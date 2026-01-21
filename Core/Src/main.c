@@ -24,6 +24,8 @@
 /* USER CODE BEGIN Includes */
 #include <stdio.h>
 #include "stepper_timer.h"
+#include "stepper.h"
+#include "cube_primitives.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -46,19 +48,12 @@ TIM_HandleTypeDef htim3;
 
 UART_HandleTypeDef huart2;
 
-/* Definitions for Task1 */
-osThreadId_t Task1Handle;
-const osThreadAttr_t Task1_attributes = {
-  .name = "Task1",
+/* Definitions for MotionTask */
+osThreadId_t MotionTaskHandle;
+const osThreadAttr_t MotionTask_attributes = {
+  .name = "MotionTask",
   .stack_size = 128 * 4,
   .priority = (osPriority_t) osPriorityNormal,
-};
-/* Definitions for Task2 */
-osThreadId_t Task2Handle;
-const osThreadAttr_t Task2_attributes = {
-  .name = "Task2",
-  .stack_size = 128 * 4,
-  .priority = (osPriority_t) osPriorityLow,
 };
 /* USER CODE BEGIN PV */
 
@@ -69,8 +64,7 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_USART2_UART_Init(void);
 static void MX_TIM3_Init(void);
-void StartTask1(void *argument);
-void StartTask2(void *argument);
+void MotionTaskStart(void *argument);
 
 /* USER CODE BEGIN PFP */
 
@@ -113,9 +107,10 @@ int main(void)
   MX_USART2_UART_Init();
   MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
-  TIM3->DIER |= TIM_DIER_UIE; // enable update interrupt
-  TIM3->CNT = 0;               // reset counter
-  TIM3->CR1 |= TIM_CR1_CEN;    // start timer
+  stepper_tim3_enable_ir();
+  stepper_init_all();
+
+
   /* USER CODE END 2 */
 
   /* Init scheduler */
@@ -138,11 +133,8 @@ int main(void)
   /* USER CODE END RTOS_QUEUES */
 
   /* Create the thread(s) */
-  /* creation of Task1 */
-  Task1Handle = osThreadNew(StartTask1, NULL, &Task1_attributes);
-
-  /* creation of Task2 */
-  Task2Handle = osThreadNew(StartTask2, NULL, &Task2_attributes);
+  /* creation of MotionTask */
+  MotionTaskHandle = osThreadNew(MotionTaskStart, NULL, &MotionTask_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -342,41 +334,23 @@ static void MX_GPIO_Init(void)
 
 /* USER CODE END 4 */
 
-/* USER CODE BEGIN Header_StartTask1 */
+/* USER CODE BEGIN Header_MotionTaskStart */
 /**
-  * @brief  Function implementing the Task1 thread.
+  * @brief  Function implementing the MotionTask thread.
   * @param  argument: Not used
   * @retval None
   */
-/* USER CODE END Header_StartTask1 */
-void StartTask1(void *argument)
+/* USER CODE END Header_MotionTaskStart */
+void MotionTaskStart(void *argument)
 {
   /* USER CODE BEGIN 5 */
   /* Infinite loop */
   for(;;)
   {
-//    HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
+	stepper_move_90(MOTOR_U, TURN_CW);
     osDelay(1000);
   }
   /* USER CODE END 5 */
-}
-
-/* USER CODE BEGIN Header_StartTask2 */
-/**
-* @brief Function implementing the Task2 thread.
-* @param argument: Not used
-* @retval None
-*/
-/* USER CODE END Header_StartTask2 */
-void StartTask2(void *argument)
-{
-  /* USER CODE BEGIN StartTask2 */
-  /* Infinite loop */
-  for(;;)
-  {
-    osDelay(1);
-  }
-  /* USER CODE END StartTask2 */
 }
 
 /**

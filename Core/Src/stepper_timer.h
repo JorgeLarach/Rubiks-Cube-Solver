@@ -8,6 +8,11 @@
 #ifndef STEPPER_TIMER_H
 #define STEPPER_TIMER_H
 
-void Stepper_TIM3_IRQHandler(void);
+#include <stdint.h>
 
-#endif
+void stepper_tim3_irqhandler(void);
+void stepper_tim3_start(void);
+void stepper_tim3_stop(void);
+void stepper_tim3_enable_ir(void);
+
+#endif /* STEPPER_TIMER_H */
