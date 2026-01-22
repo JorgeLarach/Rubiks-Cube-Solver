@@ -6,6 +6,7 @@
  */
 
 #include "stepper.h"
+#include "stepper_timer.h"
 #include "board_pins.h"
 
 #include "FreeRTOS.h"
@@ -26,7 +27,36 @@ void stepper_init_all(void){ // Fill steppers array with initialized data
 		.dir_port  = U_DIR_GPIO_Port,
 		.dir_pin   = U_DIR_Pin
 	};
-
+	steppers[MOTOR_D] = (stepper_t){
+		.step_port = D_STEP_GPIO_Port,
+		.step_pin  = D_STEP_Pin,
+		.dir_port  = D_DIR_GPIO_Port,
+		.dir_pin   = D_DIR_Pin
+	};
+	steppers[MOTOR_L] = (stepper_t){
+		.step_port = L_STEP_GPIO_Port,
+		.step_pin  = L_STEP_Pin,
+		.dir_port  = L_DIR_GPIO_Port,
+		.dir_pin   = L_DIR_Pin
+	};
+	steppers[MOTOR_R] = (stepper_t){
+		.step_port = R_STEP_GPIO_Port,
+		.step_pin  = R_STEP_Pin,
+		.dir_port  = R_DIR_GPIO_Port,
+		.dir_pin   = R_DIR_Pin
+	};
+	steppers[MOTOR_F] = (stepper_t){
+		.step_port = F_STEP_GPIO_Port,
+		.step_pin  = F_STEP_Pin,
+		.dir_port  = F_DIR_GPIO_Port,
+		.dir_pin   = F_DIR_Pin
+	};
+	steppers[MOTOR_B] = (stepper_t){
+		.step_port = B_STEP_GPIO_Port,
+		.step_pin  = B_STEP_Pin,
+		.dir_port  = B_DIR_GPIO_Port,
+		.dir_pin   = B_DIR_Pin
+	};
 }
 
 void stepper_move_90(motor_id_t motor, turn_dir_t dir){
@@ -44,4 +74,8 @@ void stepper_move_90(motor_id_t motor, turn_dir_t dir){
 	taskEXIT_CRITICAL();
 
 	stepper_tim3_start();
+}
+
+uint8_t stepper_is_busy(motor_id_t motor){
+	return steppers[motor].steps_remaining > 0;
 }

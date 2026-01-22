@@ -7,7 +7,6 @@
 
 #include "stepper_timer.h"
 #include "stepper.h"
-#include "stm32f4xx.h"
 
 extern volatile motor_id_t active_motor;
 
@@ -15,7 +14,7 @@ extern volatile motor_id_t active_motor;
 
 void stepper_tim3_irqhandler(void){
 	static uint8_t step_level = 0; // Tracks rising or falling STEP edge
-	if (TIM3->SR & TIM_SR_UIF){ // If Update Interrupt Flag (UIF) is set in the status register, then interrupt requested
+	if (TIM3->SR & TIM_SR_UIF){ // If Update Interrupt Flag (UIF) bit is set in the status register, then interrupt requested
 		TIM3->SR &= ~TIM_SR_UIF; // clears UIF
 
 		stepper_t *m = &steppers[active_motor]; // Pointer to active motor
