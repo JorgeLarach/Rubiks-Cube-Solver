@@ -9,6 +9,7 @@
 #define CUBE_SOLVER_H
 
 #include <stdint.h>
+#include <stddef.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -42,9 +43,9 @@ typedef enum {
 //                          max_moves: usize) -> usize;
 
 uint32_t solve_cube(
-		const uint8_t *stickers,
+		const uint8_t *cube_raw,
 		Move *out_moves,
-		uint32_t max_moves
+		size_t max_moves
 );
 
 

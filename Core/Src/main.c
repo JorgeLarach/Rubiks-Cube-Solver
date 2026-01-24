@@ -23,6 +23,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include <stdio.h>
+#include "cube_solver.h"
 #include "stepper_timer.h"
 #include "stepper.h"
 #include "cube_primitives.h"
@@ -109,6 +110,12 @@ int main(void)
   /* USER CODE BEGIN 2 */
   stepper_tim3_enable_ir();
   stepper_init_all();
+
+  uint8_t cube[54] = {0};
+  Move moves[16];
+  uint32_t n = solve_cube(cube, moves, 16);
+  (void)n;
+
 
 
   /* USER CODE END 2 */
