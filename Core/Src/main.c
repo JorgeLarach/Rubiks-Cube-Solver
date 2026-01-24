@@ -114,7 +114,7 @@ int main(void)
   stepper_init_all();
 
   uint8_t cube[54] = {0};
-  Move moves[16];
+  solver_move moves[16];
   uint32_t n = solve_cube(cube, moves, 16);
   snprintf(uart_buf, sizeof(uart_buf), "n=%lu\r\n", (unsigned long)n);
   HAL_UART_Transmit(&huart2, (uint8_t*)uart_buf, strlen(uart_buf), HAL_MAX_DELAY);

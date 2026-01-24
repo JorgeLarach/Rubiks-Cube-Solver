@@ -6004,37 +6004,37 @@ LOAD /Applications/STM32CubeIDE.app/Contents/Eclipse/plugins/com.st.stm32cube.id
  .debug_line    0x0001711c      0x12b /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(compiler_builtins-39ac331f3ed62a2e.compiler_builtins.5b228f9b2b2289d6-cgu.279.rcgu.o)
  .debug_line    0x00017247      0x67d /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(compiler_builtins-39ac331f3ed62a2e.compiler_builtins.5b228f9b2b2289d6-cgu.017.rcgu.o)
 
-.debug_str      0x00000000    0x99dff
- .debug_str     0x00000000    0x99dff ./Core/Src/main.o
-                              0x8fa29 (size before relaxing)
- .debug_str     0x00099dff    0x8d874 ./Core/Src/stepper.o
- .debug_str     0x00099dff    0x866a1 ./Core/Src/stepper_timer.o
- .debug_str     0x00099dff    0x8728e ./Core/Src/stm32f4xx_hal_msp.o
- .debug_str     0x00099dff    0x86ff0 ./Core/Src/stm32f4xx_hal_timebase_tim.o
- .debug_str     0x00099dff    0x86b76 ./Core/Src/stm32f4xx_it.o
- .debug_str     0x00099dff     0x7780 ./Core/Src/sysmem.o
- .debug_str     0x00099dff    0x8666a ./Core/Src/system_stm32f4xx.o
- .debug_str     0x00099dff       0x82 ./Core/Startup/startup_stm32f401retx.o
- .debug_str     0x00099dff    0x8708c ./Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal.o
- .debug_str     0x00099dff    0x86df6 ./Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_cortex.o
- .debug_str     0x00099dff    0x867e5 ./Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_gpio.o
- .debug_str     0x00099dff    0x86a9e ./Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_rcc.o
- .debug_str     0x00099dff    0x879e2 ./Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_tim.o
- .debug_str     0x00099dff    0x871ee ./Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_tim_ex.o
- .debug_str     0x00099dff    0x8706d ./Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_uart.o
- .debug_str     0x00099dff    0x914f1 ./Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2/cmsis_os2.o
- .debug_str     0x00099dff     0xac31 ./Middlewares/Third_Party/FreeRTOS/Source/list.o
- .debug_str     0x00099dff     0xc771 ./Middlewares/Third_Party/FreeRTOS/Source/queue.o
- .debug_str     0x00099dff     0xd576 ./Middlewares/Third_Party/FreeRTOS/Source/tasks.o
- .debug_str     0x00099dff     0xcfc2 ./Middlewares/Third_Party/FreeRTOS/Source/timers.o
- .debug_str     0x00099dff     0xb96f ./Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/port.o
- .debug_str     0x00099dff     0xb573 ./Middlewares/Third_Party/FreeRTOS/Source/portable/MemMang/heap_4.o
- .debug_str     0x00099dff      0x17c /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(compiler_builtins-39ac331f3ed62a2e.compiler_builtins.5b228f9b2b2289d6-cgu.119.rcgu.o)
- .debug_str     0x00099dff      0x47f /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(compiler_builtins-39ac331f3ed62a2e.compiler_builtins.5b228f9b2b2289d6-cgu.302.rcgu.o)
- .debug_str     0x00099dff       0xea /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(compiler_builtins-39ac331f3ed62a2e.compiler_builtins.5b228f9b2b2289d6-cgu.340.rcgu.o)
- .debug_str     0x00099dff      0xe4e /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(compiler_builtins-39ac331f3ed62a2e.compiler_builtins.5b228f9b2b2289d6-cgu.012.rcgu.o)
- .debug_str     0x00099dff      0x19b /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(compiler_builtins-39ac331f3ed62a2e.compiler_builtins.5b228f9b2b2289d6-cgu.279.rcgu.o)
- .debug_str     0x00099dff      0x5fa /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(compiler_builtins-39ac331f3ed62a2e.compiler_builtins.5b228f9b2b2289d6-cgu.017.rcgu.o)
+.debug_str      0x00000000    0x99e06
+ .debug_str     0x00000000    0x99e06 ./Core/Src/main.o
+                              0x8fa30 (size before relaxing)
+ .debug_str     0x00099e06    0x8d874 ./Core/Src/stepper.o
+ .debug_str     0x00099e06    0x866a1 ./Core/Src/stepper_timer.o
+ .debug_str     0x00099e06    0x8728e ./Core/Src/stm32f4xx_hal_msp.o
+ .debug_str     0x00099e06    0x86ff0 ./Core/Src/stm32f4xx_hal_timebase_tim.o
+ .debug_str     0x00099e06    0x86b76 ./Core/Src/stm32f4xx_it.o
+ .debug_str     0x00099e06     0x7780 ./Core/Src/sysmem.o
+ .debug_str     0x00099e06    0x8666a ./Core/Src/system_stm32f4xx.o
+ .debug_str     0x00099e06       0x82 ./Core/Startup/startup_stm32f401retx.o
+ .debug_str     0x00099e06    0x8708c ./Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal.o
+ .debug_str     0x00099e06    0x86df6 ./Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_cortex.o
+ .debug_str     0x00099e06    0x867e5 ./Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_gpio.o
+ .debug_str     0x00099e06    0x86a9e ./Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_rcc.o
+ .debug_str     0x00099e06    0x879e2 ./Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_tim.o
+ .debug_str     0x00099e06    0x871ee ./Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_tim_ex.o
+ .debug_str     0x00099e06    0x8706d ./Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_uart.o
+ .debug_str     0x00099e06    0x914f1 ./Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2/cmsis_os2.o
+ .debug_str     0x00099e06     0xac31 ./Middlewares/Third_Party/FreeRTOS/Source/list.o
+ .debug_str     0x00099e06     0xc771 ./Middlewares/Third_Party/FreeRTOS/Source/queue.o
+ .debug_str     0x00099e06     0xd576 ./Middlewares/Third_Party/FreeRTOS/Source/tasks.o
+ .debug_str     0x00099e06     0xcfc2 ./Middlewares/Third_Party/FreeRTOS/Source/timers.o
+ .debug_str     0x00099e06     0xb96f ./Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/port.o
+ .debug_str     0x00099e06     0xb573 ./Middlewares/Third_Party/FreeRTOS/Source/portable/MemMang/heap_4.o
+ .debug_str     0x00099e06      0x17c /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(compiler_builtins-39ac331f3ed62a2e.compiler_builtins.5b228f9b2b2289d6-cgu.119.rcgu.o)
+ .debug_str     0x00099e06      0x47f /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(compiler_builtins-39ac331f3ed62a2e.compiler_builtins.5b228f9b2b2289d6-cgu.302.rcgu.o)
+ .debug_str     0x00099e06       0xea /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(compiler_builtins-39ac331f3ed62a2e.compiler_builtins.5b228f9b2b2289d6-cgu.340.rcgu.o)
+ .debug_str     0x00099e06      0xe4e /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(compiler_builtins-39ac331f3ed62a2e.compiler_builtins.5b228f9b2b2289d6-cgu.012.rcgu.o)
+ .debug_str     0x00099e06      0x19b /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(compiler_builtins-39ac331f3ed62a2e.compiler_builtins.5b228f9b2b2289d6-cgu.279.rcgu.o)
+ .debug_str     0x00099e06      0x5fa /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(compiler_builtins-39ac331f3ed62a2e.compiler_builtins.5b228f9b2b2289d6-cgu.017.rcgu.o)
 
 .comment        0x00000000       0x6f
  .comment       0x00000000       0x6f ./Core/Src/main.o

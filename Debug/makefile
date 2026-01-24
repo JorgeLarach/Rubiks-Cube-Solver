@@ -86,7 +86,7 @@ clean:
 	-@echo ' '
 
 pre-build:
-	make VERBOSE=1
+	cd .. && ./build_rust_solver.sh
 	-@echo ' '
 
 secondary-outputs: $(SIZE_OUTPUT) $(OBJDUMP_LIST)

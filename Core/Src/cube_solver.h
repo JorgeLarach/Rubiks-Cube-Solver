@@ -34,17 +34,17 @@ typedef enum {
     MOVE_B,
     MOVE_Bi,
     MOVE_B2,
-} Move;
+} solver_move;
 
 
 // Rust signature:
 // extern "C" fn solve_cube(stickers: *const u8,
-//                          out_moves: *mut Move,
+//                          out_moves: *mut solver_move,
 //                          max_moves: usize) -> usize;
 
 uint32_t solve_cube(
 		const uint8_t *cube_raw,
-		Move *out_moves,
+		solver_move *out_moves,
 		size_t max_moves
 );
 
