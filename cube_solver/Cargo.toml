@@ -7,4 +7,10 @@ edition = "2024"
 name = "cube_solver"
 crate-type = ["staticlib"]
 
+[profile.release]
+panic = "abort"
+
+[profile.dev]
+panic = "abort"
+
 [dependencies]

@@ -1,3 +1,8 @@
+#![no_std]
+
+use core::slice;
+use core::panic::PanicInfo;
+
 #[repr(C)] // Lay out this enum/struct in memory exactly like C would
 #[derive(Copy, Clone, Debug)]
 pub enum Move {
@@ -39,30 +44,13 @@ pub extern "C" fn solve_cube(
     };
     let out_slice = unsafe {
         // Builds a mutable slice from raw pointer and length
-        std::slice::from_raw_parts_mut(out_moves, max_moves)
+        slice::from_raw_parts_mut(out_moves, max_moves)
     };
 
     solve_internal(&cube, out_slice)
 }
 
-
-
-
-
-
-
-
-pub fn add(left: u64, right: u64) -> u64 {
-    left + right
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
-    }
+#[panic_handler]
+fn panic(_info: &PanicInfo) -> ! {
+    loop {}
 }
