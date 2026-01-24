@@ -66,7 +66,7 @@ main-build: Rubiks\ Cube.elf secondary-outputs
 
 # Tool invocations
 Rubiks\ Cube.elf Rubiks\ Cube.map: $(OBJS) $(USER_OBJS) /Users/jorgelarach/Desktop/STM\ PROJECT\ WOOO/Rubiks\ Cube/STM32F401RETX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "Rubiks Cube.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"/Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/STM32F401RETX_FLASH.ld" --specs=nosys.specs -Wl,-Map="Rubiks Cube.map" -Wl,--gc-sections -static -L"/Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver" --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+	arm-none-eabi-gcc -o "Rubiks Cube.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"/Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/STM32F401RETX_FLASH.ld" --specs=nosys.specs -Wl,-Map="Rubiks Cube.map" -Wl,--gc-sections -static -L"/Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver" -Wl,-z,noexecstack --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 
