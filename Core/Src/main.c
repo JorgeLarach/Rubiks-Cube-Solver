@@ -23,6 +23,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include <stdio.h>
+#include <string.h>
 #include "cube_solver.h"
 #include "stepper_timer.h"
 #include "stepper.h"
@@ -73,6 +74,7 @@ void MotionTaskStart(void *argument);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+char uart_buf[100] = {'\0'};
 
 /* USER CODE END 0 */
 
@@ -114,7 +116,10 @@ int main(void)
   uint8_t cube[54] = {0};
   Move moves[16];
   uint32_t n = solve_cube(cube, moves, 16);
-  (void)n;
+  snprintf(uart_buf, sizeof(uart_buf), "n=%lu\r\n", (unsigned long)n);
+  HAL_UART_Transmit(&huart2, (uint8_t*)uart_buf, strlen(uart_buf), HAL_MAX_DELAY);
+
+
 
 
 
@@ -378,6 +383,11 @@ void MotionTaskStart(void *argument)
   /* Infinite loop */
   for(;;)
   {
+//	uint8_t cube[54] = {0};
+//	Move moves[16];
+//	uint32_t n = solve_cube(cube, moves, 16);
+//	snprintf(uart_buf, sizeof(uart_buf), "n=%lu\r\n", (unsigned long)n);
+//	HAL_UART_Transmit(&huart2, (uint8_t*)uart_buf, strlen(uart_buf), HAL_MAX_DELAY);
 	stepper_move_90(MOTOR_U, TURN_CW);
     osDelay(1000);
   }
