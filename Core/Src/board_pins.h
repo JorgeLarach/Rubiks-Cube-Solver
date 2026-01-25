@@ -40,7 +40,7 @@
 #define B_DIR_GPIO_Port  GPIOB
 #define B_DIR_Pin  GPIO_PIN_10
 
-#define EN_GPIO_Port     GPIOA
-#define EN_GPIO_PIN GPIO_PIN_9
+#define EN_GPIO_Port     GPIOC
+#define EN_GPIO_PIN GPIO_PIN_7
 
 #endif /* BOARD_PINS_H */
