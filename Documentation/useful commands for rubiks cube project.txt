@@ -1,0 +1,36 @@
+useful commands for rubiks cube project
+(in Rubiks Cube directory)
+
+*** to launch python virtual env. for gui and transmission ***
+source venv/bin/activate
+python gui/test_usb.py
+
+*** to deactivate env. ***
+deactivate
+
+*** if venv is deleted or need to make a new one ***
+python3 -m venv venv
+
+*** to re-install relevant packages ***
+pip install -r requirements.txt
+
+
+
+
+(in cube_solver directory)
+*** to build rust project for armv7 architecture ***
+cargo build --target thumbv7em-none-eabihf --release
+
+*** to remove nasty unneccesary cargo files ***
+cargo clean
+
+
+
+
+(stm32ide pre-build shell commands - they run when build hammer is pressed)
+cd cube_solver
+cargo build --target thumbv7em-none-eabihf --release
+cp target/thumbv7em-none-eabihf/release/libcube_solver.a ../Middlewares/cube_solver/libcube_solver.a
+cargo clean
+
+(note: ide runs "cargo" as /Users/jorgelarach/.cargo/bin/cargo)
