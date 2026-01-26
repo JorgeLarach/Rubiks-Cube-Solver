@@ -7,7 +7,7 @@ def send_54_bytes():
     # - Windows: COM3, COM4, etc.
     # - Linux: /dev/ttyACM0, /dev/ttyUSB0
     # - Mac: /dev/tty.usbmodemXXXX
-    port = '/dev/tty.usbmodem103'  # CHANGE THIS!
+    port = '/dev/tty.usbmodem1103'  
     baudrate = 115200  # Default for Nucleo boards
     
     # The 54 bytes you want to send (example: 54 zeros)

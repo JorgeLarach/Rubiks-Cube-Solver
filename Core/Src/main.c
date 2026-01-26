@@ -76,7 +76,9 @@ void MotionTaskStart(void *argument);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 char uart_buf[100] = {'\0'};
-
+uint8_t rx_buffer[64];
+volatile uint32_t rx_len;
+volatile uint8_t rx_ready;
 /* USER CODE END 0 */
 
 /**
@@ -111,21 +113,32 @@ int main(void)
   MX_USART2_UART_Init();
   MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
+  MX_USB_DEVICE_Init();
   stepper_tim3_enable_ir();
   stepper_init_all();
 
-  uint8_t cube[54] = {0};
-  solver_move moves[16];
-  uint32_t n = solve_cube(cube, moves, 16);
-  snprintf(uart_buf, sizeof(uart_buf), "n=%lu\r\n", (unsigned long)n);
-  HAL_UART_Transmit(&huart2, (uint8_t*)uart_buf, strlen(uart_buf), HAL_MAX_DELAY);
-  for(uint8_t i = 0; i < n; i++){
-	  snprintf(uart_buf, sizeof(uart_buf), "moves[%d]=%lu\r\n", i, (unsigned long)moves[i]);
-	  HAL_UART_Transmit(&huart2, (uint8_t*)uart_buf, strlen(uart_buf), HAL_MAX_DELAY);
-  }
+//  uint8_t cube[54] = {0};
+//  solver_move moves[16];
+//  uint32_t n = solve_cube(cube, moves, 16);
+//  snprintf(uart_buf, sizeof(uart_buf), "n=%lu\r\n", (unsigned long)n);
+//  HAL_UART_Transmit(&huart2, (uint8_t*)uart_buf, strlen(uart_buf), HAL_MAX_DELAY);
+//  for(uint8_t i = 0; i < n; i++){
+//	  snprintf(uart_buf, sizeof(uart_buf), "moves[%d]=%lu\r\n", i, (unsigned long)moves[i]);
+//	  HAL_UART_Transmit(&huart2, (uint8_t*)uart_buf, strlen(uart_buf), HAL_MAX_DELAY);
+//  }
 
 
 
+//  printf("Starting USB initialization...\r\n");
+//  MX_USB_DEVICE_Init();
+//
+//  // Check if USB is ready
+//  if (hUsbDeviceFS.dev_state == USBD_STATE_CONFIGURED) {
+//	  snprintf(uart_buf, sizeof(uart_buf), "USB configured successully\r\n");
+//	  HAL_UART_Transmit(&huart2, (uint8_t*)uart_buf, strlen(uart_buf), HAL_MAX_DELAY);
+//  } else {
+//	  snprintf(uart_buf, sizeof(uart_buf), "USB not configured. State: %d\r\n", hUsbDeviceFS.dev_state);
+//  }
 
   /* USER CODE END 2 */
 
@@ -193,15 +206,14 @@ void SystemClock_Config(void)
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
   */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
-  RCC_OscInitStruct.HSIState = RCC_HSI_ON;
-  RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
+  RCC_OscInitStruct.HSEState = RCC_HSE_BYPASS;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
-  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
-  RCC_OscInitStruct.PLL.PLLM = 16;
-  RCC_OscInitStruct.PLL.PLLN = 336;
-  RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV4;
-  RCC_OscInitStruct.PLL.PLLQ = 7;
+  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
+  RCC_OscInitStruct.PLL.PLLM = 4;
+  RCC_OscInitStruct.PLL.PLLN = 72;
+  RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
+  RCC_OscInitStruct.PLL.PLLQ = 3;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
   {
     Error_Handler();
@@ -322,8 +334,8 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(GPIOC, GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_7, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_4|GPIO_PIN_8
-                          |GPIO_PIN_10, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_4|GPIO_PIN_7
+                          |GPIO_PIN_8|GPIO_PIN_10, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0|GPIO_PIN_10|GPIO_PIN_3|GPIO_PIN_4
@@ -349,8 +361,8 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PA4 PA8 PA10 */
-  GPIO_InitStruct.Pin = GPIO_PIN_4|GPIO_PIN_8|GPIO_PIN_10;
+  /*Configure GPIO pins : PA4 PA7 PA8 PA10 */
+  GPIO_InitStruct.Pin = GPIO_PIN_4|GPIO_PIN_7|GPIO_PIN_8|GPIO_PIN_10;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -371,7 +383,12 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-
+void USB_CDC_RxHandler(uint8_t* Buf, uint32_t Len)
+{
+//	HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_7);
+	memcpy((void*)rx_buffer, Buf, Len);
+	rx_len = Len;
+}
 /* USER CODE END 4 */
 
 /* USER CODE BEGIN Header_MotionTaskStart */
@@ -389,11 +406,6 @@ void MotionTaskStart(void *argument)
   /* Infinite loop */
   for(;;)
   {
-//	uint8_t cube[54] = {0};
-//	Move moves[16];
-//	uint32_t n = solve_cube(cube, moves, 16);
-//	snprintf(uart_buf, sizeof(uart_buf), "n=%lu\r\n", (unsigned long)n);
-//	HAL_UART_Transmit(&huart2, (uint8_t*)uart_buf, strlen(uart_buf), HAL_MAX_DELAY);
 	stepper_move_90(MOTOR_U, TURN_CW);
     osDelay(1000);
   }
