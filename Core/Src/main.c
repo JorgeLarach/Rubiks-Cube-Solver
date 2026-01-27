@@ -28,6 +28,7 @@
 #include "stepper_timer.h"
 #include "stepper.h"
 #include "cube_primitives.h"
+#include "uart_cube.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -77,42 +78,10 @@ void MotionTaskStart(void *argument);
 char uart_buf[100] = {'\0'}; // For debugging
 
 
-#define PACKET_SIZE 54
-uint8_t uart_rx_buffer[PACKET_SIZE] = {0};
-volatile uint8_t uart_rx_ready = 0;
-uint8_t uart_rx_index = 0;
-
-
 uint8_t cube[54] = {0};
 solver_move moves[16];
 uint32_t num_moves = 0;
 
-// called automatically when data arrives
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart){
-  if (huart->Instance == USART2){
-    uart_rx_index++;
-
-    if (uart_rx_index >= PACKET_SIZE){
-      uart_rx_ready = 1;
-      uart_rx_index = 0;
-    }
-
-    // Listen for the next byte
-    HAL_UART_Receive_IT(&huart2, &uart_rx_buffer[uart_rx_index], 1);
-  }
-}
-
-
-void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart){
-  if (huart->Instance == USART2){
-    uart_rx_index = 0;
-    HAL_UART_Receive_IT(&huart2, &uart_rx_buffer[uart_rx_index], 1);
-  }
-}
-
-void UART_ProcessPacket(uint8_t* packet){
-	memcpy(cube, packet, 54);
-}
 /* USER CODE END 0 */
 
 /**
@@ -149,16 +118,16 @@ int main(void)
   /* USER CODE BEGIN 2 */
   stepper_tim3_enable_ir();
   stepper_init_all();
-  HAL_UART_Receive_IT(&huart2, &uart_rx_buffer[0], 1);
+  uart_start_reception(&huart2);
 
 
-//  uint32_t n = solve_cube(cube, moves, 16);
-//  snprintf(uart_buf, sizeof(uart_buf), "n=%lu\r\n", (unsigned long)n);
-//  HAL_UART_Transmit(&huart2, (uint8_t*)uart_buf, strlen(uart_buf), HAL_MAX_DELAY);
-//  for(uint8_t i = 0; i < n; i++){
-//	  snprintf(uart_buf, sizeof(uart_buf), "moves[%d]=%lu\r\n", i, (unsigned long)moves[i]);
-//	  HAL_UART_Transmit(&huart2, (uint8_t*)uart_buf, strlen(uart_buf), HAL_MAX_DELAY);
-//  }
+  uint32_t n = solve_cube(cube, moves, 16);
+  snprintf(uart_buf, sizeof(uart_buf), "n=%lu\r\n", (unsigned long)n);
+  HAL_UART_Transmit(&huart2, (uint8_t*)uart_buf, strlen(uart_buf), HAL_MAX_DELAY);
+  for(uint8_t i = 0; i < n; i++){
+	  snprintf(uart_buf, sizeof(uart_buf), "moves[%d]=%lu\r\n", i, (unsigned long)moves[i]);
+	  HAL_UART_Transmit(&huart2, (uint8_t*)uart_buf, strlen(uart_buf), HAL_MAX_DELAY);
+  }
 
   /* USER CODE END 2 */
 
@@ -419,10 +388,10 @@ void MotionTaskStart(void *argument)
   /* Infinite loop */
   for(;;)
   {
-	if(uart_rx_ready){
-		uart_rx_ready = 0;
-		HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_7);
-		UART_ProcessPacket(uart_rx_buffer);
+	if(rx_ready){
+		rx_ready = 0;
+//		HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_7);
+		uart_process_packet(cube);
 	}
 //	stepper_move_90(MOTOR_U, TURN_CW);
     osDelay(1000);

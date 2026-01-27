@@ -5,7 +5,7 @@ def send_data():
     port = '/dev/tty.usbmodem103'  
     baudrate = 115200  
     
-    data = bytes([8] * 54)
+    data = bytes([2] * 54)
     
     try:
         ser = serial.Serial(port, baudrate, timeout=1)
@@ -13,7 +13,7 @@ def send_data():
         
         ser.write(data)
 
-        time.sleep(1);
+        time.sleep(0.5);
         
         ser.close()
         print("Done! You can now unplug the USB cable.")

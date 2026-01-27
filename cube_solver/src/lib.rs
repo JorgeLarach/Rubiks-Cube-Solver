@@ -6,8 +6,6 @@ use core::panic::PanicInfo;
 #[repr(C)] // Lay out this enum/struct in memory exactly like C would
 #[derive(Copy, Clone, Debug)]
 
-#[repr(C)]
-
 pub enum solver_move {
     U, Ui, U2,
     D, Di, D2,
@@ -30,9 +28,9 @@ fn solve_internal(_cube: &Cube, out: &mut [solver_move]) -> usize{
 
     
 
-    out[0] = solver_move::R;
+    out[0] = solver_move::Ui;
     out[1] = solver_move::Bi;
-    out[2] = solver_move::D;
+    out[2] = solver_move::D2;
     out[3] = solver_move::F2;
 
     4
