@@ -1,12 +1,12 @@
 /*
- * cube_primitives.h
+ * stepper_primitives.h
  *
  *  Created on: Jan 20, 2026
  *      Author: jorgelarach
  */
 
-#ifndef CUBE_PRIMITIVES_H
-#define CUBE_PRIMITIVES_H
+#ifndef STEPPER_PRIMITIVES_H
+#define STEPPER_PRIMITIVES_H
 
 #include <stdint.h>
 
@@ -29,8 +29,8 @@ typedef enum {
 typedef struct {
 	motor_id_t motor;
 	turn_dir_t dir;
-} cube_move_t;
+} stepper_move_t;
 
-extern const cube_move_t cube_move_list[];
-extern const uint16_t cube_move_count;
-#endif /* CUBE_PRIMITIVES_H */
+//extern const cube_move_t cube_move_list[]; // Connect translation layer to this!
+//extern const uint16_t cube_move_count;
+#endif /* STEPPER_PRIMITIVES_H */

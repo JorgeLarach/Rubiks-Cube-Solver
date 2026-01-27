@@ -41,6 +41,12 @@
 #define B_DIR_Pin  GPIO_PIN_10
 
 #define EN_GPIO_Port     GPIOC
-#define EN_GPIO_PIN GPIO_PIN_7
+#define EN_Pin      GPIO_PIN_7
+
+#define SOLVE_BUTTON_GPIO_Port      GPIOA
+#define SOLVE_BUTTON_Pin       GPIO_PIN_6
+
+#define EXECUTE_BUTTON_GPIO_Port    GPIOA
+#define EXECUTE_BUTTON_Pin     GPIO_PIN_7
 
 #endif /* BOARD_PINS_H */

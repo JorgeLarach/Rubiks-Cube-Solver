@@ -23,12 +23,14 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include <stdio.h>
+#include <stepper_primitives.h>
 #include <string.h>
 #include "cube_solver.h"
 #include "stepper_timer.h"
 #include "stepper.h"
-#include "cube_primitives.h"
 #include "uart_cube.h"
+#include "cube_processor.h"
+#include "board_pins.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -51,10 +53,10 @@ TIM_HandleTypeDef htim3;
 
 UART_HandleTypeDef huart2;
 
-/* Definitions for MotionTask */
-osThreadId_t MotionTaskHandle;
-const osThreadAttr_t MotionTask_attributes = {
-  .name = "MotionTask",
+/* Definitions for CubeProcessTask */
+osThreadId_t CubeProcessTaskHandle;
+const osThreadAttr_t CubeProcessTask_attributes = {
+  .name = "CubeProcessTask",
   .stack_size = 128 * 4,
   .priority = (osPriority_t) osPriorityNormal,
 };
@@ -67,7 +69,7 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_USART2_UART_Init(void);
 static void MX_TIM3_Init(void);
-void MotionTaskStart(void *argument);
+void CubeProcessStart(void *argument);
 
 /* USER CODE BEGIN PFP */
 
@@ -78,9 +80,9 @@ void MotionTaskStart(void *argument);
 char uart_buf[100] = {'\0'}; // For debugging
 
 
-uint8_t cube[54] = {0};
-solver_move moves[16];
-uint32_t num_moves = 0;
+//uint8_t cube[54] = {0};
+//solver_move moves[16];
+//uint32_t num_moves = 0;
 
 /* USER CODE END 0 */
 
@@ -121,13 +123,13 @@ int main(void)
   uart_start_reception(&huart2);
 
 
-  uint32_t n = solve_cube(cube, moves, 16);
-  snprintf(uart_buf, sizeof(uart_buf), "n=%lu\r\n", (unsigned long)n);
-  HAL_UART_Transmit(&huart2, (uint8_t*)uart_buf, strlen(uart_buf), HAL_MAX_DELAY);
-  for(uint8_t i = 0; i < n; i++){
-	  snprintf(uart_buf, sizeof(uart_buf), "moves[%d]=%lu\r\n", i, (unsigned long)moves[i]);
-	  HAL_UART_Transmit(&huart2, (uint8_t*)uart_buf, strlen(uart_buf), HAL_MAX_DELAY);
-  }
+//  uint32_t n = solve_cube(cube, moves, 16);
+//  snprintf(uart_buf, sizeof(uart_buf), "n=%lu\r\n", (unsigned long)n);
+//  HAL_UART_Transmit(&huart2, (uint8_t*)uart_buf, strlen(uart_buf), HAL_MAX_DELAY);
+//  for(uint8_t i = 0; i < n; i++){
+//	  snprintf(uart_buf, sizeof(uart_buf), "moves[%d]=%lu\r\n", i, (unsigned long)moves[i]);
+//	  HAL_UART_Transmit(&huart2, (uint8_t*)uart_buf, strlen(uart_buf), HAL_MAX_DELAY);
+//  }
 
   /* USER CODE END 2 */
 
@@ -151,8 +153,8 @@ int main(void)
   /* USER CODE END RTOS_QUEUES */
 
   /* Create the thread(s) */
-  /* creation of MotionTask */
-  MotionTaskHandle = osThreadNew(MotionTaskStart, NULL, &MotionTask_attributes);
+  /* creation of CubeProcessTask */
+  CubeProcessTaskHandle = osThreadNew(CubeProcessStart, NULL, &CubeProcessTask_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -323,8 +325,8 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(GPIOC, GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_7, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_4|GPIO_PIN_7
-                          |GPIO_PIN_8|GPIO_PIN_10, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_4|GPIO_PIN_8
+                          |GPIO_PIN_10, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0|GPIO_PIN_10|GPIO_PIN_3|GPIO_PIN_4
@@ -350,11 +352,17 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PA4 PA7 PA8 PA10 */
-  GPIO_InitStruct.Pin = GPIO_PIN_4|GPIO_PIN_7|GPIO_PIN_8|GPIO_PIN_10;
+  /*Configure GPIO pins : PA4 PA8 PA10 */
+  GPIO_InitStruct.Pin = GPIO_PIN_4|GPIO_PIN_8|GPIO_PIN_10;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : PA6 PA7 */
+  GPIO_InitStruct.Pin = GPIO_PIN_6|GPIO_PIN_7;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
   /*Configure GPIO pins : PB0 PB10 PB3 PB4
@@ -372,30 +380,38 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
+    if (GPIO_Pin == SOLVE_BUTTON_Pin) {
+        // Solve button pressed - run solver
+        cube_run_solver();
+    }
+    else if (GPIO_Pin == EXECUTE_BUTTON_Pin) {
+        // Execute button pressed - run motors
+        cube_run_motors();
+    }
+}
 /* USER CODE END 4 */
 
-/* USER CODE BEGIN Header_MotionTaskStart */
+/* USER CODE BEGIN Header_CubeProcessStart */
 /**
-  * @brief  Function implementing the MotionTask thread.
-  * @param  argument: Not used
-  * @retval None
-  */
-/* USER CODE END Header_MotionTaskStart */
-void MotionTaskStart(void *argument)
+* @brief Function implementing the CubeProcessTask thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_CubeProcessStart */
+void CubeProcessStart(void *argument)
 {
-  /* USER CODE BEGIN 5 */
-  /* Infinite loop */
-  for(;;)
-  {
-	if(rx_ready){
-		rx_ready = 0;
-//		HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_7);
-		uart_process_packet(cube);
+	/* USER CODE BEGIN 5 */
+	cube_processor_init();
+	/* Infinite loop */
+	for(;;)
+	{
+		if(rx_ready){
+			rx_ready = 0;
+			cube_process_uart_packet();
+		}
+		osDelay(1000);
 	}
-//	stepper_move_90(MOTOR_U, TURN_CW);
-    osDelay(1000);
-  }
   /* USER CODE END 5 */
 }
 

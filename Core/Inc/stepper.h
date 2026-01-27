@@ -8,8 +8,8 @@
 #ifndef STEPPER_H
 #define STEPPER_H
 
+#include <stepper_primitives.h>
 #include "stm32f4xx_hal.h"
-#include "cube_primitives.h"
 
 typedef struct {
 	GPIO_TypeDef *step_port;

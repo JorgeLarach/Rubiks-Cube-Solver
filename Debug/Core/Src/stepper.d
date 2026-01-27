@@ -1,4 +1,5 @@
 Core/Src/stepper.o: ../Core/Src/stepper.c ../Core/Inc/stepper.h \
+ ../Core/Inc/stepper_primitives.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal.h \
  ../Core/Inc/stm32f4xx_hal_conf.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_rcc.h \
@@ -27,8 +28,7 @@ Core/Src/stepper.o: ../Core/Src/stepper.c ../Core/Inc/stepper.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim_ex.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_uart.h \
- ../Core/Inc/cube_primitives.h ../Core/Inc/stepper_timer.h \
- ../Core/Inc/board_pins.h \
+ ../Core/Inc/stepper_timer.h ../Core/Inc/board_pins.h \
  ../Middlewares/Third_Party/FreeRTOS/Source/include/FreeRTOS.h \
  ../Core/Inc/FreeRTOSConfig.h \
  ../Middlewares/Third_Party/FreeRTOS/Source/include/projdefs.h \
@@ -39,6 +39,7 @@ Core/Src/stepper.o: ../Core/Src/stepper.c ../Core/Inc/stepper.h \
  ../Middlewares/Third_Party/FreeRTOS/Source/include/task.h \
  ../Middlewares/Third_Party/FreeRTOS/Source/include/list.h
 ../Core/Inc/stepper.h:
+../Core/Inc/stepper_primitives.h:
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal.h:
 ../Core/Inc/stm32f4xx_hal_conf.h:
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_rcc.h:
@@ -67,7 +68,6 @@ Core/Src/stepper.o: ../Core/Src/stepper.c ../Core/Inc/stepper.h \
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim.h:
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim_ex.h:
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_uart.h:
-../Core/Inc/cube_primitives.h:
 ../Core/Inc/stepper_timer.h:
 ../Core/Inc/board_pins.h:
 ../Middlewares/Third_Party/FreeRTOS/Source/include/FreeRTOS.h:
