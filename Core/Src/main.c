@@ -19,7 +19,6 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "cmsis_os.h"
-#include "usb_device.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -76,9 +75,7 @@ void MotionTaskStart(void *argument);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 char uart_buf[100] = {'\0'};
-uint8_t rx_buffer[64];
-volatile uint32_t rx_len;
-volatile uint8_t rx_ready;
+
 /* USER CODE END 0 */
 
 /**
@@ -113,7 +110,6 @@ int main(void)
   MX_USART2_UART_Init();
   MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
-  MX_USB_DEVICE_Init();
   stepper_tim3_enable_ir();
   stepper_init_all();
 
@@ -125,19 +121,6 @@ int main(void)
 //  for(uint8_t i = 0; i < n; i++){
 //	  snprintf(uart_buf, sizeof(uart_buf), "moves[%d]=%lu\r\n", i, (unsigned long)moves[i]);
 //	  HAL_UART_Transmit(&huart2, (uint8_t*)uart_buf, strlen(uart_buf), HAL_MAX_DELAY);
-//  }
-
-
-
-//  printf("Starting USB initialization...\r\n");
-//  MX_USB_DEVICE_Init();
-//
-//  // Check if USB is ready
-//  if (hUsbDeviceFS.dev_state == USBD_STATE_CONFIGURED) {
-//	  snprintf(uart_buf, sizeof(uart_buf), "USB configured successully\r\n");
-//	  HAL_UART_Transmit(&huart2, (uint8_t*)uart_buf, strlen(uart_buf), HAL_MAX_DELAY);
-//  } else {
-//	  snprintf(uart_buf, sizeof(uart_buf), "USB not configured. State: %d\r\n", hUsbDeviceFS.dev_state);
 //  }
 
   /* USER CODE END 2 */
@@ -207,7 +190,7 @@ void SystemClock_Config(void)
   * in the RCC_OscInitTypeDef structure.
   */
   RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
-  RCC_OscInitStruct.HSEState = RCC_HSE_BYPASS;
+  RCC_OscInitStruct.HSEState = RCC_HSE_ON;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
   RCC_OscInitStruct.PLL.PLLM = 4;
@@ -383,12 +366,7 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-void USB_CDC_RxHandler(uint8_t* Buf, uint32_t Len)
-{
-//	HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_7);
-	memcpy((void*)rx_buffer, Buf, Len);
-	rx_len = Len;
-}
+
 /* USER CODE END 4 */
 
 /* USER CODE BEGIN Header_MotionTaskStart */
@@ -400,8 +378,6 @@ void USB_CDC_RxHandler(uint8_t* Buf, uint32_t Len)
 /* USER CODE END Header_MotionTaskStart */
 void MotionTaskStart(void *argument)
 {
-  /* init code for USB_DEVICE */
-  MX_USB_DEVICE_Init();
   /* USER CODE BEGIN 5 */
   /* Infinite loop */
   for(;;)
