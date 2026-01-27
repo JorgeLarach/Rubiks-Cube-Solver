@@ -26,11 +26,15 @@ typedef enum {
 	TURN_CCW
 } turn_dir_t;
 
+typedef enum {
+	TURN_90_DEG,
+	TURN_180_DEG
+} turn_degrees_t;
+
 typedef struct {
 	motor_id_t motor;
 	turn_dir_t dir;
+	turn_degrees_t degrees;
 } stepper_move_t;
 
-//extern const cube_move_t cube_move_list[]; // Connect translation layer to this!
-//extern const uint16_t cube_move_count;
 #endif /* STEPPER_PRIMITIVES_H */

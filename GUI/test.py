@@ -2,10 +2,10 @@ import serial
 import time
 
 def send_data():
-    port = '/dev/tty.usbmodem103'  
+    port = '/dev/tty.usbmodem2103'  
     baudrate = 115200  
     
-    data = bytes([2] * 54)
+    data = bytes([18] * 54)
     
     try:
         ser = serial.Serial(port, baudrate, timeout=1)

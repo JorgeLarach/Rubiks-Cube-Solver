@@ -8,6 +8,7 @@
 #include "cube_processor.h"
 #include "uart_cube.h"  // For rx_buffer
 #include "cmsis_os.h" // for os_delay
+#include "board_pins.h" // for button pins
 
 cube_state_t cube_state = {0};
 
@@ -25,6 +26,8 @@ void cube_process_uart_packet(void) {
     }
     cube_state.cube_ready = true;
     cube_state.moves_ready = false;  // Invalidate old moves
+
+    cube_run_solver(); // Not meant to go here obviously, just testing
 }
 
 void cube_run_solver(void) {
@@ -37,7 +40,7 @@ void cube_run_solver(void) {
         MAX_MOVES
     );
 
-    // Translate solver_moves to motor_moves
+    // Translate solver_moves_t to motor_moves_t
     for (int i = 0; i < cube_state.move_count; i++) {
         cube_state.motor_moves[i] = translate_solver_move(cube_state.solver_moves[i]);
     }
@@ -58,20 +61,41 @@ void cube_run_motors(void) {
     cube_state.motors_running = false;
 }
 
-// Translation function (solver_move → stepper_move_t)
-stepper_move_t translate_solver_move(solver_move move) {
+// Translation function (solver_move_t -> stepper_move_t)
+stepper_move_t translate_solver_move(solver_move_t move) {
     stepper_move_t result = {0};
 
     switch(move) {
         // U face moves
-        case MOVE_U:    result.motor = MOTOR_U; result.dir = TURN_CW;  break;
-        case MOVE_Ui:   result.motor = MOTOR_U; result.dir = TURN_CCW; break;
-        case MOVE_U2:   // Handle double moves
-        // Add all 18 cases...
+        case MOVE_U:    result.motor = MOTOR_U; result.dir = TURN_CW;  result.degrees = TURN_90_DEG;  break;
+        case MOVE_Ui:   result.motor = MOTOR_U; result.dir = TURN_CCW; result.degrees = TURN_90_DEG;  break;
+        case MOVE_U2:   result.motor = MOTOR_U; result.dir = TURN_CW;  result.degrees = TURN_180_DEG; break;
+
         // D face moves
-        case MOVE_D:    result.motor = MOTOR_D; result.dir = TURN_CW;  break;
-        case MOVE_Di:   result.motor = MOTOR_D; result.dir = TURN_CCW; break;
-        // etc...
+        case MOVE_D:    result.motor = MOTOR_D; result.dir = TURN_CW;  result.degrees = TURN_90_DEG;  break;
+        case MOVE_Di:   result.motor = MOTOR_D; result.dir = TURN_CCW; result.degrees = TURN_90_DEG;  break;
+        case MOVE_D2:   result.motor = MOTOR_D; result.dir = TURN_CW;  result.degrees = TURN_180_DEG; break;
+
+        // L face moves
+        case MOVE_L:    result.motor = MOTOR_L; result.dir = TURN_CW;  result.degrees = TURN_90_DEG;  break;
+        case MOVE_Li:   result.motor = MOTOR_L; result.dir = TURN_CCW; result.degrees = TURN_90_DEG;  break;
+        case MOVE_L2:   result.motor = MOTOR_L; result.dir = TURN_CW;  result.degrees = TURN_180_DEG; break;
+
+        // R face moves
+        case MOVE_R:    result.motor = MOTOR_R; result.dir = TURN_CW;  result.degrees = TURN_90_DEG;  break;
+        case MOVE_Ri:   result.motor = MOTOR_R; result.dir = TURN_CCW; result.degrees = TURN_90_DEG;  break;
+        case MOVE_R2:   result.motor = MOTOR_R; result.dir = TURN_CW;  result.degrees = TURN_180_DEG; break;
+
+        // F face moves
+        case MOVE_F:    result.motor = MOTOR_F; result.dir = TURN_CW;  result.degrees = TURN_90_DEG;  break;
+        case MOVE_Fi:   result.motor = MOTOR_F; result.dir = TURN_CCW; result.degrees = TURN_90_DEG;  break;
+        case MOVE_F2:   result.motor = MOTOR_F; result.dir = TURN_CW;  result.degrees = TURN_180_DEG; break;
+
+        // B face moves
+        case MOVE_B:    result.motor = MOTOR_B; result.dir = TURN_CW;  result.degrees = TURN_90_DEG;  break;
+        case MOVE_Bi:   result.motor = MOTOR_B; result.dir = TURN_CCW; result.degrees = TURN_90_DEG;  break;
+        case MOVE_B2:   result.motor = MOTOR_B; result.dir = TURN_CW;  result.degrees = TURN_180_DEG; break;
+
         default: break;
     }
 
@@ -80,10 +104,20 @@ stepper_move_t translate_solver_move(solver_move move) {
 
 // Execute a single motor move
 void execute_cube_move(stepper_move_t move) {
-    // For now, just move 90 degrees
-    // You can expand this for 180 degree moves (U2, etc.)
-    stepper_move_90(move.motor, move.dir);
+    stepper_move(move.motor, move.dir, move.degrees);
 
     // Small delay between moves
-    osDelay(300);  // Adjust as needed
+    osDelay(300);
+}
+
+// Interrupt callback for control button presses
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
+    if (GPIO_Pin == SOLVE_BUTTON_Pin) {
+        // Solve button pressed - run solver
+        cube_run_solver(); // maybe turn this into a flag and call function in cube process task
+    }
+    else if (GPIO_Pin == EXECUTE_BUTTON_Pin) {
+        // Execute button pressed - run motors
+        cube_run_motors();
+    }
 }

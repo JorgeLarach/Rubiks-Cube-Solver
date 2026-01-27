@@ -6,7 +6,7 @@ use core::panic::PanicInfo;
 #[repr(C)] // Lay out this enum/struct in memory exactly like C would
 #[derive(Copy, Clone, Debug)]
 
-pub enum solver_move {
+pub enum solver_move_t {
     U, Ui, U2,
     D, Di, D2,
     L, Li, L2,
@@ -19,19 +19,17 @@ pub struct Cube {
     pub stickers: [u8; 54],
 }
 
-fn solve_internal(_cube: &Cube, out: &mut [solver_move]) -> usize{
+fn solve_internal(_cube: &Cube, out: &mut [solver_move_t]) -> usize{
     if out.len() < 4{
         return 0;
     }
 
-    // println!("solve_internal called with out.len() = {}", out.len());
-
     
 
-    out[0] = solver_move::Ui;
-    out[1] = solver_move::Bi;
-    out[2] = solver_move::D2;
-    out[3] = solver_move::F2;
+    out[0] = solver_move_t::Ui;
+    out[1] = solver_move_t::Bi;
+    out[2] = solver_move_t::D2;
+    out[3] = solver_move_t::F2;
 
     4
 }
@@ -39,7 +37,7 @@ fn solve_internal(_cube: &Cube, out: &mut [solver_move]) -> usize{
 #[unsafe(no_mangle)] // Prevents function renaming (mangling) during compiling. C expects symbol named solve_cube
 pub extern "C" fn solve_cube(
     cube_raw: *const u8,
-    out_moves: *mut solver_move,
+    out_moves: *mut solver_move_t,
     max_moves: usize
 ) -> usize {
     if cube_raw.is_null() || out_moves.is_null() {

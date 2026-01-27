@@ -30,7 +30,7 @@
 #include "stepper.h"
 #include "uart_cube.h"
 #include "cube_processor.h"
-#include "board_pins.h"
+//#include "board_pins.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -118,18 +118,9 @@ int main(void)
   MX_USART2_UART_Init();
   MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
-  stepper_tim3_enable_ir();
-  stepper_init_all();
-  uart_start_reception(&huart2);
-
-
-//  uint32_t n = solve_cube(cube, moves, 16);
-//  snprintf(uart_buf, sizeof(uart_buf), "n=%lu\r\n", (unsigned long)n);
-//  HAL_UART_Transmit(&huart2, (uint8_t*)uart_buf, strlen(uart_buf), HAL_MAX_DELAY);
-//  for(uint8_t i = 0; i < n; i++){
-//	  snprintf(uart_buf, sizeof(uart_buf), "moves[%d]=%lu\r\n", i, (unsigned long)moves[i]);
-//	  HAL_UART_Transmit(&huart2, (uint8_t*)uart_buf, strlen(uart_buf), HAL_MAX_DELAY);
-//  }
+//  stepper_tim3_enable_ir();
+//  stepper_init_all();
+//  uart_start_reception(&huart2);
 
   /* USER CODE END 2 */
 
@@ -380,16 +371,7 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
-    if (GPIO_Pin == SOLVE_BUTTON_Pin) {
-        // Solve button pressed - run solver
-        cube_run_solver();
-    }
-    else if (GPIO_Pin == EXECUTE_BUTTON_Pin) {
-        // Execute button pressed - run motors
-        cube_run_motors();
-    }
-}
+
 /* USER CODE END 4 */
 
 /* USER CODE BEGIN Header_CubeProcessStart */
@@ -403,6 +385,9 @@ void CubeProcessStart(void *argument)
 {
 	/* USER CODE BEGIN 5 */
 	cube_processor_init();
+	stepper_tim3_enable_ir();
+	stepper_init_all();
+	uart_start_reception(&huart2);
 	/* Infinite loop */
 	for(;;)
 	{

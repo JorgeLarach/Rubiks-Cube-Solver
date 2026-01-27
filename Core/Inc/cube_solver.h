@@ -34,7 +34,7 @@ typedef enum {
     MOVE_B,
     MOVE_Bi,
     MOVE_B2,
-} solver_move;
+} solver_move_t;
 
 
 // Rust signature:
@@ -44,7 +44,7 @@ typedef enum {
 
 uint32_t solve_cube(
 		const uint8_t *cube_raw,
-		solver_move *out_moves,
+		solver_move_t *out_moves,
 		size_t max_moves
 );
 

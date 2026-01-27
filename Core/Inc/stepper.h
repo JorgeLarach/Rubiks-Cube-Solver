@@ -22,7 +22,7 @@ typedef struct {
 } stepper_t;
 
 void stepper_init_all(void);
-void stepper_move_90(motor_id_t motor, turn_dir_t dir);
+void stepper_move(motor_id_t motor, turn_dir_t dir, turn_degrees_t deg);
 uint8_t stepper_is_busy(motor_id_t motor);
 
 extern stepper_t steppers[MOTOR_COUNT];

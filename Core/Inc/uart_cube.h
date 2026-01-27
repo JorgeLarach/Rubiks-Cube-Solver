@@ -19,5 +19,5 @@ extern volatile uint8_t rx_ready;
 extern uint8_t rx_index;
 
 void uart_start_reception(UART_HandleTypeDef *huart);
-void uart_process_packet(uint8_t *cube);
+
 #endif /* UART_CUBE_H */

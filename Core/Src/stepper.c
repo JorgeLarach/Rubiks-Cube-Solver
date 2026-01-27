@@ -15,6 +15,7 @@
 #define FULL_STEPS_PER_REV 200
 #define MICROSTEPS 16
 #define STEPS_90_DEG ((FULL_STEPS_PER_REV * MICROSTEPS) / 4)
+#define STEPS_180_DEG STEPS_90_DEG * 2
 
 stepper_t steppers[MOTOR_COUNT]; // Define steppers array
 volatile motor_id_t active_motor = MOTOR_U;
@@ -59,8 +60,10 @@ void stepper_init_all(void){ // Fill steppers array with initialized data
 	};
 }
 
-void stepper_move_90(motor_id_t motor, turn_dir_t dir){
+void stepper_move(motor_id_t motor, turn_dir_t dir, turn_degrees_t deg){
 	stepper_t *m = &steppers[motor]; // Pointer to motor in question
+	active_motor = motor;
+
 
 	// Set/Reset DIR pin
 	HAL_GPIO_WritePin(
@@ -70,7 +73,7 @@ void stepper_move_90(motor_id_t motor, turn_dir_t dir){
 
 	// Critical section: assigning steps
 	taskENTER_CRITICAL();
-	m->steps_remaining = STEPS_90_DEG;
+	m->steps_remaining = (deg == TURN_90_DEG) ? STEPS_90_DEG : STEPS_180_DEG;
 	taskEXIT_CRITICAL();
 
 	stepper_tim3_start();

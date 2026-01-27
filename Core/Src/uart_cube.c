@@ -16,10 +16,6 @@ void uart_start_reception(UART_HandleTypeDef *huart){
 	HAL_UART_Receive_IT(huart, &rx_buffer[0], 1);
 }
 
-void uart_process_packet(uint8_t *cube){
-	memcpy(cube, rx_buffer, 54);
-}
-
 // called automatically when data arrives
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
     if (huart->Instance == USART2) {
