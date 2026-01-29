@@ -13,7 +13,7 @@ def send_data():
         
         ser.write(data)
 
-        time.sleep(0.5);
+        time.sleep(0.5)
         
         ser.close()
         print("Done! You can now unplug the USB cable.")

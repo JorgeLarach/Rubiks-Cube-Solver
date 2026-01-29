@@ -24,8 +24,6 @@ fn solve_internal(_cube: &Cube, out: &mut [solver_move_t]) -> usize{
         return 0;
     }
 
-    
-
     out[0] = solver_move_t::Ui;
     out[1] = solver_move_t::Bi;
     out[2] = solver_move_t::D2;
