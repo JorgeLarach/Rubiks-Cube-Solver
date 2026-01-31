@@ -5,12 +5,16 @@ edition = "2024"
 
 [lib]
 name = "cube_solver"
-crate-type = ["staticlib"]
+crate-type = ["rlib"]
+
+[features]
+default = ["std-env"]
+std-env = []
 
 [profile.release]
 panic = "abort"
 
-[profile.dev]
-panic = "abort"
-
 [dependencies]
+
+
+[dev-dependencies]

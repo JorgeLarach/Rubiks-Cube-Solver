@@ -1,10 +1,12 @@
-#![no_std]
+#![cfg_attr(not(feature = "std-env"), no_std)]
 
 use core::slice;
+
+#[cfg(not(feature = "std-env"))]
 use core::panic::PanicInfo;
 
 #[repr(C)] // Lay out this enum/struct in memory exactly like C would
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 
 pub enum solver_move_t {
     U, Ui, U2,
@@ -15,9 +17,46 @@ pub enum solver_move_t {
     B, Bi, B2
 }
 
+#[derive(Copy, Clone, Debug)]
 pub struct Cube {
     pub stickers: [u8; 54],
 }
+
+impl Cube {
+    pub fn make_solved() -> Self {
+        let mut stickers = [0u8; 54];
+        for face in 0..6 {
+            for i in 0..9 {
+                stickers[face * 9 + i] = face as u8;
+            }
+        }
+
+        Cube {stickers}
+    }
+
+    pub fn is_solved(&self) -> bool {
+        for face in 0..6 {
+            let color = self.stickers[face * 9];
+            for i in 0..9 {
+                if self.stickers[face * 9 + i] != color {
+                    return false;
+                }
+            }
+        }
+        true
+    }
+
+    pub fn apply_move(&mut self, m: solver_move_t) {
+        match m {
+            solver_move_t::U => {}
+            solver_move_t::Ui => {}
+            solver_move_t::U2 => {}
+            _ => {}
+        }
+    }
+}
+
+
 
 fn solve_internal(_cube: &Cube, out: &mut [solver_move_t]) -> usize{
     if out.len() < 4{
@@ -57,6 +96,7 @@ pub extern "C" fn solve_cube(
     solve_internal(&cube, out_slice)
 }
 
+#[cfg(not(feature = "std-env"))]
 #[panic_handler]
 fn panic(_info: &PanicInfo) -> ! {
     loop {}

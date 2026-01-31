@@ -5,9 +5,11 @@ echo "[Rust] Building cube_solver..."
 
 cd cube_solver
 
-/Users/jorgelarach/.cargo/bin/cargo build \
+/Users/jorgelarach/.cargo/bin/cargo rustc \
 --target thumbv7em-none-eabihf \
---release
+--release \
+--no-default-features \
+--crate-type staticlib
 
 echo "[Rust] Copying static library..."
 
@@ -19,3 +21,4 @@ echo "[Rust] Cleaning Cargo..."
 /Users/jorgelarach/.cargo/bin/cargo clean
 
 echo "[Rust] Done."
+

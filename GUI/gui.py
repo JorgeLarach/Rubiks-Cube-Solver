@@ -6,6 +6,8 @@
  #   Co-Author: Deepseek
  #
 
+# white, yellow, green, blue, red, orange
+
 import tkinter as tk
 from tkinter import ttk, messagebox
 import serial
@@ -21,8 +23,8 @@ class RubiksCubeGUI:
         self.color_map = {
             'W': ("white", 0),
             'Y': ("yellow", 1),
-            'B': ("blue", 2),
-            'G': ("green", 3),
+            'G': ("green", 2),
+            'B': ("blue", 3),
             'R': ("red", 4),
             'O': ("orange", 5)
         }
@@ -47,7 +49,7 @@ class RubiksCubeGUI:
         inst_frame = tk.Frame(self.root)
         inst_frame.pack(pady=5)
         
-        tk.Label(inst_frame, text="Enter color codes (W=White, Y=Yellow, B=Blue, G=Green, R=Red, O=Orange)", 
+        tk.Label(inst_frame, text="Enter color codes (W=White, Y=Yellow, G=Green, B=Blue, R=Red, O=Orange)", 
                 font=("Arial", 10)).pack()
         tk.Label(inst_frame, text="Click 'Update Colors' to apply colors or 'Validate Cube' to check and color automatically",
                 font=("Arial", 9), fg="gray").pack()
@@ -81,6 +83,9 @@ class RubiksCubeGUI:
         
         tk.Button(control_frame, text="Fill Solved", 
                  command=self.fill_solved, bg="lightyellow",
+                 font=("Arial", 12)).pack(side=tk.LEFT, padx=10)
+        tk.Button(control_frame, text="Fill Test", 
+                 command=self.fill_test, bg="lightyellow",
                  font=("Arial", 12)).pack(side=tk.LEFT, padx=10)
         
         # Status label
@@ -116,7 +121,7 @@ class RubiksCubeGUI:
         # Define face positions (x, y) for each face in cross pattern
         face_positions = {
             'U': (400, 50),   # Top
-            'D': (400, 350),   # Bottom
+            'D': (400, 350),  # Bottom
             'L': (200, 200),  # Left
             'R': (600, 200),  # Right
             'F': (400, 200),  # Center
@@ -234,7 +239,7 @@ class RubiksCubeGUI:
         for byte in cube_bytes:
             color_counts[byte] += 1
         
-        color_names = ["White", "Yellow", "Blue", "Green", "Red", "Orange"]
+        color_names = ["White", "Yellow", "Green","Blue", "Red", "Orange"]
         valid = True
         
         for i, count in enumerate(color_counts):
@@ -355,14 +360,14 @@ class RubiksCubeGUI:
         solved_mapping = {
             'U': 'W',  # White
             'D': 'Y',  # Yellow
-            'F': 'B',  # Blue
-            'B': 'G',  # Green
-            'R': 'R',  # Red
-            'L': 'O'   # Orange
+			'L': 'G',  # Green
+			'R': 'B',  # Blue
+            'F': 'R',  # Red
+            'B': 'O',  # Orange
         }
         
-        # Face order in our display: U, L, F, R, B, D
-        face_order = ['U', 'L', 'F', 'R', 'B', 'D']
+        # Face order in our display: 'U', 'D', 'L', 'R', 'F', 'B'
+        face_order = ['U', 'D', 'L', 'R', 'F', 'B']
         
         for face_idx, face_name in enumerate(face_order):
             color_char = solved_mapping[face_name]
@@ -374,6 +379,70 @@ class RubiksCubeGUI:
         
         self.update_colors()
         self.status_label.config(text="Solved cube loaded", fg="green")
+    
+    def save_config_to_file(self):
+        cube_bytes = self.get_cube_state_bytes()
+        if cube_bytes is None:
+            return
+
+    	# f=open("cube_configs.txt", "w+")
+        for byte in cube_bytes:
+            print(byte)
+            print("\n")
+    		# f.write(byte)
+    	# for byte in cube_bytes:
+    		# print(byte)
+
+
+
+    def fill_test(self):
+        up = \
+            ["W", "W", "W",
+             "W", "W", "W",
+             "W", "W", "W"
+            ]
+        down = \
+            ["Y", "Y", "Y",
+             "Y", "Y", "Y",
+             "Y", "Y", "Y"
+            ]
+        left = \
+            ["R", "R", "R",
+             "G", "G", "G",
+             "G", "G", "G"
+            ]
+        right = \
+            ["O", "O", "O",
+             "B", "B", "B",
+             "B", "B", "B"
+            ]
+        forward = \
+            ["B", "B", "B",
+             "R", "R", "R",
+             "R", "R", "R"
+            ]
+        backward = \
+            ["G", "G", "G",
+             "O", "O", "O",
+             "O", "O", "O"
+            ]
+        config = up+down+left+right+forward+backward
+
+        # for string in config:
+        # 	print(string)
+        
+        
+        for i in range(len(config)):
+            self.sticker_entries[i].delete(0, tk.END)
+            self.sticker_entries[i].insert(0, config[i])
+    
+        self.save_config_to_file()
+        
+        
+        self.update_colors()
+        self.status_label.config(text="Test cube loaded", fg="green")
+
+
 
 def main():
     root = tk.Tk()
