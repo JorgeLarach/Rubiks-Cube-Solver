@@ -87,6 +87,12 @@ class RubiksCubeGUI:
         tk.Button(control_frame, text="Fill Test", 
                  command=self.fill_test, bg="lightyellow",
                  font=("Arial", 12)).pack(side=tk.LEFT, padx=10)
+        tk.Button(control_frame, text="Save Config",
+                  command=self.save_config_to_file, bg="lightyellow",
+                  font=("Arial", 12)).pack(side=tk.LEFT, padx=10)
+        tk.Button(control_frame, text="Load config",
+                  command=self.load_config_from_file, bg="lightyellow",
+                  font=("Arial", 12)).pack(side=tk.LEFT, padx=10)
         
         # Status label
         self.status_label = tk.Label(self.root, text="Ready", 
@@ -273,7 +279,6 @@ class RubiksCubeGUI:
         }
         
         # Map face names to indices for checking
-        face_map = {'U': 0, 'D': 1, 'F': 2, 'B': 3, 'R': 4, 'L': 5}
         for color1, color2 in opposite_pairs:
             # Find which faces have these colors as centers
             faces1 = [face for face, color in face_centers.items() if color == color1]
@@ -385,15 +390,42 @@ class RubiksCubeGUI:
         if cube_bytes is None:
             return
 
-    	# f=open("cube_configs.txt", "w+")
-        for byte in cube_bytes:
-            print(byte)
-            print("\n")
-    		# f.write(byte)
-    	# for byte in cube_bytes:
-    		# print(byte)
+        with open("GUI/cube_configs.txt", "a") as f:
+            f.write("".join(str(b) for b in cube_bytes) + "\n")
+        
+        self.status_label.config(text="Cube config saved to file", fg="green")
 
+    def load_config_from_file(self):
+        
+        # Really roundabout way to do it but it works
+        reverse_color_map = {num: color_name for color_name, num in self.color_map.values()}
+        # {0: "white", 1: "yellow", 2: "green", 3: "blue", 4: "red", 5: "orange"}
+        line_number = 1
+        try:
+            with open("GUI/cube_configs.txt", "r") as f:
+                lines = f.readlines()
+            if line_number < 0 or line_number >= len(lines):
+                print(f"config {line_number} doesn't exist in file")
+                return False
+            
+            line = lines[line_number].strip()
 
+            for i, digit in enumerate(line):
+                color_val = int(digit)
+                color_name = reverse_color_map.get(color_val, 'white')[0].upper()
+
+                self.sticker_entries[i].delete(0, tk.END)
+                self.sticker_entries[i].insert(0, color_name)
+            
+            self.update_colors()
+
+            return True
+        except FileNotFoundError:
+            print("file not found")
+            return False
+        except ValueError:
+            print("invalid data in file")
+            return False
 
     def fill_test(self):
         up = \
@@ -436,7 +468,7 @@ class RubiksCubeGUI:
             self.sticker_entries[i].delete(0, tk.END)
             self.sticker_entries[i].insert(0, config[i])
     
-        self.save_config_to_file()
+        # self.save_config_to_file()
         
         
         self.update_colors()
