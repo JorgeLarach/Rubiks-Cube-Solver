@@ -68,19 +68,15 @@ class RubiksCubeGUI:
         tk.Button(control_frame, text="Update Colors", 
                  command=self.update_colors, bg="lightblue",
                  font=("Arial", 12)).pack(side=tk.LEFT, padx=10)
-        
         tk.Button(control_frame, text="Validate Cube", 
                  command=self.validate_cube, bg="lightgreen",
                  font=("Arial", 12)).pack(side=tk.LEFT, padx=10)
-        
         tk.Button(control_frame, text="Send via UART", 
                  command=self.send_via_uart, bg="lightcoral",
                  font=("Arial", 12)).pack(side=tk.LEFT, padx=10)
-        
         tk.Button(control_frame, text="Clear All", 
                  command=self.clear_all, bg="lightgray",
                  font=("Arial", 12)).pack(side=tk.LEFT, padx=10)
-        
         tk.Button(control_frame, text="Fill Solved", 
                  command=self.fill_solved, bg="lightyellow",
                  font=("Arial", 12)).pack(side=tk.LEFT, padx=10)
@@ -400,7 +396,7 @@ class RubiksCubeGUI:
         # Really roundabout way to do it but it works
         reverse_color_map = {num: color_name for color_name, num in self.color_map.values()}
         # {0: "white", 1: "yellow", 2: "green", 3: "blue", 4: "red", 5: "orange"}
-        line_number = 1
+        line_number = 0
         try:
             with open("GUI/cube_configs.txt", "r") as f:
                 lines = f.readlines()
@@ -467,9 +463,6 @@ class RubiksCubeGUI:
         for i in range(len(config)):
             self.sticker_entries[i].delete(0, tk.END)
             self.sticker_entries[i].insert(0, config[i])
-    
-        # self.save_config_to_file()
-        
         
         self.update_colors()
         self.status_label.config(text="Test cube loaded", fg="green")
