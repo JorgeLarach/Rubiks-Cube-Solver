@@ -1,93 +1,129 @@
-use cube_solver::*;
-
-#[test]
-fn test_solved_cube_is_solved() {
-    let cube: Cube = Cube::make_solved();
-    assert!(cube.is_solved());
-}
-
-#[test]
-fn debug_solved_cube() {
-    // run as: cargo test debug_solved_cube -- --nocapture
-    let cube: Cube = Cube::make_solved();
-    println!("Cube stickers: {:?}", &cube.stickers[..]);
-
-    for face in 0..6 {
-        print!("Face: {:?} ", face);
-        for i in 0..9 {
-            print!("{} ", cube.stickers[face * 9 + i]);
-        }
-        println!();
-    }
-
-    assert!(cube.is_solved());
-
-
-}
-
-#[test]
-fn test_rotate_u_face_cw() {
-    let mut cube: Cube = Cube::make_solved();
-
-    for i in 0..9 {
-        cube.stickers[U_FACE * 9 + i] = i as u8;
-    }
-
-    cube.rotate_face_cw(U_FACE);
-
-    let expected_order = [6, 3, 0, 7, 4, 1, 8, 5, 2];
-
-    for i in 0..9 {
-        assert_eq!(cube.stickers[i], expected_order[i]);
-    }
-}
-
-#[test]
-fn test_u() {
-    let mut cube:Cube = Cube::make_solved();
-
-    cube.apply_move(solver_move_t::U);
-    assert!(!cube.is_solved());
-    cube.apply_move(solver_move_t::Ui);
-    assert!(cube.is_solved());
-    cube.apply_move(solver_move_t::U2);
-    assert!(!cube.is_solved());
-    cube.apply_move(solver_move_t::U2);
-    assert!(cube.is_solved());
-}
-
-fn test_d() {
-    let mut cube:Cube = Cube::make_solved();
-
-    cube.apply_move(solver_move_t::D);
-    assert!(!cube.is_solved());
-    cube.apply_move(solver_move_t::Di);
-    assert!(cube.is_solved());
-    cube.apply_move(solver_move_t::D2);
-    assert!(!cube.is_solved());
-    cube.apply_move(solver_move_t::D2);
-    assert!(cube.is_solved());
-}
-
-#[test]
-fn test_r() {
-    let mut cube:Cube = Cube::make_solved();
-
-    cube.apply_move(solver_move_t::R);
-    assert!(!cube.is_solved());
-    cube.apply_move(solver_move_t::Ri);
-    assert!(cube.is_solved());
-    cube.apply_move(solver_move_t::R2);
-    assert!(!cube.is_solved());
-    cube.apply_move(solver_move_t::R2);
-    assert!(cube.is_solved());
-}
-
-
-#[cfg(test)]
 mod tests {
-    use super::*;
-    
+    use cube_solver::*;
+    #[test]
+    fn test_solved_cube_is_solved() {
+        let cube: Cube = Cube::make_solved();
+        assert!(cube.is_solved());
+    }
+
+    #[test]
+    fn debug_solved_cube() {
+        // run as: cargo test debug_solved_cube -- --nocapture
+        let cube: Cube = Cube::make_solved();
+        println!("Cube stickers: {:?}", &cube.stickers[..]);
+
+        for face in 0..6 {
+            print!("Face: {:?} ", face);
+            for i in 0..9 {
+                print!("{} ", cube.stickers[face * 9 + i]);
+            }
+            println!();
+        }
+
+        assert!(cube.is_solved());
+
+
+    }
+
+    #[test]
+    fn test_rotate_u_face_cw() {
+        let mut cube: Cube = Cube::make_solved();
+
+        for i in 0..9 {
+            cube.stickers[U_FACE * 9 + i] = i as u8;
+        }
+
+        cube.rotate_face_cw(U_FACE);
+
+        let expected_order = [6, 3, 0, 7, 4, 1, 8, 5, 2];
+
+        for i in 0..9 {
+            assert_eq!(cube.stickers[i], expected_order[i]);
+        }
+    }
+
+    #[test]
+    fn test_u() {
+        let mut cube:Cube = Cube::make_solved();
+
+        cube.apply_move(solver_move_t::U);
+        assert!(!cube.is_solved());
+        cube.apply_move(solver_move_t::Ui);
+        assert!(cube.is_solved());
+        cube.apply_move(solver_move_t::U2);
+        assert!(!cube.is_solved());
+        cube.apply_move(solver_move_t::U2);
+        assert!(cube.is_solved());
+    }
+
+    #[test]
+    fn test_d() {
+        let mut cube:Cube = Cube::make_solved();
+
+        cube.apply_move(solver_move_t::D);
+        assert!(!cube.is_solved());
+        cube.apply_move(solver_move_t::Di);
+        assert!(cube.is_solved());
+        cube.apply_move(solver_move_t::D2);
+        assert!(!cube.is_solved());
+        cube.apply_move(solver_move_t::D2);
+        assert!(cube.is_solved());
+    }
+
+    #[test]
+    fn test_l() {
+        let mut cube:Cube = Cube::make_solved();
+
+        cube.apply_move(solver_move_t::L);
+        assert!(!cube.is_solved());
+        cube.apply_move(solver_move_t::Li);
+        assert!(cube.is_solved());
+        cube.apply_move(solver_move_t::L2);
+        assert!(!cube.is_solved());
+        cube.apply_move(solver_move_t::L2);
+        assert!(cube.is_solved());
+    }
+
+    #[test]
+    fn test_r() {
+        let mut cube:Cube = Cube::make_solved();
+
+        cube.apply_move(solver_move_t::R);
+        assert!(!cube.is_solved());
+        cube.apply_move(solver_move_t::Ri);
+        assert!(cube.is_solved());
+        cube.apply_move(solver_move_t::R2);
+        assert!(!cube.is_solved());
+        cube.apply_move(solver_move_t::R2);
+        assert!(cube.is_solved());
+    }
+    #[test]
+    fn test_f() {
+        let mut cube:Cube = Cube::make_solved();
+
+        cube.apply_move(solver_move_t::F);
+        assert!(!cube.is_solved());
+        cube.apply_move(solver_move_t::Fi);
+        assert!(cube.is_solved());
+        cube.apply_move(solver_move_t::F2);
+        assert!(!cube.is_solved());
+        cube.apply_move(solver_move_t::F2);
+        assert!(cube.is_solved());
+    }
+
+    #[test]
+    fn test_b() {
+        let mut cube:Cube = Cube::make_solved();
+
+        cube.apply_move(solver_move_t::B);
+        assert!(!cube.is_solved());
+        cube.apply_move(solver_move_t::Bi);
+        assert!(cube.is_solved());
+        cube.apply_move(solver_move_t::B2);
+        assert!(!cube.is_solved());
+        cube.apply_move(solver_move_t::B2);
+        assert!(cube.is_solved());
+    }
     #[test]
     fn test_all_moves_return_to_solved() {
         // Test each move 4 times returns to solved state
@@ -150,4 +186,24 @@ mod tests {
         
         assert_eq!(cube1.stickers, cube2.stickers, "U2 should equal U applied twice");
     }
+
+    #[test]
+    fn test_find_edge_on_solved_cube() {
+        let cube = Cube::make_solved();
+        
+        let mut result = cube.find_edge(WHITE, ORANGE);
+        assert_eq!(result, Some((0,0)));
+        
+        result = cube.find_edge(WHITE, GREEN);
+        assert_eq!(result, Some((1,0)));
+
+        result = cube.find_edge(WHITE, BLUE);
+        assert_eq!(result, Some((2, 0)));
+
+        result = cube.find_edge(WHITE,  RED);
+        assert_eq!(result, Some((3, 0)));
+
+    }
+
+
 }
