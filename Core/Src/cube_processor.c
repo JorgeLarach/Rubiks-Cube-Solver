@@ -28,6 +28,7 @@ void cube_process_uart_packet(void) {
     cube_state.moves_ready = false;  // Invalidate old moves
 
     cube_run_solver(); // Not meant to go here obviously, just testing
+    osDelay(1000);
     cube_run_motors(); // Not meant to go here obviously, just testing
 }
 
@@ -55,18 +56,18 @@ void cube_run_motors(void) {
     cube_state.motors_running = true;
 
     /* TESTING CODE BEGIN */
-    cube_state.move_count = 10;
+//    cube_state.move_count = 10;
 
-    while(cube_state.move_count != 1){
-    	stepper_move(MOTOR_U, TURN_CW, TURN_90_DEG);
-    	osDelay(500);
-    }
+//    while(cube_state.move_count != 1){
+//    	stepper_move(MOTOR_U, TURN_CW, TURN_90_DEG);
+//    	osDelay(500);
+//    }
     /* TESTING CODE END */
 
     // Execute all motor moves
-//    for (int i = 0; i < cube_state.move_count; i++) {
-//        execute_cube_move(cube_state.motor_moves[i]);
-//    }
+    for (int i = 0; i < cube_state.move_count; i++) {
+        execute_cube_move(cube_state.motor_moves[i]);
+    }
 
     cube_state.motors_running = false;
 }

@@ -26,18 +26,18 @@ pub const EDGES: [(usize, usize); 12] = [
     // Each face's edge stickers are located at [1, 3, 5, 7]
     // Here, I am showing all 24 edge sticker combinations, but keeping only the 12 edge pieces
     (U_FACE * 9 + 1, B_FACE * 9 + 1), // Edge Piece 0 (White-Orange)
-    (U_FACE * 9 + 3, L_FACE * 9 + 1), // Edge Piece 1 (Up-Left)
-    (U_FACE * 9 + 5, R_FACE * 9 + 1), // Edge Piece 2 (Up-Right)
-    (U_FACE * 9 + 7, F_FACE * 9 + 1), // Edge Piece 3 (Up-Forward)
+    (U_FACE * 9 + 3, L_FACE * 9 + 1), // Edge Piece 1 (White-Green)
+    (U_FACE * 9 + 5, R_FACE * 9 + 1), // Edge Piece 2 (White-Blue)
+    (U_FACE * 9 + 7, F_FACE * 9 + 1), // Edge Piece 3 (White-Red)
 
-    (D_FACE * 9 + 1, F_FACE * 9 + 7), // Edge Piece 4 (Down-Forward)
-    (D_FACE * 9 + 3, L_FACE * 9 + 7), // Edge Piece 5 (Down-Left)
-    (D_FACE * 9 + 5, R_FACE * 9 + 7), // Edge Piece 6 (Down-Right)
-    (D_FACE * 9 + 7, B_FACE * 9 + 7), // Edge Piece 7 (Down-Back)
+    (D_FACE * 9 + 1, F_FACE * 9 + 7), // Edge Piece 4 (Yellow-Red)
+    (D_FACE * 9 + 3, L_FACE * 9 + 7), // Edge Piece 5 (Yellow-Green)
+    (D_FACE * 9 + 5, R_FACE * 9 + 7), // Edge Piece 6 (Yellow-Blue)
+    (D_FACE * 9 + 7, B_FACE * 9 + 7), // Edge Piece 7 (Yellow-Orange)
 
  // (L_FACE * 9 + 1, U_FACE * 9 + 3), // Edge piece already included
-    (L_FACE * 9 + 3, B_FACE * 9 + 5), // Edge Piece 8 (Left-Back)
-    (L_FACE * 9 + 5, F_FACE * 9 + 3), // Edge Piece 9 (Left-Front)
+    (L_FACE * 9 + 3, B_FACE * 9 + 5), // Edge Piece 8 (Green-Orange)
+    (L_FACE * 9 + 5, F_FACE * 9 + 3), // Edge Piece 9 (Green-Red)
  // (L_FACE * 9 + 7, D_FACE * 9 + 3), // Edge piece already included
 
  // (R_FACE * 9 + 1, U_FACE * 9 + 5), // Edge piece already included
@@ -376,12 +376,64 @@ fn solve_internal(_cube: &Cube, out: &mut [solver_move_t]) -> usize{
         return 0;
     }
 
-    out[0] = solver_move_t::Ui;
-    out[1] = solver_move_t::Bi;
-    out[2] = solver_move_t::D2;
-    out[3] = solver_move_t::F2;
+    // out[0] = solver_move_t::Ui;
+    // out[1] = solver_move_t::U;
+    // out[2] = solver_move_t::U2;
+    // out[3] = solver_move_t::U2;
+
+    // out[4] = solver_move_t::Di;
+    // out[5] = solver_move_t::D;
+    // out[6] = solver_move_t::D2;
+    // out[7] = solver_move_t::D2;
+
+    // out[8] = solver_move_t::Li;
+    // out[9] = solver_move_t::L;
+    // out[10] = solver_move_t::L2;
+    // out[11] = solver_move_t::L2;
+
+    // out[12] = solver_move_t::U2;
+    // out[13] = solver_move_t::U2;
+
+    // out[14] = solver_move_t::L2;
+    // out[15] = solver_move_t::L2;
+
+    // out[16] = solver_move_t::Ri;
+    // out[17] = solver_move_t::R;
+    // out[18] = solver_move_t::R2;
+    // out[19] = solver_move_t::R2;
+
+    out[0] = solver_move_t::U;
+    out[1] = solver_move_t::D;
+    out[2] = solver_move_t::L;
+    out[3] = solver_move_t::R;
+
+    out[4] = solver_move_t::U2;
+    out[5] = solver_move_t::D2;
+    out[6] = solver_move_t::L2;
+    out[7] = solver_move_t::R2;
+
+    out[8] = solver_move_t::Ui;
+    out[9] = solver_move_t::Di;
+    out[10] = solver_move_t::Li;
+    out[11] = solver_move_t::Ri;
+
+    // *** //
+    out[12] = solver_move_t::R;
+    out[13] = solver_move_t::L;
+    out[14] = solver_move_t::D;
+    out[15] = solver_move_t::U;
+
+    out[16] = solver_move_t::R2;
+    out[17] = solver_move_t::L2;
+    out[18] = solver_move_t::D2;
+    out[19] = solver_move_t::U2;
+
+    out[20] = solver_move_t::Ri;
+    out[21] = solver_move_t::Li;
+    out[22] = solver_move_t::Di;
+    out[23] = solver_move_t::Ui;
  
-    4
+    24
 }
 
 #[unsafe(no_mangle)] // Prevents function renaming (mangling) during compiling. C expects symbol named solve_cube

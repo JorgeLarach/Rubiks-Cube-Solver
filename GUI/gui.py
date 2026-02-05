@@ -33,7 +33,7 @@ class RubiksCubeGUI:
         self.sticker_entries = []
         
         # UART settings
-        self.port = '/dev/tty.usbmodem2103'  # Adjust for your system
+        self.port = '/dev/tty.usbmodem103'  # Adjust for your system
         self.baudrate = 115200
         
         self.create_widgets()
