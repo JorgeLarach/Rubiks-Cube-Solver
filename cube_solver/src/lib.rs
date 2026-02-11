@@ -24,7 +24,6 @@ pub const EDGES: [(usize, usize); 12] = [
     // Each edge sticker is adjacent to an edge sticker on another face. 
     // That pair makes an edge piece. These are used in the algorithm
     // Each face's edge stickers are located at [1, 3, 5, 7]
-    // Here, I am showing all 24 edge sticker combinations, but keeping only the 12 edge pieces
     (U_FACE * 9 + 1, B_FACE * 9 + 1), // Edge Piece 0 (White-Orange)
     (U_FACE * 9 + 3, L_FACE * 9 + 1), // Edge Piece 1 (White-Green)
     (U_FACE * 9 + 5, R_FACE * 9 + 1), // Edge Piece 2 (White-Blue)
@@ -35,26 +34,25 @@ pub const EDGES: [(usize, usize); 12] = [
     (D_FACE * 9 + 5, R_FACE * 9 + 7), // Edge Piece 6 (Yellow-Blue)
     (D_FACE * 9 + 7, B_FACE * 9 + 7), // Edge Piece 7 (Yellow-Orange)
 
- // (L_FACE * 9 + 1, U_FACE * 9 + 3), // Edge piece already included
     (L_FACE * 9 + 3, B_FACE * 9 + 5), // Edge Piece 8 (Green-Orange)
     (L_FACE * 9 + 5, F_FACE * 9 + 3), // Edge Piece 9 (Green-Red)
- // (L_FACE * 9 + 7, D_FACE * 9 + 3), // Edge piece already included
 
- // (R_FACE * 9 + 1, U_FACE * 9 + 5), // Edge piece already included
     (R_FACE * 9 + 3, F_FACE * 9 + 5), // Edge Piece 10 (Right-Front)
     (R_FACE * 9 + 5, B_FACE * 9 + 3), // Edge Piece 11 (Right-Back)
- // (R_FACE * 9 + 7, D_FACE * 9 + 5), // Edge piece already included
-
- // (F_FACE * 9 + 1, U_FACE * 9 + 7), // Edge piece already included
- // (F_FACE * 9 + 3, L_FACE * 9 + 5), // Edge piece already included
- // (F_FACE * 9 + 5, R_FACE * 9 + 3), // Edge piece already included
- // (F_FACE * 9 + 7, D_FACE * 9 + 1), // Edge piece already included
-
- // (B_FACE * 9 + 1, U_FACE * 9 + 1), // Edge piece already included
- // (B_FACE * 9 + 3, R_FACE * 9 + 5), // Edge piece already included
- // (B_FACE * 9 + 5, L_FACE * 9 + 3), // Edge piece already included
- // (B_FACE * 9 + 7, D_FACE * 9 + 7), // Edge piece already included
 ];
+
+pub const U_FACE_MIN_STICKER_IDX: usize = 0;
+pub const U_FACE_MAX_STICKER_IDX: usize = 8;
+pub const D_FACE_MIN_STICKER_IDX: usize = 9;
+pub const D_FACE_MAX_STICKER_IDX: usize = 17;
+pub const L_FACE_MIN_STICKER_IDX: usize = 18;
+pub const L_FACE_MAX_STICKER_IDX: usize = 26;
+pub const R_FACE_MIN_STICKER_IDX: usize = 27;
+pub const R_FACE_MAX_STICKER_IDX: usize = 35;
+pub const F_FACE_MIN_STICKER_IDX: usize = 36;
+pub const F_FACE_MAX_STICKER_IDX: usize = 44;
+pub const B_FACE_MIN_STICKER_IDX: usize = 45;
+pub const B_FACE_MAX_STICKER_IDX: usize = 53;
 
 #[repr(C)] // Lays out this enum/struct in memory exactly like C would
 #[derive(Copy, Clone, Debug, PartialEq)]
@@ -73,15 +71,413 @@ pub struct Cube {
 }
 
 impl Cube {
-    pub fn find_edge(&self, color1: u8, color2: u8) -> Option<(usize, u8)> {
-        for (edge_pos, &(idx1, idx2)) in EDGES.iter().enumerate() {
-            let sticker1 = self.stickers[idx1];
-            let sticker2 = self.stickers[idx2];
+    pub fn record_move(&self, out: &mut [solver_move_t], out_idx: usize, m: solver_move_t) {
+        if out_idx < out.len() {
+            out[out_idx] = m
+        }
+    }
+    pub fn solve_white_cross(&mut self, out: &mut [solver_move_t]) -> usize {
+        // Step 0: Identify all four white edges:
+        // 1. White-Orange (Up-Back) edge
+        // 2. White-Green  (Up-Left) edge
+        // 3. White-Blue   (Up-Right) edge
+        // 4. White-Red    (Up-Forward) edge
 
-            if sticker1 == color1 && sticker2 == color2 {
-                return Some((edge_pos, 0));
-            } else if sticker1 == color2 && sticker2 == color1 {
-                return Some((edge_pos, 1));
+        let mut out_idx = 0;
+        out_idx += self.swc_white_orange(out, out_idx); 
+        // self.swc_white_green(_out);
+        // self.swc_white_blue(_out);
+        // self.swc_white_red(_out);
+
+        out_idx
+    }
+
+    pub fn swc_white_orange(&mut self, out: &mut [solver_move_t], mut out_idx: usize) -> usize {
+        // Goal: Bring W-O edge piece from its position (given by EDGES array) to where 
+        // the WHITE sticker portion is on the U face and the ORANGE sticker is on the B face
+        
+        // Places where W-O edge could be:
+        // D layer where orange is facing its corresponding face (B face)
+        // D layer where orange is facing L face
+        // D layer where orange is facing R face
+        // D layer where orange is facing F face
+
+        // Cube idx layout:
+        // 0..=8 -> U face
+        // 9..17 -> D face
+        // 18..26 -> L face
+        // 27..=35 -> R face
+        // 36..=44 -> F face
+        // 45..=53 -> B face
+
+        // Bounds for where white sticker of W-O edge piece could be:
+        // Down layer (from 9 to 17 inc.)
+        // Middle Layers (from 18 to 53 inc., L, R, F, B)
+        // Up Layer (from 0 to 8 inc., layer is correct, wrong position/orientation)
+
+        let (sticker1_idx, sticker2_idx) = match self.find_edge(WHITE, ORANGE){
+            Some(val) => val,
+            None => panic!("cube is invalid (white-orange edge does not exist)"),
+        };
+
+        let sticker1_face = self.identify_face_from_sticker_idx(sticker1_idx);
+        let sticker2_face = self.identify_face_from_sticker_idx(sticker2_idx);
+
+        if sticker1_idx >= U_FACE_MIN_STICKER_IDX && sticker1_idx <= U_FACE_MAX_STICKER_IDX {
+            // sticker_1 is in the up (white) layer
+            out_idx += self.swc_solve_white_edge_on_up_layer(sticker2_face, out, out_idx);
+        } else if sticker1_idx >= L_FACE_MIN_STICKER_IDX && sticker1_idx <= B_FACE_MAX_STICKER_IDX {
+            // sticker_1 is in one of the middle layer faces(L, R, F, B)
+            // case 1: sticker_2 is also on a middle layer face
+            // case 2: sticker_2 is on up or down face
+            
+            match sticker1_face {
+                L_FACE => {
+                    match sticker2_face {
+                        // Want to get white on D
+                        U_FACE => {
+                            // white on L(1), orange on U(3)
+                            // Li to get orange on B face 
+                            // Bi to get white on U face
+
+                            self.apply_move(solver_move_t::Li);
+                            self.record_move(out, out_idx, solver_move_t::Li);
+                            out_idx += 1;
+
+                            self.apply_move(solver_move_t::Bi);
+                            self.record_move(out, out_idx, solver_move_t::Bi);
+                            out_idx += 1;
+                        }
+                        D_FACE => {
+                            // white on L(7), orange on D(3)
+                            // L to get orange on B face 
+                            // Bi
+                            // this leaves white on U(1) and orange on B(1) solved
+
+                            self.apply_move(solver_move_t::L);
+                            self.record_move(out, out_idx, solver_move_t::L);
+                            out_idx += 1;
+
+                            self.apply_move(solver_move_t::Bi);
+                            self.record_move(out, out_idx, solver_move_t::Bi);
+                            out_idx += 1;
+                        }
+                        B_FACE => {
+                            // white on L(3), orange on B(5)
+                            // B
+                            // white sticker is now on D(7), orange is in B(7)
+                            self.apply_move(solver_move_t::B);
+                            self.record_move(out, out_idx, solver_move_t::B);
+                            out_idx += 1;
+
+                            out_idx += self.swc_solve_white_edge_on_down_layer(B_FACE, out, out_idx);
+                        }
+                        F_FACE => {
+                            // white on L(5), orange on F(3)
+                            // Fi
+                            // white edge is now on D(1), orange is on F(7)
+                            // self.apply_move(solver_move_t::Fi);
+                            // self.record_move(out, out_idx, solver_move_t::Fi);
+                            // out_idx += 1;
+
+                            // out_idx += self.swc_solve_white_edge_on_down_layer(F_FACE, out, out_idx);
+
+                            // Version 2
+                            self.apply_move(solver_move_t::L2);
+                            self.record_move(out, out_idx, solver_move_t::L2);
+                            out_idx += 1;
+
+                            self.apply_move(solver_move_t::Bi);
+                            self.record_move(out, out_idx, solver_move_t::Bi);
+                            out_idx += 1;
+                        }
+                        _ => {}
+                    }
+                }
+                R_FACE => {
+                    match sticker2_face {
+                        // Want to get white on D
+                        U_FACE => {
+                            // R to get orange on B face
+                            // B to get white on U face
+
+                            self.apply_move(solver_move_t::R);
+                            self.record_move(out, out_idx, solver_move_t::R);
+                            out_idx += 1;
+
+                            self.apply_move(solver_move_t::B);
+                            self.record_move(out, out_idx, solver_move_t::B);
+                            out_idx += 1;
+
+                        }
+                        D_FACE => {
+                            // white on R(7), orange on D(5)
+                            // Ri to get orange on B face
+                            // B to get white on U face
+
+                            self.apply_move(solver_move_t::Ri);
+                            self.record_move(out, out_idx, solver_move_t::Ri);
+                            out_idx += 1;
+
+                            self.apply_move(solver_move_t::B);
+                            self.record_move(out, out_idx, solver_move_t::B);
+                            out_idx += 1;
+                        }
+                        F_FACE => {
+                            // white on R(3), orange on F(5)
+                            // F
+                            // white now on D(1), orange on F(7)
+
+                            self.apply_move(solver_move_t::F);
+                            self.record_move(out, out_idx, solver_move_t::F);
+                            out_idx += 1;
+
+                            out_idx += self.swc_solve_white_edge_on_down_layer(F_FACE, out, out_idx);
+
+                        }
+                        B_FACE => {
+                            // white on R(5), orange on B(3)
+                            // Bi
+                            // white now on D(7), orange on B(7)
+
+                            self.apply_move(solver_move_t::Bi);
+                            self.record_move(out, out_idx, solver_move_t::Bi);
+                            out_idx += 1;
+
+                            out_idx += self.swc_solve_white_edge_on_down_layer(B_FACE, out, out_idx);
+                        }
+                        _ => {}
+                    }
+                }
+                F_FACE => {
+                    match sticker2_face {
+                        // Want to get white on D
+                        U_FACE => {
+                            // white on F(1), orange on U(7)
+                            // F, R, Ui
+                            self.apply_move(solver_move_t::F);
+                            self.record_move(out, out_idx, solver_move_t::F);
+                            out_idx += 1;
+
+                            self.apply_move(solver_move_t::R); 
+                            self.record_move(out, out_idx, solver_move_t::R);
+                            out_idx += 1;
+
+                            self.apply_move(solver_move_t::Ui);
+                            self.record_move(out, out_idx, solver_move_t::Ui);
+                            out_idx += 1;
+                        }
+                        D_FACE => {
+                            // white on F(1), orange on D(1)
+                            // Fi, R, Ui
+                            self.apply_move(solver_move_t::Fi);
+                            self.record_move(out, out_idx, solver_move_t::Fi);
+                            out_idx += 1;
+
+                            self.apply_move(solver_move_t::R);
+                            self.record_move(out, out_idx, solver_move_t::R);
+                            out_idx += 1; 
+
+                            self.apply_move(solver_move_t::Ui);
+                            self.record_move(out, out_idx, solver_move_t::Ui);
+                            out_idx += 1;
+                        }
+                        L_FACE => {
+                            // white on F(3), orange on L(5)
+                            // L
+                            // white now on D(3), orange on L(7)
+
+                            self.apply_move(solver_move_t::L);
+                            self.record_move(out, out_idx, solver_move_t::L);
+                            out_idx += 1;
+
+                            out_idx += self.swc_solve_white_edge_on_down_layer(L_FACE, out, out_idx);
+                        }
+                        R_FACE => {
+                            // white on F(5), orange on R(3)
+                            // Ri
+                            // white now on D(5), orange on R(7)
+
+                            self.apply_move(solver_move_t::Ri);
+                            self.record_move(out, out_idx, solver_move_t::Ri);
+                            out_idx += 1;
+
+                            out_idx += self.swc_solve_white_edge_on_down_layer(R_FACE, out, out_idx);
+                        }
+                        _ => {}
+                    }
+                }
+                B_FACE => {
+                    match sticker2_face {
+                        // Want to get white on D
+                        U_FACE => {
+                            // white on B(1), orange on U(1)
+                            // B, L, Ui
+                            self.apply_move(solver_move_t::B);
+                            self.record_move(out, out_idx, solver_move_t::B);
+                            out_idx += 1;
+
+                            self.apply_move(solver_move_t::L); 
+                            self.record_move(out, out_idx, solver_move_t::L);
+                            out_idx += 1;
+
+                            self.apply_move(solver_move_t::Ui);
+                            self.record_move(out, out_idx, solver_move_t::Ui);
+                            out_idx += 1;
+                        }
+                        D_FACE => {
+                            // white on B(7), orange on D(7)
+                            // Bi, L, U
+                            self.apply_move(solver_move_t::Bi);
+                            self.record_move(out, out_idx, solver_move_t::Bi);
+                            out_idx += 1;
+
+                            self.apply_move(solver_move_t::L); 
+                            self.record_move(out, out_idx, solver_move_t::L);
+                            out_idx += 1;
+
+                            self.apply_move(solver_move_t::U);
+                            self.record_move(out, out_idx, solver_move_t::U);
+                            out_idx += 1;
+                        }
+                        R_FACE => {
+                            // white on B(3), orange on R(5)
+                            // R
+                            // white now on D(5), orange on R(7)
+
+                            self.apply_move(solver_move_t::R);
+                            self.record_move(out, out_idx, solver_move_t::R);
+                            out_idx += 1;
+
+                            out_idx += self.swc_solve_white_edge_on_down_layer(R_FACE, out, out_idx);
+                        }
+                        L_FACE => {
+                            // white on B(5), orange on L(3)
+                            // Li
+                            // white now on D(3), orange on L(7)
+
+                            self.apply_move(solver_move_t::Li);
+                            self.record_move(out, out_idx, solver_move_t::Li);
+                            out_idx += 1;
+                            
+                            out_idx += self.swc_solve_white_edge_on_down_layer(L_FACE, out, out_idx);
+                        }
+                        _ => {}
+                    }
+                }
+                _ => {}
+            }
+            
+        } else if sticker1_idx >= D_FACE_MIN_STICKER_IDX && sticker1_idx <= D_FACE_MAX_STICKER_IDX {
+            // sticker_1 is in the down (yellow) layer
+            out_idx += self.swc_solve_white_edge_on_down_layer(sticker2_face, out, out_idx);
+        }
+
+        out_idx
+
+    }
+
+    pub fn swc_solve_white_edge_on_down_layer(&mut self, sticker_face: usize, out: &mut [solver_move_t], mut out_idx: usize) -> usize {
+        // When this function is called, the white sticker is already on the D face. Needs to know which face the orange sticker is on
+        match sticker_face {
+            L_FACE => {
+                // todo: add the following moves to the out moves array:
+                // Di (counterclockwise to get the orange sticker of the edge piece to the orange (back) face)
+                // B2 (180 degree turn on face where orange sticker is to get white sticker up to the U face)
+
+                self.apply_move(solver_move_t::Di);
+                self.record_move(out, out_idx, solver_move_t::Di);
+                out_idx += 1;
+
+                self.apply_move(solver_move_t::B2);
+                self.record_move(out, out_idx, solver_move_t::B2);
+                out_idx += 1;
+            }
+            R_FACE => {
+                // todo: add the following moves to the out moves array:
+                // D
+                // B2
+
+                self.apply_move(solver_move_t::D);
+                self.record_move(out, out_idx, solver_move_t::D);
+                out_idx += 1;
+
+                self.apply_move(solver_move_t::B2);
+                self.record_move(out, out_idx, solver_move_t::B2);
+                out_idx += 1;
+            }
+            F_FACE => {
+                // todo: add the following moves to the out moves array:
+                // D2
+                // B2
+
+                self.apply_move(solver_move_t::D2);
+                self.record_move(out, out_idx, solver_move_t::D2);
+                out_idx += 1;
+
+                self.apply_move(solver_move_t::B2);
+                self.record_move(out, out_idx, solver_move_t::B2);
+                out_idx += 1;
+            }
+            B_FACE => {
+                // orange already on B, rotate B face 180 so that white sticker is on top
+                self.apply_move(solver_move_t::B2);
+                self.record_move(out, out_idx, solver_move_t::B2);
+                out_idx += 1;
+            }
+            _ => {}
+        }
+        out_idx
+    }
+
+    pub fn swc_solve_white_edge_on_up_layer(&mut self, sticker_face: usize, out: &mut [solver_move_t], mut out_idx: usize) -> usize {
+        // When this function is called, the white sticker is on the U face
+        match sticker_face {
+            L_FACE => {
+                self.apply_move(solver_move_t::U);
+                self.record_move(out, out_idx, solver_move_t::U);
+                out_idx += 1;
+            }
+            R_FACE => {
+                self.apply_move(solver_move_t::Ui);
+                self.record_move(out, out_idx, solver_move_t::Ui);
+                out_idx += 1;
+            }
+            F_FACE => {
+                self.apply_move(solver_move_t::U2);
+                self.record_move(out, out_idx, solver_move_t::U2);
+                out_idx += 1;
+            }
+            B_FACE => {
+                // Orange is already on B! all done!
+            }
+            _ => {}
+        }
+        out_idx
+    }
+    pub fn identify_face_from_sticker_idx(&self, sticker_idx: usize) -> usize {
+        if      sticker_idx >= U_FACE_MIN_STICKER_IDX && sticker_idx <= U_FACE_MAX_STICKER_IDX {return U_FACE}
+        else if sticker_idx >= D_FACE_MIN_STICKER_IDX && sticker_idx <= D_FACE_MAX_STICKER_IDX {return D_FACE}
+        else if sticker_idx >= L_FACE_MIN_STICKER_IDX && sticker_idx <= L_FACE_MAX_STICKER_IDX {return L_FACE}
+        else if sticker_idx >= R_FACE_MIN_STICKER_IDX && sticker_idx <= R_FACE_MAX_STICKER_IDX {return R_FACE}
+        else if sticker_idx >= F_FACE_MIN_STICKER_IDX && sticker_idx <= F_FACE_MAX_STICKER_IDX {return F_FACE}
+        else if sticker_idx >= B_FACE_MIN_STICKER_IDX && sticker_idx <= B_FACE_MAX_STICKER_IDX {return B_FACE}
+        else {panic!("sticker is invalid");}
+    }
+
+    pub fn find_edge(&self, color1: u8, color2: u8) -> Option<(usize, usize)> {
+        // Search through all edge pieces (in EDGES array) until match found
+
+        for &(idx1, idx2) in EDGES.iter() {
+            let sticker_color1 = self.stickers[idx1];
+            let sticker_color2 = self.stickers[idx2];
+
+            // Always return index of color1 as first val in return tuple 
+            // e.g. find_edge(WHITE, ORANGE) returns tuple where first val is idx of WHITE sticker for that edge piece
+            if sticker_color1 == color1 && sticker_color2 == color2 {
+                return Some((idx1, idx2));
+            } else if sticker_color1 == color2 && sticker_color2 == color1 {
+                return Some((idx2, idx1));
             }
         }
         None
@@ -262,7 +658,7 @@ impl Cube {
 
         let temp_l_0: u8 = self.stickers[L_FACE * 9 + 0];
         let temp_l_3: u8 = self.stickers[L_FACE * 9 + 3];
-        let temp_l_6: u8 = self.stickers[L_FACE * 9 + 0];
+        let temp_l_6: u8 = self.stickers[L_FACE * 9 + 6];
 
         self.stickers[L_FACE * 9 + 0] = self.stickers[U_FACE * 9 + 2];
         self.stickers[L_FACE * 9 + 3] = self.stickers[U_FACE * 9 + 1];
@@ -281,7 +677,13 @@ impl Cube {
         self.stickers[D_FACE * 9 + 8] = temp_l_6;
     }
 
-    
+    pub fn ui(&mut self) {self.u(); self.u(); self.u()}
+    pub fn di(&mut self) {self.d(); self.d(); self.d()}
+    pub fn li(&mut self) {self.l(); self.l(); self.l()}
+    pub fn ri(&mut self) {self.r(); self.r(); self.r()}
+    pub fn fi(&mut self) {self.f(); self.f(); self.f()}
+    pub fn bi(&mut self) {self.b(); self.b(); self.b()}
+
     pub fn rotate_face_cw(&mut self, face: usize) {
         // Face layout              Rotated face cw
         //  0  1  2                  6  3  0
@@ -372,68 +774,56 @@ impl Cube {
 
 
 fn solve_internal(_cube: &Cube, out: &mut [solver_move_t]) -> usize{
-    if out.len() < 4{
-        return 0;
-    }
+    // if out.len() < 4{
+    //     return 0;
+    // }
 
-    // out[0] = solver_move_t::Ui;
-    // out[1] = solver_move_t::U;
-    // out[2] = solver_move_t::U2;
-    // out[3] = solver_move_t::U2;
+    out[0]  = solver_move_t::U;
+    out[1]  = solver_move_t::D;
+    out[2]  = solver_move_t::L;
+    out[3]  = solver_move_t::R;
+    out[4]  = solver_move_t::F;
+    out[5]  = solver_move_t::B;
 
-    // out[4] = solver_move_t::Di;
-    // out[5] = solver_move_t::D;
-    // out[6] = solver_move_t::D2;
-    // out[7] = solver_move_t::D2;
+    out[6]  = solver_move_t::U2;
+    out[7]  = solver_move_t::D2;
+    out[8]  = solver_move_t::L2;
+    out[9]  = solver_move_t::R2;
+    out[10] = solver_move_t::F2;
+    out[11] = solver_move_t::B2;
 
-    // out[8] = solver_move_t::Li;
-    // out[9] = solver_move_t::L;
-    // out[10] = solver_move_t::L2;
-    // out[11] = solver_move_t::L2;
+    out[12] = solver_move_t::Ui;
+    out[13] = solver_move_t::Di;
+    out[14] = solver_move_t::Li;
+    out[15] = solver_move_t::Ri;
+    out[16] = solver_move_t::Fi;
+    out[17] = solver_move_t::Bi;
 
-    // out[12] = solver_move_t::U2;
-    // out[13] = solver_move_t::U2;
+    // ***** inverse starts here *****
 
-    // out[14] = solver_move_t::L2;
-    // out[15] = solver_move_t::L2;
+    out[18] = solver_move_t::B;
+    out[19] = solver_move_t::F;
+    out[20] = solver_move_t::R;
+    out[21] = solver_move_t::L;
+    out[22] = solver_move_t::D;
+    out[23] = solver_move_t::U;
 
-    // out[16] = solver_move_t::Ri;
-    // out[17] = solver_move_t::R;
-    // out[18] = solver_move_t::R2;
-    // out[19] = solver_move_t::R2;
+    out[24] = solver_move_t::B2;
+    out[25] = solver_move_t::F2;
+    out[26] = solver_move_t::R2;
+    out[27] = solver_move_t::L2;
+    out[28] = solver_move_t::D2;
+    out[29] = solver_move_t::U2;
 
-    out[0] = solver_move_t::U;
-    out[1] = solver_move_t::D;
-    out[2] = solver_move_t::L;
-    out[3] = solver_move_t::R;
+    out[30] = solver_move_t::Bi;
+    out[31] = solver_move_t::Fi;
+    out[32] = solver_move_t::Ri;
+    out[33] = solver_move_t::Li;
+    out[34] = solver_move_t::Di;
+    out[35] = solver_move_t::Ui;
 
-    out[4] = solver_move_t::U2;
-    out[5] = solver_move_t::D2;
-    out[6] = solver_move_t::L2;
-    out[7] = solver_move_t::R2;
-
-    out[8] = solver_move_t::Ui;
-    out[9] = solver_move_t::Di;
-    out[10] = solver_move_t::Li;
-    out[11] = solver_move_t::Ri;
-
-    // *** //
-    out[12] = solver_move_t::R;
-    out[13] = solver_move_t::L;
-    out[14] = solver_move_t::D;
-    out[15] = solver_move_t::U;
-
-    out[16] = solver_move_t::R2;
-    out[17] = solver_move_t::L2;
-    out[18] = solver_move_t::D2;
-    out[19] = solver_move_t::U2;
-
-    out[20] = solver_move_t::Ri;
-    out[21] = solver_move_t::Li;
-    out[22] = solver_move_t::Di;
-    out[23] = solver_move_t::Ui;
  
-    24
+    36
 }
 
 #[unsafe(no_mangle)] // Prevents function renaming (mangling) during compiling. C expects symbol named solve_cube

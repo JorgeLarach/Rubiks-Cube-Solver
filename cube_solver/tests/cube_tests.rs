@@ -21,8 +21,6 @@ mod tests {
         }
 
         assert!(cube.is_solved());
-
-
     }
 
     #[test]
@@ -192,18 +190,370 @@ mod tests {
         let cube = Cube::make_solved();
         
         let mut result = cube.find_edge(WHITE, ORANGE);
-        assert_eq!(result, Some((0,0)));
+        assert_eq!(result, Some((1, B_FACE * 9 + 1)));
         
         result = cube.find_edge(WHITE, GREEN);
-        assert_eq!(result, Some((1,0)));
+        assert_eq!(result, Some((3, L_FACE * 9 + 1)));
 
         result = cube.find_edge(WHITE, BLUE);
-        assert_eq!(result, Some((2, 0)));
+        assert_eq!(result, Some((5, R_FACE * 9 + 1)));
 
         result = cube.find_edge(WHITE,  RED);
-        assert_eq!(result, Some((3, 0)));
+        assert_eq!(result, Some((7, F_FACE * 9 + 1)));
 
     }
 
+    #[test]
+    fn test_white_orange_already_solved() {
+        let mut cube = Cube::make_solved();
+        let mut out: [solver_move_t; 100] = [solver_move_t::U; 100];
+        
+        let moves_count = cube.solve_white_cross(&mut out);
+        
+        // White-orange is already solved, so no moves should be needed
+        assert_eq!(moves_count, 0, "Solved cube should require 0 moves");
+        assert!(cube.is_solved());
+    }
+
+    #[test]
+
+    // WHITE ON U FACE
+    fn test_white_orange_on_ul() {
+        // Set up: white-orange edge is on U layer but at the wrong position (at L instead of B)
+        let mut cube = Cube::make_solved();
+        
+        // Rotate U layer so white-orange moves from U-B to U-R
+        cube.u();
+        
+        // Before solving
+        let result = cube.find_edge(WHITE, ORANGE);
+        assert!(result.is_some());
+        let (edge_idx, _) = result.unwrap();
+        assert_eq!(edge_idx, U_FACE * 9 + 5); // U-R edge sticker index
+        
+        // Solve it
+        let mut out: [solver_move_t; 100] = [solver_move_t::U; 100];
+        let moves_count = cube.solve_white_cross(&mut out);
+        
+        // Should have recorded moves
+        assert!(moves_count > 0, "Should require moves to fix misaligned white-orange");
+        
+        // After solving, white should be at U1, orange at B1
+        let result = cube.find_edge(WHITE, ORANGE);
+        assert!(result.is_some());
+        let (edge_idx, _) = result.unwrap();
+        assert_eq!(edge_idx, U_FACE * 9 + 1, "White-orange should be at U-B position");
+        
+        // Cube should be solved
+        assert!(cube.is_solved());
+    }
+
+    #[test]
+    fn test_white_orange_on_ur() {
+        let mut cube = Cube::make_solved();
+        
+        // Rotate U layer counter-clockwise so white-orange moves from U-B to U-L
+        cube.u();
+        cube.u();
+        cube.u();
+        
+        let result = cube.find_edge(WHITE, ORANGE);
+        assert!(result.is_some());
+        let (edge_idx, _) = result.unwrap();
+        assert_eq!(edge_idx, U_FACE * 9 + 3); // U-L edge sticker index
+        
+        let mut out: [solver_move_t; 100] = [solver_move_t::U; 100];
+        let moves_count = cube.solve_white_cross(&mut out);
+        
+        assert!(moves_count > 0);
+        assert!(cube.is_solved());
+    }
+
+    #[test]
+    fn test_white_orange_on_uf() {
+        let mut cube = Cube::make_solved();
+        
+        // Rotate U layer twice so white-orange moves from U-B to U-F
+        cube.u();
+        cube.u();
+        
+        let result = cube.find_edge(WHITE, ORANGE);
+        assert!(result.is_some());
+        let (edge_idx, _) = result.unwrap();
+        assert_eq!(edge_idx, U_FACE * 9 + 7); // U-F edge sticker index
+        
+        let mut out: [solver_move_t; 100] = [solver_move_t::U; 100];
+        let moves_count = cube.solve_white_cross(&mut out);
+        
+        assert!(moves_count > 0);
+        assert!(cube.is_solved());
+    }
+
+    // WHITE ON D FACE
+    #[test]
+    fn test_white_orange_on_db() {
+        let mut cube = Cube::make_solved();
+        
+        // Move white-orange down to D layer below B face
+        // B2 moves the white-orange from U-B to D-B position
+        cube.b();
+        cube.b();
+        
+        let result = cube.find_edge(WHITE, ORANGE);
+        assert!(result.is_some());
+        let (edge_idx, _) = result.unwrap();
+        assert_eq!(edge_idx, D_FACE * 9 + 7, "White-orange should be at D-B position");
+        
+        let mut out: [solver_move_t; 100] = [solver_move_t::U; 100];
+        let moves_count = cube.solve_white_cross(&mut out);
+        
+        assert!(moves_count > 0, "Should record moves from D layer");
+        assert!(cube.is_solved());
+    }
+
+    #[test]
+    fn test_white_orange_on_df() {
+        let mut cube = Cube::make_solved();
+        
+        // Move white-orange to D-F position
+        cube.b();
+        cube.b();
+        cube.d();
+        cube.d();
+        
+        let result = cube.find_edge(WHITE, ORANGE);
+        assert!(result.is_some());
+        
+        let mut out: [solver_move_t; 100] = [solver_move_t::U; 100];
+        let moves_count = cube.solve_white_cross(&mut out);
+        
+        assert!(moves_count > 0);
+        assert!(cube.is_solved());
+    }
+
+    #[test]
+    fn test_white_orange_on_dl() {
+        let mut cube = Cube::make_solved();
+        
+        // Move white-orange to D-L position
+        cube.b();
+        cube.b();
+        cube.d();
+        
+        let result = cube.find_edge(WHITE, ORANGE);
+        assert!(result.is_some());
+        
+        let mut out: [solver_move_t; 100] = [solver_move_t::U; 100];
+        let moves_count = cube.solve_white_cross(&mut out);
+        
+        assert!(moves_count > 0);
+        assert!(cube.is_solved());
+    }
+
+    #[test]
+    fn test_white_orange_on_dr() {
+        let mut cube = Cube::make_solved();
+        
+        // Move white-orange to D-R position
+        cube.b();
+        cube.b();
+        cube.di();
+        
+        let result = cube.find_edge(WHITE, ORANGE);
+        assert!(result.is_some());
+        
+        let mut out: [solver_move_t; 100] = [solver_move_t::U; 100];
+        let moves_count = cube.solve_white_cross(&mut out);
+        
+        assert!(moves_count > 0);
+        assert!(cube.is_solved());
+    }
+
+    // WHITE ON B FACE
+    #[test]
+    fn test_white_orange_on_bl() {
+        let mut cube = Cube::make_solved();
+        
+        // White on B face, Orange on L face (middle layer edge piece)
+        // Setup: rotate B face to bring white-orange pair to B-L
+        cube.b();
+        
+        let result = cube.find_edge(WHITE, ORANGE);
+        assert!(result.is_some());
+        
+        let mut out: [solver_move_t; 100] = [solver_move_t::U; 100];
+        let moves_count = cube.solve_white_cross(&mut out);
+        
+        assert!(moves_count > 0);
+        assert!(cube.is_solved());
+    }
+
+    #[test]
+    fn test_white_orange_on_br() {
+        let mut cube = Cube::make_solved();
+        
+        // White on B face, Orange on R face
+        cube.bi();
+        
+        let result = cube.find_edge(WHITE, ORANGE);
+        assert!(result.is_some());
+        
+        let mut out: [solver_move_t; 100] = [solver_move_t::U; 100];
+        let moves_count = cube.solve_white_cross(&mut out);
+        
+        assert!(moves_count > 0);
+        assert!(cube.is_solved());
+    }
+
+    // todo: bu
+    // todo: bd
+
+    // WHITE ON L FACE
+    #[test]
+    fn test_white_orange_on_lb() {
+        let mut cube = Cube::make_solved();
+        
+        // White on L face, Orange on B face
+        cube.b();
+        
+        let result = cube.find_edge(WHITE, ORANGE);
+        assert!(result.is_some());
+        
+        let mut out: [solver_move_t; 100] = [solver_move_t::U; 100];
+        let moves_count = cube.solve_white_cross(&mut out);
+        
+        assert!(moves_count > 0);
+        assert!(cube.is_solved());
+    }
+
+    #[test]
+    fn test_white_orange_on_lf() {
+        let mut cube = Cube::make_solved();
+        
+        // White on L face, Orange on F face (not adjacent, need pivoting)
+        cube.b();
+        cube.l();
+        cube.l();
+        
+        let result = cube.find_edge(WHITE, ORANGE);
+        assert!(result.is_some());
+
+        let (white_idx, orange_idx) = result.unwrap();
+        assert_eq!(white_idx, L_FACE * 9 + 5);
+        assert_eq!(orange_idx, F_FACE * 9 + 3);
+        
+        let mut out: [solver_move_t; 100] = [solver_move_t::U; 100];
+        let moves_count = cube.solve_white_cross(&mut out);
+        
+        assert!(moves_count > 0);
+        assert!(cube.is_solved());
+    }
+
+    // todo: lu
+    // todo: ld
+
+    // WHITE ON R FACE
+    #[test]
+    fn test_white_orange_on_rb() {
+        let mut cube = Cube::make_solved();
+        
+        // White on R face, Orange on B face
+        cube.bi();
+        
+        let result = cube.find_edge(WHITE, ORANGE);
+        assert!(result.is_some());
+        
+        let mut out: [solver_move_t; 100] = [solver_move_t::U; 100];
+        let moves_count = cube.solve_white_cross(&mut out);
+        
+        assert!(moves_count > 0);
+        assert!(cube.is_solved());
+    }
+
+    // todo: rf
+    // todo: ru
+    // todo: rd
+    #[test]
+    fn test_white_orange_moves_recorded_in_output() {
+        let mut cube = Cube::make_solved();
+        
+        // Move white-orange off its solved position
+        cube.u();
+        
+        let mut out: [solver_move_t; 100] = [solver_move_t::U; 100];
+        let moves_count = cube.solve_white_cross(&mut out);
+        
+        // Check that the output array contains the moves
+        assert!(moves_count > 0);
+        for i in 0..moves_count {
+            // Each recorded move should be valid (one of the 18 possible moves)
+            match out[i] {
+                solver_move_t::U | solver_move_t::Ui | solver_move_t::U2 |
+                solver_move_t::D | solver_move_t::Di | solver_move_t::D2 |
+                solver_move_t::L | solver_move_t::Li | solver_move_t::L2 |
+                solver_move_t::R | solver_move_t::Ri | solver_move_t::R2 |
+                solver_move_t::F | solver_move_t::Fi | solver_move_t::F2 |
+                solver_move_t::B | solver_move_t::Bi | solver_move_t::B2 => {
+                    // Valid move
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn test_solve_white_orange_multiple_times() {
+        // Test that the solver handles various random placements which modifies the white-orange edge
+        let placements = vec![
+            vec![solver_move_t::U],
+            vec![solver_move_t::U, solver_move_t::U],
+            vec![solver_move_t::U, solver_move_t::U, solver_move_t::U],
+            vec![solver_move_t::B],
+            vec![solver_move_t::B, solver_move_t::B],
+        ];
+        
+        for moves_to_apply in placements {
+            let mut cube = Cube::make_solved();
+            
+            // Apply scramble
+            for m in &moves_to_apply {
+                cube.apply_move(*m);
+            }
+            
+            // Solve white-orange
+            let mut out: [solver_move_t; 100] = [solver_move_t::U; 100];
+            let moves_count = cube.solve_white_cross(&mut out);
+            
+            // Verify it's solved
+            assert!(cube.is_solved(), "Cube should be solved after white-orange solver");
+            assert!(moves_count > 0 || moves_to_apply.is_empty(), "Should record moves or already be solved");
+        }
+    }
+
+    #[test]
+    fn test_white_orange_edge_position_after_solve() {
+        let mut cube = Cube::make_solved();
+        
+        // Scramble it
+        cube.u();
+        cube.l();
+        cube.d();
+        
+        // Solve it
+        let mut out: [solver_move_t; 100] = [solver_move_t::U; 100];
+        cube.solve_white_cross(&mut out);
+        
+        // Verify white-orange edge is at the correct position
+        let result = cube.find_edge(WHITE, ORANGE);
+        assert!(result.is_some());
+        let (white_idx, orange_idx) = result.unwrap();
+        
+        // White should be at U face position 1, Orange should be at B face position 1
+        assert_eq!(white_idx, U_FACE * 9 + 1, "White sticker should be at U1");
+        assert_eq!(orange_idx, B_FACE * 9 + 1, "Orange sticker should be at B1");
+        
+        // Double check the stickers themselves
+        assert_eq!(cube.stickers[U_FACE * 9 + 1], WHITE, "U1 should have white");
+        assert_eq!(cube.stickers[B_FACE * 9 + 1], ORANGE, "B1 should have orange");
+    }
 
 }

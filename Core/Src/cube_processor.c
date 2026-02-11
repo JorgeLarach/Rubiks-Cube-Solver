@@ -118,7 +118,7 @@ void execute_cube_move(stepper_move_t move) {
     stepper_move(move.motor, move.dir, move.degrees);
 
     // Small delay between moves
-    osDelay(300);
+    osDelay(200);
 }
 
 // Interrupt callback for control button presses
