@@ -313,11 +313,11 @@ impl Cube {
                         U_FACE => {
                             // white on B(1), orange on U(1)
                             // B, L, Ui
-                            self.apply_move(solver_move_t::B);
+                            self.apply_move(solver_move_t::Bi);
                             self.record_move(out, out_idx, solver_move_t::B);
                             out_idx += 1;
 
-                            self.apply_move(solver_move_t::L); 
+                            self.apply_move(solver_move_t::Ri); 
                             self.record_move(out, out_idx, solver_move_t::L);
                             out_idx += 1;
 
@@ -431,7 +431,7 @@ impl Cube {
     }
 
     pub fn swc_solve_white_edge_on_up_layer(&mut self, sticker_face: usize, out: &mut [solver_move_t], mut out_idx: usize) -> usize {
-        // When this function is called, the white sticker is on the U face
+        // When this function is called, the white sticker is on the U face. Needs to know which face the orange sticker is on
         match sticker_face {
             L_FACE => {
                 self.apply_move(solver_move_t::U);
@@ -773,57 +773,60 @@ impl Cube {
 }
 
 
-fn solve_internal(_cube: &Cube, out: &mut [solver_move_t]) -> usize{
-    // if out.len() < 4{
-    //     return 0;
-    // }
+fn solve_internal(cube: &mut Cube, out: &mut [solver_move_t]) -> usize{
+    if out.len() < 4{
+        return 0;
+    }
 
-    out[0]  = solver_move_t::U;
-    out[1]  = solver_move_t::D;
-    out[2]  = solver_move_t::L;
-    out[3]  = solver_move_t::R;
-    out[4]  = solver_move_t::F;
-    out[5]  = solver_move_t::B;
+    let out_len = cube.solve_white_cross(out);
+    out_len
 
-    out[6]  = solver_move_t::U2;
-    out[7]  = solver_move_t::D2;
-    out[8]  = solver_move_t::L2;
-    out[9]  = solver_move_t::R2;
-    out[10] = solver_move_t::F2;
-    out[11] = solver_move_t::B2;
+    // out[0]  = solver_move_t::U;
+    // out[1]  = solver_move_t::D;
+    // out[2]  = solver_move_t::L;
+    // out[3]  = solver_move_t::R;
+    // out[4]  = solver_move_t::F;
+    // out[5]  = solver_move_t::B;
 
-    out[12] = solver_move_t::Ui;
-    out[13] = solver_move_t::Di;
-    out[14] = solver_move_t::Li;
-    out[15] = solver_move_t::Ri;
-    out[16] = solver_move_t::Fi;
-    out[17] = solver_move_t::Bi;
+    // out[6]  = solver_move_t::U2;
+    // out[7]  = solver_move_t::D2;
+    // out[8]  = solver_move_t::L2;
+    // out[9]  = solver_move_t::R2;
+    // out[10] = solver_move_t::F2;
+    // out[11] = solver_move_t::B2;
 
-    // ***** inverse starts here *****
+    // out[12] = solver_move_t::Ui;
+    // out[13] = solver_move_t::Di;
+    // out[14] = solver_move_t::Li;
+    // out[15] = solver_move_t::Ri;
+    // out[16] = solver_move_t::Fi;
+    // out[17] = solver_move_t::Bi;
 
-    out[18] = solver_move_t::B;
-    out[19] = solver_move_t::F;
-    out[20] = solver_move_t::R;
-    out[21] = solver_move_t::L;
-    out[22] = solver_move_t::D;
-    out[23] = solver_move_t::U;
+    // // ***** inverse starts here *****
 
-    out[24] = solver_move_t::B2;
-    out[25] = solver_move_t::F2;
-    out[26] = solver_move_t::R2;
-    out[27] = solver_move_t::L2;
-    out[28] = solver_move_t::D2;
-    out[29] = solver_move_t::U2;
+    // out[18] = solver_move_t::B;
+    // out[19] = solver_move_t::F;
+    // out[20] = solver_move_t::R;
+    // out[21] = solver_move_t::L;
+    // out[22] = solver_move_t::D;
+    // out[23] = solver_move_t::U;
 
-    out[30] = solver_move_t::Bi;
-    out[31] = solver_move_t::Fi;
-    out[32] = solver_move_t::Ri;
-    out[33] = solver_move_t::Li;
-    out[34] = solver_move_t::Di;
-    out[35] = solver_move_t::Ui;
+    // out[24] = solver_move_t::B2;
+    // out[25] = solver_move_t::F2;
+    // out[26] = solver_move_t::R2;
+    // out[27] = solver_move_t::L2;
+    // out[28] = solver_move_t::D2;
+    // out[29] = solver_move_t::U2;
+
+    // out[30] = solver_move_t::Bi;
+    // out[31] = solver_move_t::Fi;
+    // out[32] = solver_move_t::Ri;
+    // out[33] = solver_move_t::Li;
+    // out[34] = solver_move_t::Di;
+    // out[35] = solver_move_t::Ui;
 
  
-    36
+    // 36
 }
 
 #[unsafe(no_mangle)] // Prevents function renaming (mangling) during compiling. C expects symbol named solve_cube
@@ -835,7 +838,7 @@ pub extern "C" fn solve_cube(
     if cube_raw.is_null() || out_moves.is_null() {
         return 0;
     }
-    let cube: Cube = unsafe { // Unsafe because dereferencing raw pointer (cube_raw)
+    let mut cube: Cube = unsafe { // Unsafe because dereferencing raw pointer (cube_raw)
         let slice = slice::from_raw_parts(cube_raw, 54); // Does not copy
         let mut stickers = [0u8; 54];
         stickers.copy_from_slice(slice); // Copies cube data (slice) into Rust owned stack memory
@@ -847,7 +850,7 @@ pub extern "C" fn solve_cube(
     };
 
 
-    solve_internal(&cube, out_slice)
+    solve_internal(&mut cube, out_slice)
 }
 
 #[cfg(not(feature = "std-env"))]

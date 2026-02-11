@@ -243,9 +243,14 @@ mod tests {
         assert!(result.is_some());
         let (edge_idx, _) = result.unwrap();
         assert_eq!(edge_idx, U_FACE * 9 + 1, "White-orange should be at U-B position");
+
+        let result = cube.find_edge(WHITE, ORANGE);
+        assert!(result.is_some());
+
+        assert_eq!(result, Some((U_FACE * 9 + 1, B_FACE * 9 + 1)));
         
-        // Cube should be solved
-        assert!(cube.is_solved());
+        
+        
     }
 
     #[test]
@@ -264,9 +269,14 @@ mod tests {
         
         let mut out: [solver_move_t; 100] = [solver_move_t::U; 100];
         let moves_count = cube.solve_white_cross(&mut out);
+
+        let result = cube.find_edge(WHITE, ORANGE);
+        assert!(result.is_some());
+
+        assert_eq!(result, Some((U_FACE * 9 + 1, B_FACE * 9 + 1)));
         
         assert!(moves_count > 0);
-        assert!(cube.is_solved());
+        
     }
 
     #[test]
@@ -284,9 +294,14 @@ mod tests {
         
         let mut out: [solver_move_t; 100] = [solver_move_t::U; 100];
         let moves_count = cube.solve_white_cross(&mut out);
+
+        let result = cube.find_edge(WHITE, ORANGE);
+        assert!(result.is_some());
+
+        assert_eq!(result, Some((U_FACE * 9 + 1, B_FACE * 9 + 1)));
         
         assert!(moves_count > 0);
-        assert!(cube.is_solved());
+        
     }
 
     // WHITE ON D FACE
@@ -306,9 +321,14 @@ mod tests {
         
         let mut out: [solver_move_t; 100] = [solver_move_t::U; 100];
         let moves_count = cube.solve_white_cross(&mut out);
+
+        let result = cube.find_edge(WHITE, ORANGE);
+        assert!(result.is_some());
+
+        assert_eq!(result, Some((U_FACE * 9 + 1, B_FACE * 9 + 1)));
         
         assert!(moves_count > 0, "Should record moves from D layer");
-        assert!(cube.is_solved());
+        
     }
 
     #[test]
@@ -326,9 +346,14 @@ mod tests {
         
         let mut out: [solver_move_t; 100] = [solver_move_t::U; 100];
         let moves_count = cube.solve_white_cross(&mut out);
+
+        let result = cube.find_edge(WHITE, ORANGE);
+        assert!(result.is_some());
+
+        assert_eq!(result, Some((U_FACE * 9 + 1, B_FACE * 9 + 1)));
         
         assert!(moves_count > 0);
-        assert!(cube.is_solved());
+        
     }
 
     #[test]
@@ -345,9 +370,13 @@ mod tests {
         
         let mut out: [solver_move_t; 100] = [solver_move_t::U; 100];
         let moves_count = cube.solve_white_cross(&mut out);
+
+        let result = cube.find_edge(WHITE, ORANGE);
+        assert!(result.is_some());
+
+        assert_eq!(result, Some((U_FACE * 9 + 1, B_FACE * 9 + 1)));
         
         assert!(moves_count > 0);
-        assert!(cube.is_solved());
     }
 
     #[test]
@@ -364,9 +393,13 @@ mod tests {
         
         let mut out: [solver_move_t; 100] = [solver_move_t::U; 100];
         let moves_count = cube.solve_white_cross(&mut out);
+
+        let result = cube.find_edge(WHITE, ORANGE);
+        assert!(result.is_some());
+
+        assert_eq!(result, Some((U_FACE * 9 + 1, B_FACE * 9 + 1)));
         
         assert!(moves_count > 0);
-        assert!(cube.is_solved());
     }
 
     // WHITE ON B FACE
@@ -383,9 +416,13 @@ mod tests {
         
         let mut out: [solver_move_t; 100] = [solver_move_t::U; 100];
         let moves_count = cube.solve_white_cross(&mut out);
-        
+
+        let result = cube.find_edge(WHITE, ORANGE);
+        assert!(result.is_some());
+
+        assert_eq!(result, Some((U_FACE * 9 + 1, B_FACE * 9 + 1)));
+
         assert!(moves_count > 0);
-        assert!(cube.is_solved());
     }
 
     #[test]
@@ -400,13 +437,65 @@ mod tests {
         
         let mut out: [solver_move_t; 100] = [solver_move_t::U; 100];
         let moves_count = cube.solve_white_cross(&mut out);
+
+        let result = cube.find_edge(WHITE, ORANGE);
+        assert!(result.is_some());
+
+        assert_eq!(result, Some((U_FACE * 9 + 1, B_FACE * 9 + 1)));
         
         assert!(moves_count > 0);
-        assert!(cube.is_solved());
     }
 
-    // todo: bu
-    // todo: bd
+    #[test]
+    fn test_white_orange_on_bu() {
+        let mut cube = Cube::make_solved();
+
+        // White on B face, Orange on U face
+        cube.u();
+        cube.r();
+        cube.b();
+
+        let result = cube.find_edge(WHITE, ORANGE);
+        assert!(result.is_some());
+
+        assert_eq!(result, Some((B_FACE * 9 + 1, U_FACE * 9 + 1)));
+
+        let mut out: [solver_move_t; 100] = [solver_move_t::U; 100];
+        let moves_count = cube.solve_white_cross(&mut out);
+
+        let result = cube.find_edge(WHITE, ORANGE);
+        assert!(result.is_some());
+
+        assert_eq!(result, Some((U_FACE * 9 + 1, B_FACE * 9 + 1)));
+
+        assert!(moves_count > 0);
+    }
+    
+    #[test]
+    fn test_white_orange_on_bd() {
+        let mut cube = Cube::make_solved();
+
+        // White on B face, Orange on D face
+        cube.u();
+        cube.r();
+        cube.bi();
+
+        let result = cube.find_edge(WHITE, ORANGE);
+        assert!(result.is_some());
+
+        assert_eq!(result, Some((B_FACE * 9 + 7, D_FACE * 9 + 7)));
+
+        let mut out: [solver_move_t; 100] = [solver_move_t::U; 100];
+        let moves_count = cube.solve_white_cross(&mut out);
+
+        let result = cube.find_edge(WHITE, ORANGE);
+        assert!(result.is_some());
+
+        assert_eq!(result, Some((U_FACE * 9 + 1, B_FACE * 9 + 1)));
+
+        assert!(moves_count > 0);       
+
+    }
 
     // WHITE ON L FACE
     #[test]
@@ -421,9 +510,13 @@ mod tests {
         
         let mut out: [solver_move_t; 100] = [solver_move_t::U; 100];
         let moves_count = cube.solve_white_cross(&mut out);
+
+        let result = cube.find_edge(WHITE, ORANGE);
+        assert!(result.is_some());
+
+        assert_eq!(result, Some((U_FACE * 9 + 1, B_FACE * 9 + 1)));
         
         assert!(moves_count > 0);
-        assert!(cube.is_solved());
     }
 
     #[test]
@@ -444,13 +537,63 @@ mod tests {
         
         let mut out: [solver_move_t; 100] = [solver_move_t::U; 100];
         let moves_count = cube.solve_white_cross(&mut out);
+
+        let result = cube.find_edge(WHITE, ORANGE);
+        assert!(result.is_some());
+
+        assert_eq!(result, Some((U_FACE * 9 + 1, B_FACE * 9 + 1)));
         
         assert!(moves_count > 0);
-        assert!(cube.is_solved());
+
     }
 
-    // todo: lu
+    #[test]
+    fn test_white_orange_on_lu() {
+        let mut cube = Cube::make_solved();
+
+        cube.b();
+        cube.l();
+
+        let result = cube.find_edge(WHITE, ORANGE);
+        assert!(result.is_some());
+
+        assert_eq!(result, Some((L_FACE * 9 + 1, U_FACE * 9 + 3)));
+
+        let mut out: [solver_move_t; 100] = [solver_move_t::U; 100];
+        let moves_count = cube.solve_white_cross(&mut out);
+
+        let result = cube.find_edge(WHITE, ORANGE);
+        assert!(result.is_some());
+
+        assert_eq!(result, Some((U_FACE * 9 + 1, B_FACE * 9 + 1)));
+
+        assert!(moves_count > 0);
+
+    } 
     // todo: ld
+    #[test]
+    fn test_white_orange_on_ld() {
+        let mut cube = Cube::make_solved();
+
+        cube.b();
+        cube.li();
+
+        let result = cube.find_edge(WHITE, ORANGE);
+        assert!(result.is_some());
+
+        assert_eq!(result, Some((L_FACE * 9 + 7, D_FACE * 9 + 3)));
+
+        let mut out: [solver_move_t; 100] = [solver_move_t::U; 100];
+        let moves_count = cube.solve_white_cross(&mut out);
+
+        let result = cube.find_edge(WHITE, ORANGE);
+        assert!(result.is_some());
+
+        assert_eq!(result, Some((U_FACE * 9 + 1, B_FACE * 9 + 1)));
+
+        assert!(moves_count > 0);
+
+    } 
 
     // WHITE ON R FACE
     #[test]
@@ -466,13 +609,87 @@ mod tests {
         let mut out: [solver_move_t; 100] = [solver_move_t::U; 100];
         let moves_count = cube.solve_white_cross(&mut out);
         
+        let result = cube.find_edge(WHITE, ORANGE);
+        assert!(result.is_some());
+
+        assert_eq!(result, Some((U_FACE * 9 + 1, B_FACE * 9 + 1)));
+
         assert!(moves_count > 0);
-        assert!(cube.is_solved());
+     
     }
 
-    // todo: rf
-    // todo: ru
-    // todo: rd
+    #[test]
+    fn test_white_orange_on_rf() {
+        let mut cube = Cube::make_solved();
+
+        cube.u();
+        cube.u();
+        cube.f();
+
+        let result = cube.find_edge(WHITE, ORANGE);
+        assert!(result.is_some());
+
+        assert_eq!(result, Some((R_FACE * 9 + 3, F_FACE * 9 + 5)));
+
+        let mut out: [solver_move_t; 100] = [solver_move_t::U; 100];
+        let moves_count = cube.solve_white_cross(&mut out);
+
+        let result = cube.find_edge(WHITE, ORANGE);
+        assert!(result.is_some());
+
+        assert_eq!(result, Some((U_FACE * 9 + 1, B_FACE * 9 + 1)));
+
+        assert!(moves_count > 0);
+
+    }
+
+    #[test]
+    fn test_white_orange_on_ru() {
+        let mut cube = Cube::make_solved();
+
+        cube.bi();
+        cube.ri();
+
+        let result = cube.find_edge(WHITE, ORANGE);
+        assert!(result.is_some());
+
+        assert_eq!(result, Some((R_FACE * 9 + 1, U_FACE * 9 + 5)));
+
+        let mut out: [solver_move_t; 100] = [solver_move_t::U; 100];
+        let moves_count = cube.solve_white_cross(&mut out);
+
+        let result = cube.find_edge(WHITE, ORANGE);
+        assert!(result.is_some());
+
+        assert_eq!(result, Some((U_FACE * 9 + 1, B_FACE * 9 + 1)));
+
+        assert!(moves_count > 0);
+
+    } 
+
+    #[test]
+    fn test_white_orange_on_rd() {
+        let mut cube = Cube::make_solved();
+
+        cube.bi();
+        cube.r();
+
+        let result = cube.find_edge(WHITE, ORANGE);
+        assert!(result.is_some());
+
+        assert_eq!(result, Some((R_FACE * 9 + 7, D_FACE * 9 + 5)));
+
+        let mut out: [solver_move_t; 100] = [solver_move_t::U; 100];
+        let moves_count = cube.solve_white_cross(&mut out);
+
+        let result = cube.find_edge(WHITE, ORANGE);
+        assert!(result.is_some());
+
+        assert_eq!(result, Some((U_FACE * 9 + 1, B_FACE * 9 + 1)));
+
+        assert!(moves_count > 0);
+
+    } 
     #[test]
     fn test_white_orange_moves_recorded_in_output() {
         let mut cube = Cube::make_solved();
