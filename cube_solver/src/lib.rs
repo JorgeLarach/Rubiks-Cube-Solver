@@ -106,7 +106,7 @@ impl Cube {
         // 0..=8 -> U face
         // 9..17 -> D face
         // 18..26 -> L face
-        // 27..=35 -> R face
+        // 27..=35 -> R face 
         // 36..=44 -> F face
         // 45..=53 -> B face
 
@@ -115,25 +115,25 @@ impl Cube {
         // Middle Layers (from 18 to 53 inc., L, R, F, B)
         // Up Layer (from 0 to 8 inc., layer is correct, wrong position/orientation)
 
-        let (sticker1_idx, sticker2_idx) = match self.find_edge(WHITE, ORANGE){
+        let (white_idx, orange_idx) = match self.find_edge(WHITE, ORANGE){
             Some(val) => val,
             None => panic!("cube is invalid (white-orange edge does not exist)"),
         };
+ 
+        let white_face = self.identify_face_from_sticker_idx(white_idx);
+        let orange_face = self.identify_face_from_sticker_idx(orange_idx);
 
-        let sticker1_face = self.identify_face_from_sticker_idx(sticker1_idx);
-        let sticker2_face = self.identify_face_from_sticker_idx(sticker2_idx);
-
-        if sticker1_idx >= U_FACE_MIN_STICKER_IDX && sticker1_idx <= U_FACE_MAX_STICKER_IDX {
+        if white_idx >= U_FACE_MIN_STICKER_IDX && white_idx <= U_FACE_MAX_STICKER_IDX {
             // sticker_1 is in the up (white) layer
-            out_idx += self.swc_solve_white_edge_on_up_layer(sticker2_face, out, out_idx);
-        } else if sticker1_idx >= L_FACE_MIN_STICKER_IDX && sticker1_idx <= B_FACE_MAX_STICKER_IDX {
+            out_idx += self.swc_solve_white_edge_on_up_layer(orange_face, out, out_idx);
+        } else if white_idx >= L_FACE_MIN_STICKER_IDX && white_idx <= B_FACE_MAX_STICKER_IDX {
             // sticker_1 is in one of the middle layer faces(L, R, F, B)
             // case 1: sticker_2 is also on a middle layer face
             // case 2: sticker_2 is on up or down face
             
-            match sticker1_face {
+            match white_face {
                 L_FACE => {
-                    match sticker2_face {
+                    match orange_face {
                         // Want to get white on D
                         U_FACE => {
                             // white on L(1), orange on U(3)
@@ -195,7 +195,7 @@ impl Cube {
                     }
                 }
                 R_FACE => {
-                    match sticker2_face {
+                    match orange_face {
                         // Want to get white on D
                         U_FACE => {
                             // R to get orange on B face
@@ -250,7 +250,7 @@ impl Cube {
                     }
                 }
                 F_FACE => {
-                    match sticker2_face {
+                    match orange_face {
                         // Want to get white on D
                         U_FACE => {
                             // white on F(1), orange on U(7)
@@ -308,17 +308,17 @@ impl Cube {
                     }
                 }
                 B_FACE => {
-                    match sticker2_face {
+                    match orange_face {
                         // Want to get white on D
                         U_FACE => {
                             // white on B(1), orange on U(1)
                             // B, L, Ui
                             self.apply_move(solver_move_t::Bi);
-                            self.record_move(out, out_idx, solver_move_t::B);
+                            self.record_move(out, out_idx, solver_move_t::Bi);
                             out_idx += 1;
 
                             self.apply_move(solver_move_t::Ri); 
-                            self.record_move(out, out_idx, solver_move_t::L);
+                            self.record_move(out, out_idx, solver_move_t::Ri);
                             out_idx += 1;
 
                             self.apply_move(solver_move_t::Ui);
@@ -368,16 +368,21 @@ impl Cube {
                 _ => {}
             }
             
-        } else if sticker1_idx >= D_FACE_MIN_STICKER_IDX && sticker1_idx <= D_FACE_MAX_STICKER_IDX {
+            } else if white_idx >= D_FACE_MIN_STICKER_IDX && white_idx <= D_FACE_MAX_STICKER_IDX {
             // sticker_1 is in the down (yellow) layer
-            out_idx += self.swc_solve_white_edge_on_down_layer(sticker2_face, out, out_idx);
+            out_idx += self.swc_solve_white_edge_on_down_layer(orange_face, out, out_idx);
         }
 
         out_idx
 
     }
 
-    pub fn swc_solve_white_edge_on_down_layer(&mut self, sticker_face: usize, out: &mut [solver_move_t], mut out_idx: usize) -> usize {
+    pub fn swc_solve_white_edge_on_down_layer(
+        &mut self, 
+        sticker_face: usize, 
+        out: &mut [solver_move_t], 
+        mut out_idx: usize
+    ) -> usize {
         // When this function is called, the white sticker is already on the D face. Needs to know which face the orange sticker is on
         match sticker_face {
             L_FACE => {
@@ -430,7 +435,12 @@ impl Cube {
         out_idx
     }
 
-    pub fn swc_solve_white_edge_on_up_layer(&mut self, sticker_face: usize, out: &mut [solver_move_t], mut out_idx: usize) -> usize {
+    pub fn swc_solve_white_edge_on_up_layer(
+        &mut self, 
+        sticker_face: usize, 
+        out: &mut [solver_move_t], 
+        mut out_idx: usize
+    ) -> usize {
         // When this function is called, the white sticker is on the U face. Needs to know which face the orange sticker is on
         match sticker_face {
             L_FACE => {
@@ -455,6 +465,7 @@ impl Cube {
         }
         out_idx
     }
+    
     pub fn identify_face_from_sticker_idx(&self, sticker_idx: usize) -> usize {
         if      sticker_idx >= U_FACE_MIN_STICKER_IDX && sticker_idx <= U_FACE_MAX_STICKER_IDX {return U_FACE}
         else if sticker_idx >= D_FACE_MIN_STICKER_IDX && sticker_idx <= D_FACE_MAX_STICKER_IDX {return D_FACE}
