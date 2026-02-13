@@ -1,3 +1,6 @@
+
+// This program hasn't seen the last of me yet
+
 #![cfg_attr(not(feature = "std-env"), no_std)]
 
 use core::slice;
@@ -18,6 +21,19 @@ pub const GREEN:  u8 = 2;
 pub const BLUE:   u8 = 3;
 pub const RED:    u8 = 4;
 pub const ORANGE: u8 = 5;
+
+pub const U_FACE_MIN: usize = 0;
+pub const U_FACE_MAX: usize = 8;
+pub const D_FACE_MIN: usize = 9;
+pub const D_FACE_MAX: usize = 17;
+pub const L_FACE_MIN: usize = 18;
+pub const L_FACE_MAX: usize = 26;
+pub const R_FACE_MIN: usize = 27;
+pub const R_FACE_MAX: usize = 35;
+pub const F_FACE_MIN: usize = 36;
+pub const F_FACE_MAX: usize = 44;
+pub const B_FACE_MIN: usize = 45;
+pub const B_FACE_MAX: usize = 53;
 
 pub const EDGES: [(usize, usize); 12] = [
     // There are 24 edge stickers in the cube (four on each face). 
@@ -79,6 +95,11 @@ pub struct Cube {
 
 impl Cube {
 
+    pub fn solve_white_cross(&mut self, out: &mut [solver_move_t]) -> usize {
+        // About 1000 lines later, I decided to leave this function empty. Maybe I should learn to solve a cube first.
+        0
+    }
+
     #[inline]
     fn apply_and_record(&mut self, out: &mut [solver_move_t], out_idx: &mut usize, m: solver_move_t) {
         self.apply_move(m);
@@ -91,264 +112,6 @@ impl Cube {
             out[out_idx] = m
         }
     }
-    pub fn solve_white_cross(&mut self, out: &mut [solver_move_t]) -> usize {
-        
-        let mut out_idx = 0;
-        
-        // 1. White-Orange (Up-Back) edge
-        // 2. White-Green  (Up-Left) edge
-        // 3. White-Blue   (Up-Right) edge
-        // 4. White-Red    (Up-Forward) edge
-
-        out_idx += self.swc_white_orange(out, out_idx); 
-        // self.swc_white_green(_out);
-        // self.swc_white_blue(_out);
-        // self.swc_white_red(_out);
-
-        out_idx
-    }
-
-    pub fn swc_white_orange(
-        &mut self, 
-        out: &mut [solver_move_t], 
-        mut out_idx: usize
-    ) -> usize {
-        let (white_idx, orange_idx) = match self.find_edge(WHITE, ORANGE){
-            Some(val) => val,
-            None => panic!("cube is invalid (white-orange edge does not exist)"),
-        };
-
-        let white_face  = identify_face_from_sticker_idx(white_idx);
-        let orange_face = identify_face_from_sticker_idx(orange_idx);
-
-        let (u_min, u_max) = face_sticker_range(U_FACE);
-        let (l_min, _)            = face_sticker_range(L_FACE);
-        let (_, b_max)            = face_sticker_range(B_FACE);
-        let (d_min, d_max) = face_sticker_range(D_FACE);
-
-        if white_idx >= u_min && white_idx <= u_max {
-            out_idx += self.swc_white_orange_on_u_face(orange_face, out, out_idx);
-        } else if white_idx >= l_min && white_idx <= b_max {
-            match white_face {
-                L_FACE => out_idx += self.swc_white_orange_on_l_face(orange_face, out, out_idx),
-                R_FACE => out_idx += self.swc_white_orange_on_r_face(orange_face, out, out_idx),
-                F_FACE => out_idx += self.swc_white_orange_on_f_face(orange_face, out, out_idx),
-                B_FACE => out_idx += self.swc_white_orange_on_b_face(orange_face, out, out_idx),
-                _ => {}
-            }
-        } else if white_idx >= d_min && white_idx <= d_max {
-            out_idx += self.swc_white_orange_on_d_face(orange_face, out, out_idx);
-        }
-
-        out_idx
-    }
-
-    fn swc_white_orange_on_l_face(
-        &mut self, 
-        orange_face: usize, 
-        out: &mut [solver_move_t], 
-        mut out_idx: usize
-    ) -> usize {
-        match orange_face {
-            U_FACE => {
-                self.apply_and_record(out, &mut out_idx, solver_move_t::Li);
-                self.apply_and_record(out, &mut out_idx, solver_move_t::Bi);
-            }
-            D_FACE => {
-                self.apply_and_record(out, &mut out_idx, solver_move_t::L);
-                self.apply_and_record(out, &mut out_idx, solver_move_t::Bi);
-            }
-            B_FACE => {
-                self.apply_and_record(out, &mut out_idx, solver_move_t::B);
-                out_idx += self.swc_white_orange_on_d_face(B_FACE, out, out_idx);
-            }
-            F_FACE => {
-                self.apply_and_record(out, &mut out_idx, solver_move_t::L2);
-                self.apply_and_record(out, &mut out_idx, solver_move_t::Bi);
-            }
-            _ => {}
-        }
-        out_idx
-    }
-
-    fn swc_white_orange_on_r_face(
-        &mut self, 
-        orange_face: usize, 
-        out: &mut [solver_move_t], 
-        mut out_idx: usize
-    ) -> usize {
-        match orange_face {
-            U_FACE => {
-                self.apply_and_record(out, &mut out_idx, solver_move_t::R);
-                self.apply_and_record(out, &mut out_idx, solver_move_t::B);
-            }
-            D_FACE => {
-                self.apply_and_record(out, &mut out_idx, solver_move_t::Ri);
-                self.apply_and_record(out, &mut out_idx, solver_move_t::B);
-            }
-            F_FACE => {
-                self.apply_and_record(out, &mut out_idx, solver_move_t::F);
-                out_idx += self.swc_white_orange_on_d_face(F_FACE, out, out_idx);
-            }
-            B_FACE => {
-                self.apply_and_record(out, &mut out_idx, solver_move_t::Bi);
-                out_idx += self.swc_white_orange_on_d_face(B_FACE, out, out_idx);
-            }
-            _ => {}
-        }
-        out_idx
-    }
-
-    fn swc_white_orange_on_f_face(
-        &mut self, 
-        orange_face: usize, 
-        out: &mut [solver_move_t], 
-        mut out_idx: usize
-    ) -> usize {
-        match orange_face {
-            U_FACE => {
-                self.apply_and_record(out, &mut out_idx, solver_move_t::F);
-                self.apply_and_record(out, &mut out_idx, solver_move_t::R);
-                self.apply_and_record(out, &mut out_idx, solver_move_t::Ui);
-            }
-            D_FACE => {
-                self.apply_and_record(out, &mut out_idx, solver_move_t::Fi);
-                self.apply_and_record(out, &mut out_idx, solver_move_t::R);
-                self.apply_and_record(out, &mut out_idx, solver_move_t::Ui);
-            }
-            L_FACE => {
-                self.apply_and_record(out, &mut out_idx, solver_move_t::L);
-                out_idx += self.swc_white_orange_on_d_face(L_FACE, out, out_idx);
-            }
-            R_FACE => {
-                self.apply_and_record(out, &mut out_idx, solver_move_t::Ri);
-                out_idx += self.swc_white_orange_on_d_face(R_FACE, out, out_idx);
-            }
-            _ => {}
-        }
-        out_idx
-    }
-
-    fn swc_white_orange_on_b_face(
-        &mut self, 
-        orange_face: usize, 
-        out: &mut [solver_move_t], 
-        mut out_idx: usize
-    ) -> usize {
-        match orange_face {
-            U_FACE => {
-                self.apply_and_record(out, &mut out_idx, solver_move_t::Bi);
-                self.apply_and_record(out, &mut out_idx, solver_move_t::Ri);
-                self.apply_and_record(out, &mut out_idx, solver_move_t::Ui);
-            }
-            D_FACE => {
-                self.apply_and_record(out, &mut out_idx, solver_move_t::Bi);
-                self.apply_and_record(out, &mut out_idx, solver_move_t::L);
-                self.apply_and_record(out, &mut out_idx, solver_move_t::U);
-            }
-            R_FACE => {
-                self.apply_and_record(out, &mut out_idx, solver_move_t::R);
-                out_idx += self.swc_white_orange_on_d_face(R_FACE, out, out_idx);
-            }
-            L_FACE => {
-                self.apply_and_record(out, &mut out_idx, solver_move_t::Li);
-                out_idx += self.swc_white_orange_on_d_face(L_FACE, out, out_idx);
-            }
-            _ => {}
-        }
-        out_idx
-    }
-
-    fn swc_white_orange_on_d_face(
-        &mut self, 
-        orange_face: usize, 
-        out: &mut [solver_move_t], 
-        mut out_idx: usize
-    ) -> usize {
-        // When this function is called, the white sticker is already on the D face. Needs to know which face the orange sticker is on
-        match orange_face {
-            L_FACE => {
-                // todo: add the following moves to the out moves array:
-                // Di (counterclockwise to get the orange sticker of the edge piece to the orange (back) face)
-                // B2 (180 degree turn on face where orange sticker is to get white sticker up to the U face)
-
-                self.apply_move(solver_move_t::Di);
-                self.record_move(out, out_idx, solver_move_t::Di);
-                out_idx += 1;
-
-                self.apply_move(solver_move_t::B2);
-                self.record_move(out, out_idx, solver_move_t::B2);
-                out_idx += 1;
-            }
-            R_FACE => {
-                // todo: add the following moves to the out moves array:
-                // D
-                // B2
-
-                self.apply_move(solver_move_t::D);
-                self.record_move(out, out_idx, solver_move_t::D);
-                out_idx += 1;
-
-                self.apply_move(solver_move_t::B2);
-                self.record_move(out, out_idx, solver_move_t::B2);
-                out_idx += 1;
-            }
-            F_FACE => {
-                // todo: add the following moves to the out moves array:
-                // D2
-                // B2
-
-                self.apply_move(solver_move_t::D2);
-                self.record_move(out, out_idx, solver_move_t::D2);
-                out_idx += 1;
-
-                self.apply_move(solver_move_t::B2);
-                self.record_move(out, out_idx, solver_move_t::B2);
-                out_idx += 1;
-            }
-            B_FACE => {
-                // orange already on B, rotate B face 180 so that white sticker is on top
-                self.apply_move(solver_move_t::B2);
-                self.record_move(out, out_idx, solver_move_t::B2);
-                out_idx += 1;
-            }
-            _ => {}
-        }
-        out_idx
-    }
-
-    fn swc_white_orange_on_u_face(
-        &mut self, 
-        orange_face: usize, 
-        out: &mut [solver_move_t], 
-        mut out_idx: usize
-    ) -> usize {
-        // When this function is called, the white sticker is on the U face. Needs to know which face the orange sticker is on
-        match orange_face {
-            L_FACE => {
-                self.apply_move(solver_move_t::U);
-                self.record_move(out, out_idx, solver_move_t::U);
-                out_idx += 1;
-            }
-            R_FACE => {
-                self.apply_move(solver_move_t::Ui);
-                self.record_move(out, out_idx, solver_move_t::Ui);
-                out_idx += 1;
-            }
-            F_FACE => {
-                self.apply_move(solver_move_t::U2);
-                self.record_move(out, out_idx, solver_move_t::U2);
-                out_idx += 1;
-            }
-            B_FACE => {
-                // Orange is already on B! all done!
-            }
-            _ => {}
-        }
-        out_idx
-    }
-    
-
 
     pub fn find_edge(&self, color1: u8, color2: u8) -> Option<(usize, usize)> {
         // Search through all edge pieces (in EDGES array) until match found
@@ -367,6 +130,9 @@ impl Cube {
         }
         None
     }
+
+    /* ROTATIONS */
+
     pub fn u(&mut self) {
         // Affected stickers:
         // U has face stickers rotated, D is unaffected
@@ -631,27 +397,27 @@ impl Cube {
     pub fn apply_move(&mut self, m: solver_move_t) {
         match m {
             solver_move_t::U  => {self.u();}
-            solver_move_t::Ui => {self.u(); self.u(); self.u();}
+            solver_move_t::Ui => {self.ui();}
             solver_move_t::U2 => {self.u(); self.u();}
 
             solver_move_t::D  => {self.d();}
-            solver_move_t::Di => {self.d(); self.d(); self.d();}
+            solver_move_t::Di => {self.di();}
             solver_move_t::D2 => {self.d(); self.d();}
 
             solver_move_t::L  => {self.l();}
-            solver_move_t::Li => {self.l(); self.l(); self.l();}
+            solver_move_t::Li => {self.li();}
             solver_move_t::L2 => {self.l(); self.l();}
 
             solver_move_t::R  => {self.r();}
-            solver_move_t::Ri => {self.r(); self.r(); self.r();}
+            solver_move_t::Ri => {self.ri();}
             solver_move_t::R2 => {self.r(); self.r();}
 
             solver_move_t::F  => {self.f();}
-            solver_move_t::Fi => {self.f(); self.f(); self.f();}
+            solver_move_t::Fi => {self.fi();}
             solver_move_t::F2 => {self.f(); self.f();}
 
             solver_move_t::B  => {self.b();}
-            solver_move_t::Bi => {self.b(); self.b(); self.b();}
+            solver_move_t::Bi => {self.bi();}
             solver_move_t::B2 => {self.b(); self.b();}
         }
     }
@@ -659,59 +425,56 @@ impl Cube {
 
 
 fn solve_internal(cube: &mut Cube, out: &mut [solver_move_t]) -> usize{
-    if out.len() < 4{
-        return 0;
-    }
+    // if out.len() < 4{
+    //     return 0;
+    // }
 
-    let out_len = cube.solve_white_cross(out);
-    out_len
+    out[0]  = solver_move_t::U;
+    out[1]  = solver_move_t::D;
+    out[2]  = solver_move_t::L;
+    out[3]  = solver_move_t::R;
+    out[4]  = solver_move_t::F;
+    out[5]  = solver_move_t::B;
 
-    // out[0]  = solver_move_t::U;
-    // out[1]  = solver_move_t::D;
-    // out[2]  = solver_move_t::L;
-    // out[3]  = solver_move_t::R;
-    // out[4]  = solver_move_t::F;
-    // out[5]  = solver_move_t::B;
+    out[6]  = solver_move_t::U2;
+    out[7]  = solver_move_t::D2;
+    out[8]  = solver_move_t::L2;
+    out[9]  = solver_move_t::R2;
+    out[10] = solver_move_t::F2;
+    out[11] = solver_move_t::B2;
 
-    // out[6]  = solver_move_t::U2;
-    // out[7]  = solver_move_t::D2;
-    // out[8]  = solver_move_t::L2;
-    // out[9]  = solver_move_t::R2;
-    // out[10] = solver_move_t::F2;
-    // out[11] = solver_move_t::B2;
+    out[12] = solver_move_t::Ui;
+    out[13] = solver_move_t::Di;
+    out[14] = solver_move_t::Li;
+    out[15] = solver_move_t::Ri;
+    out[16] = solver_move_t::Fi;
+    out[17] = solver_move_t::Bi;
 
-    // out[12] = solver_move_t::Ui;
-    // out[13] = solver_move_t::Di;
-    // out[14] = solver_move_t::Li;
-    // out[15] = solver_move_t::Ri;
-    // out[16] = solver_move_t::Fi;
-    // out[17] = solver_move_t::Bi;
+    // ***** inverse starts here *****
 
-    // // ***** inverse starts here *****
+    out[18] = solver_move_t::B;
+    out[19] = solver_move_t::F;
+    out[20] = solver_move_t::R;
+    out[21] = solver_move_t::L;
+    out[22] = solver_move_t::D;
+    out[23] = solver_move_t::U;
 
-    // out[18] = solver_move_t::B;
-    // out[19] = solver_move_t::F;
-    // out[20] = solver_move_t::R;
-    // out[21] = solver_move_t::L;
-    // out[22] = solver_move_t::D;
-    // out[23] = solver_move_t::U;
+    out[24] = solver_move_t::B2;
+    out[25] = solver_move_t::F2;
+    out[26] = solver_move_t::R2;
+    out[27] = solver_move_t::L2;
+    out[28] = solver_move_t::D2;
+    out[29] = solver_move_t::U2;
 
-    // out[24] = solver_move_t::B2;
-    // out[25] = solver_move_t::F2;
-    // out[26] = solver_move_t::R2;
-    // out[27] = solver_move_t::L2;
-    // out[28] = solver_move_t::D2;
-    // out[29] = solver_move_t::U2;
-
-    // out[30] = solver_move_t::Bi;
-    // out[31] = solver_move_t::Fi;
-    // out[32] = solver_move_t::Ri;
-    // out[33] = solver_move_t::Li;
-    // out[34] = solver_move_t::Di;
-    // out[35] = solver_move_t::Ui;
+    out[30] = solver_move_t::Bi;
+    out[31] = solver_move_t::Fi;
+    out[32] = solver_move_t::Ri;
+    out[33] = solver_move_t::Li;
+    out[34] = solver_move_t::Di;
+    out[35] = solver_move_t::Ui;
 
  
-    // 36
+    36
 }
 
 #[unsafe(no_mangle)] // Prevents function renaming (mangling) during compiling. C expects symbol named solve_cube
