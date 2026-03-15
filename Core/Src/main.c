@@ -77,12 +77,6 @@ void CubeProcessStart(void *argument);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-char uart_buf[100] = {'\0'}; // For debugging
-
-
-//uint8_t cube[54] = {0};
-//solver_move moves[16];
-//uint32_t num_moves = 0;
 
 /* USER CODE END 0 */
 

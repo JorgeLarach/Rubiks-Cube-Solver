@@ -55,15 +55,6 @@ void cube_run_motors(void) {
 
     cube_state.motors_running = true;
 
-    /* TESTING CODE BEGIN */
-//    cube_state.move_count = 10;
-
-//    while(cube_state.move_count != 1){
-//    	stepper_move(MOTOR_U, TURN_CW, TURN_90_DEG);
-//    	osDelay(500);
-//    }
-    /* TESTING CODE END */
-
     // Execute all motor moves
     for (int i = 0; i < cube_state.move_count; i++) {
         execute_cube_move(cube_state.motor_moves[i]);

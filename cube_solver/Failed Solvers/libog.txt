@@ -1,12 +1,60 @@
-
-// This program hasn't seen the last of me yet
-
 #![cfg_attr(not(feature = "std-env"), no_std)]
 
 use core::slice;
 
 #[cfg(not(feature = "std-env"))]
 use core::panic::PanicInfo;
+
+pub const U_FACE: usize = 0;
+pub const D_FACE: usize = 1;
+pub const L_FACE: usize = 2;
+pub const R_FACE: usize = 3;
+pub const F_FACE: usize = 4;
+pub const B_FACE: usize = 5;
+
+pub const WHITE:  u8 = 0;
+pub const YELLOW: u8 = 1;
+pub const GREEN:  u8 = 2;
+pub const BLUE:   u8 = 3;
+pub const RED:    u8 = 4;
+pub const ORANGE: u8 = 5;
+
+pub const EDGES: [(usize, usize); 12] = [
+    // There are 24 edge stickers in the cube (four on each face). 
+    // Each edge sticker is adjacent to an edge sticker on another face. 
+    // That pair makes an edge piece. These are used in the algorithm
+    // Each face's edge stickers are located at [1, 3, 5, 7]
+    // Here, I am showing all 24 edge sticker combinations, but keeping only the 12 edge pieces
+    (U_FACE * 9 + 1, B_FACE * 9 + 1), // Edge Piece 0 (White-Orange)
+    (U_FACE * 9 + 3, L_FACE * 9 + 1), // Edge Piece 1 (White-Green)
+    (U_FACE * 9 + 5, R_FACE * 9 + 1), // Edge Piece 2 (White-Blue)
+    (U_FACE * 9 + 7, F_FACE * 9 + 1), // Edge Piece 3 (White-Red)
+
+    (D_FACE * 9 + 1, F_FACE * 9 + 7), // Edge Piece 4 (Yellow-Red)
+    (D_FACE * 9 + 3, L_FACE * 9 + 7), // Edge Piece 5 (Yellow-Green)
+    (D_FACE * 9 + 5, R_FACE * 9 + 7), // Edge Piece 6 (Yellow-Blue)
+    (D_FACE * 9 + 7, B_FACE * 9 + 7), // Edge Piece 7 (Yellow-Orange)
+
+ // (L_FACE * 9 + 1, U_FACE * 9 + 3), // Edge piece already included
+    (L_FACE * 9 + 3, B_FACE * 9 + 5), // Edge Piece 8 (Green-Orange)
+    (L_FACE * 9 + 5, F_FACE * 9 + 3), // Edge Piece 9 (Green-Red)
+ // (L_FACE * 9 + 7, D_FACE * 9 + 3), // Edge piece already included
+
+ // (R_FACE * 9 + 1, U_FACE * 9 + 5), // Edge piece already included
+    (R_FACE * 9 + 3, F_FACE * 9 + 5), // Edge Piece 10 (Right-Front)
+    (R_FACE * 9 + 5, B_FACE * 9 + 3), // Edge Piece 11 (Right-Back)
+ // (R_FACE * 9 + 7, D_FACE * 9 + 5), // Edge piece already included
+
+ // (F_FACE * 9 + 1, U_FACE * 9 + 7), // Edge piece already included
+ // (F_FACE * 9 + 3, L_FACE * 9 + 5), // Edge piece already included
+ // (F_FACE * 9 + 5, R_FACE * 9 + 3), // Edge piece already included
+ // (F_FACE * 9 + 7, D_FACE * 9 + 1), // Edge piece already included
+
+ // (B_FACE * 9 + 1, U_FACE * 9 + 1), // Edge piece already included
+ // (B_FACE * 9 + 3, R_FACE * 9 + 5), // Edge piece already included
+ // (B_FACE * 9 + 5, L_FACE * 9 + 3), // Edge piece already included
+ // (B_FACE * 9 + 7, D_FACE * 9 + 7), // Edge piece already included
+];
 
 #[repr(C)] // Lays out this enum/struct in memory exactly like C would
 #[derive(Copy, Clone, Debug, PartialEq)]
@@ -24,135 +72,20 @@ pub struct Cube {
     pub stickers: [u8; 54],
 }
 
-pub const U_FACE: usize = 0;
-pub const D_FACE: usize = 1;
-pub const L_FACE: usize = 2;
-pub const R_FACE: usize = 3;
-pub const F_FACE: usize = 4;
-pub const B_FACE: usize = 5;
-
-pub const WHITE:  u8 = 0;
-pub const YELLOW: u8 = 1;
-pub const GREEN:  u8 = 2;
-pub const BLUE:   u8 = 3;
-pub const RED:    u8 = 4;
-pub const ORANGE: u8 = 5;
-
-pub const U_FACE_MIN_IDX: usize = 0;
-pub const U_FACE_MAX_IDX: usize = 8;
-pub const D_FACE_MIN_IDX: usize = 9;
-pub const D_FACE_MAX_IDX: usize = 17;
-pub const L_FACE_MIN_IDX: usize = 18;
-pub const L_FACE_MAX_IDX: usize = 26;
-pub const R_FACE_MIN_IDX: usize = 27;
-pub const R_FACE_MAX_IDX: usize = 35;
-pub const F_FACE_MIN_IDX: usize = 36;
-pub const F_FACE_MAX_IDX: usize = 44;
-pub const B_FACE_MIN_IDX: usize = 45;
-pub const B_FACE_MAX_IDX: usize = 53;
-
-pub const EDGES: [(usize, usize); 12] = [
-    // There are 24 edge stickers in the cube (four on each face). 
-    // Each edge sticker is adjacent to an edge sticker on another face. 
-    // That pair makes an edge piece. These are used in the algorithm
-    // Each face's edge stickers are located at [1, 3, 5, 7]
-    (U_FACE * 9 + 1, B_FACE * 9 + 1), // Edge Piece 0 (White-Orange)
-    (U_FACE * 9 + 3, L_FACE * 9 + 1), // Edge Piece 1 (White-Green)
-    (U_FACE * 9 + 5, R_FACE * 9 + 1), // Edge Piece 2 (White-Blue)
-    (U_FACE * 9 + 7, F_FACE * 9 + 1), // Edge Piece 3 (White-Red)
-
-    (D_FACE * 9 + 1, F_FACE * 9 + 7), // Edge Piece 4 (Yellow-Red)
-    (D_FACE * 9 + 3, L_FACE * 9 + 7), // Edge Piece 5 (Yellow-Green)
-    (D_FACE * 9 + 5, R_FACE * 9 + 7), // Edge Piece 6 (Yellow-Blue)
-    (D_FACE * 9 + 7, B_FACE * 9 + 7), // Edge Piece 7 (Yellow-Orange)
-
-    (L_FACE * 9 + 3, B_FACE * 9 + 5), // Edge Piece 8 (Green-Orange)
-    (L_FACE * 9 + 5, F_FACE * 9 + 3), // Edge Piece 9 (Green-Red)
-
-    (R_FACE * 9 + 3, F_FACE * 9 + 5), // Edge Piece 10 (Right-Front)
-    (R_FACE * 9 + 5, B_FACE * 9 + 3), // Edge Piece 11 (Right-Back)
-];
-
-// Helper function: get face from sticker index
-pub fn identify_face_from_sticker_idx(sticker_idx: usize) -> usize {
-    match sticker_idx {
-        i if i < 9   => U_FACE,
-        i if i < 18  => D_FACE,
-        i if i < 27  => L_FACE,
-        i if i < 36  => R_FACE,
-        i if i < 45  => F_FACE,
-        i if i < 54  => B_FACE,
-        _ => panic!("sticker index out of range"),
-    }
-}
-
-pub fn find_inverse_move(input_move: solver_move_t) -> solver_move_t{
-    match input_move {
-        solver_move_t::U => solver_move_t::Ui,
-        solver_move_t::Ui => solver_move_t::U,
-
-        solver_move_t::D => solver_move_t::Di,
-        solver_move_t::Di => solver_move_t::D,
-
-        solver_move_t::L => solver_move_t::Li,
-        solver_move_t::Li => solver_move_t::L,
-
-        solver_move_t::R => solver_move_t::Ri,
-        solver_move_t::Ri => solver_move_t::R,
-
-        solver_move_t::F => solver_move_t::Fi,
-        solver_move_t::Fi => solver_move_t::F,
-
-        solver_move_t::B => solver_move_t::Bi,
-        solver_move_t::Bi => solver_move_t::B,
-
-        _ => input_move
-    }
-}
-
-
 impl Cube {
-    /* SOLVER STUFF */
+    pub fn find_edge(&self, color1: u8, color2: u8) -> Option<(usize, u8)> {
+        for (edge_pos, &(idx1, idx2)) in EDGES.iter().enumerate() {
+            let sticker1 = self.stickers[idx1];
+            let sticker2 = self.stickers[idx2];
 
-    pub fn solve_white_cross(&mut self, _out: &mut [solver_move_t]) -> usize {
-        // About 1000 lines later, I decided to leave this function empty. Maybe I should learn to solve a cube first.
-        0
-    }
-
-    
-    pub fn find_edge(&self, color1: u8, color2: u8) -> Option<(usize, usize)> {
-        // Search through all edge pieces (in EDGES array) until match found
-        
-        for &(idx1, idx2) in EDGES.iter() {
-            let sticker_color1 = self.stickers[idx1];
-            let sticker_color2 = self.stickers[idx2];
-            
-            // Always return index of color1 as first val in return tuple 
-            // e.g. find_edge(WHITE, ORANGE) returns tuple where first val is idx of WHITE sticker for that edge piece
-            if sticker_color1 == color1 && sticker_color2 == color2 {
-                return Some((idx1, idx2));
-            } else if sticker_color1 == color2 && sticker_color2 == color1 {
-                return Some((idx2, idx1));
+            if sticker1 == color1 && sticker2 == color2 {
+                return Some((edge_pos, 0));
+            } else if sticker1 == color2 && sticker2 == color1 {
+                return Some((edge_pos, 1));
             }
         }
         None
     }
-
-    #[inline]
-    pub fn apply_and_record(&mut self, out: &mut [solver_move_t], out_idx: &mut usize, m: solver_move_t) {
-        self.apply_move(m);
-        self.record_move(out, *out_idx, m);
-        *out_idx += 1;
-    }
-
-    pub fn record_move(&self, out: &mut [solver_move_t], out_idx: usize, m: solver_move_t) {
-        if out_idx < out.len() {
-            out[out_idx] = m
-        }
-    }
-    
-    /* ROTATIONS */
-
     pub fn u(&mut self) {
         // Affected stickers:
         // U has face stickers rotated, D is unaffected
@@ -329,7 +262,7 @@ impl Cube {
 
         let temp_l_0: u8 = self.stickers[L_FACE * 9 + 0];
         let temp_l_3: u8 = self.stickers[L_FACE * 9 + 3];
-        let temp_l_6: u8 = self.stickers[L_FACE * 9 + 6];
+        let temp_l_6: u8 = self.stickers[L_FACE * 9 + 0];
 
         self.stickers[L_FACE * 9 + 0] = self.stickers[U_FACE * 9 + 2];
         self.stickers[L_FACE * 9 + 3] = self.stickers[U_FACE * 9 + 1];
@@ -348,20 +281,14 @@ impl Cube {
         self.stickers[D_FACE * 9 + 8] = temp_l_6;
     }
 
-    pub fn ui(&mut self) {self.u(); self.u(); self.u()}
-    pub fn di(&mut self) {self.d(); self.d(); self.d()}
-    pub fn li(&mut self) {self.l(); self.l(); self.l()}
-    pub fn ri(&mut self) {self.r(); self.r(); self.r()}
-    pub fn fi(&mut self) {self.f(); self.f(); self.f()}
-    pub fn bi(&mut self) {self.b(); self.b(); self.b()}
-
+    
     pub fn rotate_face_cw(&mut self, face: usize) {
         // Face layout              Rotated face cw
         //  0  1  2                  6  3  0
         //  3  4  5                  7  4  1
         //  6  7  8                  8  5  2
-        // Corners: 0, 2, 6, 8      
-        // Edges:   1, 3, 5, 7      
+        // Corners: 0, 2, 6, 8      Corners: 0, 2, 6, 8
+        // Edges:   1, 3, 5, 7      Edges:   1, 3, 5, 7
         
         let base: usize = face * 9; // base index into stickers array for face's 9 stickers
         
@@ -417,37 +344,63 @@ impl Cube {
     pub fn apply_move(&mut self, m: solver_move_t) {
         match m {
             solver_move_t::U  => {self.u();}
-            solver_move_t::Ui => {self.ui();}
+            solver_move_t::Ui => {self.u(); self.u(); self.u();}
             solver_move_t::U2 => {self.u(); self.u();}
 
             solver_move_t::D  => {self.d();}
-            solver_move_t::Di => {self.di();}
+            solver_move_t::Di => {self.d(); self.d(); self.d();}
             solver_move_t::D2 => {self.d(); self.d();}
 
             solver_move_t::L  => {self.l();}
-            solver_move_t::Li => {self.li();}
+            solver_move_t::Li => {self.l(); self.l(); self.l();}
             solver_move_t::L2 => {self.l(); self.l();}
 
             solver_move_t::R  => {self.r();}
-            solver_move_t::Ri => {self.ri();}
+            solver_move_t::Ri => {self.r(); self.r(); self.r();}
             solver_move_t::R2 => {self.r(); self.r();}
 
             solver_move_t::F  => {self.f();}
-            solver_move_t::Fi => {self.fi();}
+            solver_move_t::Fi => {self.f(); self.f(); self.f();}
             solver_move_t::F2 => {self.f(); self.f();}
 
             solver_move_t::B  => {self.b();}
-            solver_move_t::Bi => {self.bi();}
+            solver_move_t::Bi => {self.b(); self.b(); self.b();}
             solver_move_t::B2 => {self.b(); self.b();}
         }
     }
 }
 
 
-fn solve_internal(_cube: &mut Cube, out: &mut [solver_move_t]) -> usize{
-    // if out.len() < 4{
-    //     return 0;
-    // }
+fn solve_internal(_cube: &Cube, out: &mut [solver_move_t]) -> usize{
+    if out.len() < 4{
+        return 0;
+    }
+
+    // out[0] = solver_move_t::Ui;
+    // out[1] = solver_move_t::U;
+    // out[2] = solver_move_t::U2;
+    // out[3] = solver_move_t::U2;
+
+    // out[4] = solver_move_t::Di;
+    // out[5] = solver_move_t::D;
+    // out[6] = solver_move_t::D2;
+    // out[7] = solver_move_t::D2;
+
+    // out[8] = solver_move_t::Li;
+    // out[9] = solver_move_t::L;
+    // out[10] = solver_move_t::L2;
+    // out[11] = solver_move_t::L2;
+
+    // out[12] = solver_move_t::U2;
+    // out[13] = solver_move_t::U2;
+
+    // out[14] = solver_move_t::L2;
+    // out[15] = solver_move_t::L2;
+
+    // out[16] = solver_move_t::Ri;
+    // out[17] = solver_move_t::R;
+    // out[18] = solver_move_t::R2;
+    // out[19] = solver_move_t::R2;
 
     out[0]  = solver_move_t::U;
     out[1]  = solver_move_t::D;
@@ -506,7 +459,7 @@ pub extern "C" fn solve_cube(
     if cube_raw.is_null() || out_moves.is_null() {
         return 0;
     }
-    let mut cube: Cube = unsafe { // Unsafe because dereferencing raw pointer (cube_raw)
+    let cube: Cube = unsafe { // Unsafe because dereferencing raw pointer (cube_raw)
         let slice = slice::from_raw_parts(cube_raw, 54); // Does not copy
         let mut stickers = [0u8; 54];
         stickers.copy_from_slice(slice); // Copies cube data (slice) into Rust owned stack memory
@@ -517,7 +470,8 @@ pub extern "C" fn solve_cube(
         slice::from_raw_parts_mut(out_moves, max_moves)
     };
 
-    solve_internal(&mut cube, out_slice)
+
+    solve_internal(&cube, out_slice)
 }
 
 #[cfg(not(feature = "std-env"))]
