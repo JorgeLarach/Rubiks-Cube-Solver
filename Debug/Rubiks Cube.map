@@ -8304,7 +8304,7 @@ LOAD /Applications/STM32CubeIDE.app/Contents/Eclipse/plugins/com.st.stm32cube.id
                 0x08000000                g_pfnVectors
                 0x08000194                        . = ALIGN (0x4)
 
-.text           0x080001a0     0x78b4
+.text           0x080001a0     0x7624
                 0x080001a0                        . = ALIGN (0x4)
  *(.text)
  .text          0x080001a0       0x40 /Applications/STM32CubeIDE.app/Contents/Eclipse/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.13.3.rel1.macos64_1.0.0.202411102158/tools/bin/../lib/gcc/arm-none-eabi/13.3.1/thumb/v7e-m+fp/hard/crtbegin.o
@@ -8834,275 +8834,228 @@ LOAD /Applications/STM32CubeIDE.app/Contents/Eclipse/plugins/com.st.stm32cube.id
                 0x08006318        0x6 /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(cube_solver-9cb2d2c87d42d52d.cube_solver.7c6f56aa1cac7d27-cgu.0.rcgu.o)
                 0x08006318                __rustc::rust_begin_unwind
  .text.solve_cube
-                0x0800631e      0x3c4 /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(cube_solver-9cb2d2c87d42d52d.cube_solver.7c6f56aa1cac7d27-cgu.0.rcgu.o)
+                0x0800631e      0x132 /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(cube_solver-9cb2d2c87d42d52d.cube_solver.7c6f56aa1cac7d27-cgu.0.rcgu.o)
                 0x0800631e                solve_cube
  .text._ZN4core3fmt3num3imp21_$LT$impl$u20$u32$GT$10_fmt_inner17h7e0fac834a52e1b2E
-                0x080066e2      0x1a0 /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(core-6ada6be836d9a692.core.6c74236d6d32f994-cgu.0.rcgu.o)
+                0x08006450      0x1a0 /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(core-6ada6be836d9a692.core.6c74236d6d32f994-cgu.0.rcgu.o)
  .text._ZN4core3fmt3num3imp52_$LT$impl$u20$core..fmt..Display$u20$for$u20$u32$GT$3fmt17hf6a4bfbde2c99e13E
-                0x08006882       0x30 /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(core-6ada6be836d9a692.core.6c74236d6d32f994-cgu.0.rcgu.o)
-                0x08006882                core::fmt::num::imp::<impl core::fmt::Display for usize>::fmt
-                0x08006882                core::fmt::num::imp::<impl core::fmt::Display for u32>::fmt
+                0x080065f0       0x30 /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(core-6ada6be836d9a692.core.6c74236d6d32f994-cgu.0.rcgu.o)
+                0x080065f0                core::fmt::num::imp::<impl core::fmt::Display for usize>::fmt
+                0x080065f0                core::fmt::num::imp::<impl core::fmt::Display for u32>::fmt
  .text._ZN4core3fmt9Formatter12pad_integral12write_prefix17h84006ed563cb6a22E
-                0x080068b2       0x46 /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(core-6ada6be836d9a692.core.6c74236d6d32f994-cgu.0.rcgu.o)
+                0x08006620       0x46 /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(core-6ada6be836d9a692.core.6c74236d6d32f994-cgu.0.rcgu.o)
+ *fill*         0x08006666        0x2 
  .text._ZN4core3fmt9Formatter12pad_integral17h7738abc4dcb7ef43E
-                0x080068f8      0x266 /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(core-6ada6be836d9a692.core.6c74236d6d32f994-cgu.0.rcgu.o)
-                0x080068f8                core::fmt::Formatter::pad_integral
+                0x08006668      0x266 /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(core-6ada6be836d9a692.core.6c74236d6d32f994-cgu.0.rcgu.o)
+                0x08006668                core::fmt::Formatter::pad_integral
  .text._ZN4core3str5count14do_count_chars17h7996e4c50b069a42E
-                0x08006b5e      0x556 /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(core-6ada6be836d9a692.core.6c74236d6d32f994-cgu.0.rcgu.o)
-                0x08006b5e                core::str::count::do_count_chars
+                0x080068ce      0x556 /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(core-6ada6be836d9a692.core.6c74236d6d32f994-cgu.0.rcgu.o)
+                0x080068ce                core::str::count::do_count_chars
  .text.unlikely._ZN4core9panicking18panic_bounds_check17h6511f546ab9d5ae5E
-                0x080070b4       0x28 /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(core-6ada6be836d9a692.core.6c74236d6d32f994-cgu.0.rcgu.o)
-                0x080070b4                core::panicking::panic_bounds_check
+                0x08006e24       0x28 /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(core-6ada6be836d9a692.core.6c74236d6d32f994-cgu.0.rcgu.o)
+                0x08006e24                core::panicking::panic_bounds_check
  .text.unlikely._ZN4core9panicking9panic_fmt17ha5c8d1aa6e35ad31E
-                0x080070dc       0x1c /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(core-6ada6be836d9a692.core.6c74236d6d32f994-cgu.0.rcgu.o)
-                0x080070dc                core::panicking::panic_fmt
- .text.memset   0x080070f8       0xf8 /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(compiler_builtins-39ac331f3ed62a2e.compiler_builtins.5b228f9b2b2289d6-cgu.302.rcgu.o)
-                0x080070f8                memset
- .text.memcpy   0x080071f0        0xc /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(compiler_builtins-39ac331f3ed62a2e.compiler_builtins.5b228f9b2b2289d6-cgu.340.rcgu.o)
-                0x080071f0                memcpy
+                0x08006e4c       0x1c /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(core-6ada6be836d9a692.core.6c74236d6d32f994-cgu.0.rcgu.o)
+                0x08006e4c                core::panicking::panic_fmt
+ .text.memset   0x08006e68       0xf8 /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(compiler_builtins-39ac331f3ed62a2e.compiler_builtins.5b228f9b2b2289d6-cgu.302.rcgu.o)
+                0x08006e68                memset
+ .text.memcpy   0x08006f60        0xc /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(compiler_builtins-39ac331f3ed62a2e.compiler_builtins.5b228f9b2b2289d6-cgu.340.rcgu.o)
+                0x08006f60                memcpy
  .text.__aeabi_uldivmod
-                0x080071fc       0x14 /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(compiler_builtins-39ac331f3ed62a2e.compiler_builtins.5b228f9b2b2289d6-cgu.413.rcgu.o)
-                0x080071fc                __aeabi_uldivmod
+                0x08006f6c       0x14 /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(compiler_builtins-39ac331f3ed62a2e.compiler_builtins.5b228f9b2b2289d6-cgu.413.rcgu.o)
+                0x08006f6c                __aeabi_uldivmod
  .text._ZN17compiler_builtins3mem6memcpy17h76d83c5a68c1995dE
-                0x08007210      0x2e6 /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(compiler_builtins-39ac331f3ed62a2e.compiler_builtins.5b228f9b2b2289d6-cgu.012.rcgu.o)
-                0x08007210                compiler_builtins::mem::memcpy
+                0x08006f80      0x2e6 /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(compiler_builtins-39ac331f3ed62a2e.compiler_builtins.5b228f9b2b2289d6-cgu.012.rcgu.o)
+                0x08006f80                compiler_builtins::mem::memcpy
  .text.__udivmoddi4
-                0x080074f6       0x30 /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(compiler_builtins-39ac331f3ed62a2e.compiler_builtins.5b228f9b2b2289d6-cgu.279.rcgu.o)
-                0x080074f6                __udivmoddi4
+                0x08007266       0x30 /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(compiler_builtins-39ac331f3ed62a2e.compiler_builtins.5b228f9b2b2289d6-cgu.279.rcgu.o)
+                0x08007266                __udivmoddi4
  .text._ZN17compiler_builtins3int19specialized_div_rem11u64_div_rem17h56a02874b2bc4b33E
-                0x08007526      0x360 /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(compiler_builtins-39ac331f3ed62a2e.compiler_builtins.5b228f9b2b2289d6-cgu.017.rcgu.o)
-                0x08007526                compiler_builtins::int::specialized_div_rem::u64_div_rem
- *fill*         0x08007886        0x2 
+                0x08007296      0x360 /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(compiler_builtins-39ac331f3ed62a2e.compiler_builtins.5b228f9b2b2289d6-cgu.017.rcgu.o)
+                0x08007296                compiler_builtins::int::specialized_div_rem::u64_div_rem
+ *fill*         0x080075f6        0x2 
  .text.__libc_init_array
-                0x08007888       0x48 /Applications/STM32CubeIDE.app/Contents/Eclipse/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.13.3.rel1.macos64_1.0.0.202411102158/tools/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(libc_a-init.o)
-                0x08007888                __libc_init_array
+                0x080075f8       0x48 /Applications/STM32CubeIDE.app/Contents/Eclipse/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.13.3.rel1.macos64_1.0.0.202411102158/tools/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(libc_a-init.o)
+                0x080075f8                __libc_init_array
  .text.__retarget_lock_acquire_recursive
-                0x080078d0        0x2 /Applications/STM32CubeIDE.app/Contents/Eclipse/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.13.3.rel1.macos64_1.0.0.202411102158/tools/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(libc_a-lock.o)
-                0x080078d0                __retarget_lock_acquire_recursive
+                0x08007640        0x2 /Applications/STM32CubeIDE.app/Contents/Eclipse/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.13.3.rel1.macos64_1.0.0.202411102158/tools/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(libc_a-lock.o)
+                0x08007640                __retarget_lock_acquire_recursive
  .text.__retarget_lock_release_recursive
-                0x080078d2        0x2 /Applications/STM32CubeIDE.app/Contents/Eclipse/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.13.3.rel1.macos64_1.0.0.202411102158/tools/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(libc_a-lock.o)
-                0x080078d2                __retarget_lock_release_recursive
+                0x08007642        0x2 /Applications/STM32CubeIDE.app/Contents/Eclipse/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.13.3.rel1.macos64_1.0.0.202411102158/tools/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(libc_a-lock.o)
+                0x08007642                __retarget_lock_release_recursive
  .text._reclaim_reent
-                0x080078d4       0xbc /Applications/STM32CubeIDE.app/Contents/Eclipse/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.13.3.rel1.macos64_1.0.0.202411102158/tools/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(libc_a-reent.o)
-                0x080078d4                _reclaim_reent
- .text._free_r  0x08007990       0x94 /Applications/STM32CubeIDE.app/Contents/Eclipse/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.13.3.rel1.macos64_1.0.0.202411102158/tools/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(libc_a-freer.o)
-                0x08007990                _free_r
+                0x08007644       0xbc /Applications/STM32CubeIDE.app/Contents/Eclipse/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.13.3.rel1.macos64_1.0.0.202411102158/tools/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(libc_a-reent.o)
+                0x08007644                _reclaim_reent
+ .text._free_r  0x08007700       0x94 /Applications/STM32CubeIDE.app/Contents/Eclipse/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.13.3.rel1.macos64_1.0.0.202411102158/tools/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(libc_a-freer.o)
+                0x08007700                _free_r
  .text.__malloc_lock
-                0x08007a24        0xc /Applications/STM32CubeIDE.app/Contents/Eclipse/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.13.3.rel1.macos64_1.0.0.202411102158/tools/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(libc_a-mlock.o)
-                0x08007a24                __malloc_lock
+                0x08007794        0xc /Applications/STM32CubeIDE.app/Contents/Eclipse/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.13.3.rel1.macos64_1.0.0.202411102158/tools/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(libc_a-mlock.o)
+                0x08007794                __malloc_lock
  .text.__malloc_unlock
-                0x08007a30        0xc /Applications/STM32CubeIDE.app/Contents/Eclipse/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.13.3.rel1.macos64_1.0.0.202411102158/tools/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(libc_a-mlock.o)
-                0x08007a30                __malloc_unlock
+                0x080077a0        0xc /Applications/STM32CubeIDE.app/Contents/Eclipse/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.13.3.rel1.macos64_1.0.0.202411102158/tools/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(libc_a-mlock.o)
+                0x080077a0                __malloc_unlock
  *(.glue_7)
- .glue_7        0x08007a3c        0x0 linker stubs
+ .glue_7        0x080077ac        0x0 linker stubs
  *(.glue_7t)
- .glue_7t       0x08007a3c        0x0 linker stubs
+ .glue_7t       0x080077ac        0x0 linker stubs
  *(.eh_frame)
- .eh_frame      0x08007a3c        0x0 /Applications/STM32CubeIDE.app/Contents/Eclipse/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.13.3.rel1.macos64_1.0.0.202411102158/tools/bin/../lib/gcc/arm-none-eabi/13.3.1/thumb/v7e-m+fp/hard/crtbegin.o
+ .eh_frame      0x080077ac        0x0 /Applications/STM32CubeIDE.app/Contents/Eclipse/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.13.3.rel1.macos64_1.0.0.202411102158/tools/bin/../lib/gcc/arm-none-eabi/13.3.1/thumb/v7e-m+fp/hard/crtbegin.o
  *(.init)
- .init          0x08007a3c        0x4 /Applications/STM32CubeIDE.app/Contents/Eclipse/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.13.3.rel1.macos64_1.0.0.202411102158/tools/bin/../lib/gcc/arm-none-eabi/13.3.1/thumb/v7e-m+fp/hard/crti.o
-                0x08007a3c                _init
- .init          0x08007a40        0x8 /Applications/STM32CubeIDE.app/Contents/Eclipse/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.13.3.rel1.macos64_1.0.0.202411102158/tools/bin/../lib/gcc/arm-none-eabi/13.3.1/thumb/v7e-m+fp/hard/crtn.o
+ .init          0x080077ac        0x4 /Applications/STM32CubeIDE.app/Contents/Eclipse/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.13.3.rel1.macos64_1.0.0.202411102158/tools/bin/../lib/gcc/arm-none-eabi/13.3.1/thumb/v7e-m+fp/hard/crti.o
+                0x080077ac                _init
+ .init          0x080077b0        0x8 /Applications/STM32CubeIDE.app/Contents/Eclipse/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.13.3.rel1.macos64_1.0.0.202411102158/tools/bin/../lib/gcc/arm-none-eabi/13.3.1/thumb/v7e-m+fp/hard/crtn.o
  *(.fini)
- .fini          0x08007a48        0x4 /Applications/STM32CubeIDE.app/Contents/Eclipse/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.13.3.rel1.macos64_1.0.0.202411102158/tools/bin/../lib/gcc/arm-none-eabi/13.3.1/thumb/v7e-m+fp/hard/crti.o
-                0x08007a48                _fini
- .fini          0x08007a4c        0x8 /Applications/STM32CubeIDE.app/Contents/Eclipse/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.13.3.rel1.macos64_1.0.0.202411102158/tools/bin/../lib/gcc/arm-none-eabi/13.3.1/thumb/v7e-m+fp/hard/crtn.o
-                0x08007a54                        . = ALIGN (0x4)
-                0x08007a54                        _etext = .
+ .fini          0x080077b8        0x4 /Applications/STM32CubeIDE.app/Contents/Eclipse/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.13.3.rel1.macos64_1.0.0.202411102158/tools/bin/../lib/gcc/arm-none-eabi/13.3.1/thumb/v7e-m+fp/hard/crti.o
+                0x080077b8                _fini
+ .fini          0x080077bc        0x8 /Applications/STM32CubeIDE.app/Contents/Eclipse/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.13.3.rel1.macos64_1.0.0.202411102158/tools/bin/../lib/gcc/arm-none-eabi/13.3.1/thumb/v7e-m+fp/hard/crtn.o
+                0x080077c4                        . = ALIGN (0x4)
+                0x080077c4                        _etext = .
 
-.vfp11_veneer   0x08007a54        0x0
- .vfp11_veneer  0x08007a54        0x0 linker stubs
+.vfp11_veneer   0x080077c4        0x0
+ .vfp11_veneer  0x080077c4        0x0 linker stubs
 
-.v4_bx          0x08007a54        0x0
- .v4_bx         0x08007a54        0x0 linker stubs
+.v4_bx          0x080077c4        0x0
+ .v4_bx         0x080077c4        0x0 linker stubs
 
-.iplt           0x08007a54        0x0
- .iplt          0x08007a54        0x0 /Applications/STM32CubeIDE.app/Contents/Eclipse/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.13.3.rel1.macos64_1.0.0.202411102158/tools/bin/../lib/gcc/arm-none-eabi/13.3.1/thumb/v7e-m+fp/hard/crtbegin.o
+.iplt           0x080077c4        0x0
+ .iplt          0x080077c4        0x0 /Applications/STM32CubeIDE.app/Contents/Eclipse/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.13.3.rel1.macos64_1.0.0.202411102158/tools/bin/../lib/gcc/arm-none-eabi/13.3.1/thumb/v7e-m+fp/hard/crtbegin.o
 
-.rodata         0x08007a54      0xba4
-                0x08007a54                        . = ALIGN (0x4)
+.rodata         0x080077c4      0xa24
+                0x080077c4                        . = ALIGN (0x4)
  *(.rodata)
- .rodata        0x08007a54       0x10 ./Core/Src/main.o
- .rodata        0x08007a64        0x5 ./Middlewares/Third_Party/FreeRTOS/Source/tasks.o
- *fill*         0x08007a69        0x3 
- .rodata        0x08007a6c        0xd ./Middlewares/Third_Party/FreeRTOS/Source/timers.o
+ .rodata        0x080077c4       0x10 ./Core/Src/main.o
+ .rodata        0x080077d4        0x5 ./Middlewares/Third_Party/FreeRTOS/Source/tasks.o
+ *fill*         0x080077d9        0x3 
+ .rodata        0x080077dc        0xd ./Middlewares/Third_Party/FreeRTOS/Source/timers.o
  *(.rodata*)
- *fill*         0x08007a79        0x3 
+ *fill*         0x080077e9        0x3 
  .rodata.CubeProcessTask_attributes
-                0x08007a7c       0x24 ./Core/Src/main.o
-                0x08007a7c                CubeProcessTask_attributes
+                0x080077ec       0x24 ./Core/Src/main.o
+                0x080077ec                CubeProcessTask_attributes
  .rodata.AHBPrescTable
-                0x08007aa0       0x10 ./Core/Src/system_stm32f4xx.o
-                0x08007aa0                AHBPrescTable
+                0x08007810       0x10 ./Core/Src/system_stm32f4xx.o
+                0x08007810                AHBPrescTable
  .rodata.APBPrescTable
-                0x08007ab0        0x8 ./Core/Src/system_stm32f4xx.o
-                0x08007ab0                APBPrescTable
+                0x08007820        0x8 ./Core/Src/system_stm32f4xx.o
+                0x08007820                APBPrescTable
  .rodata.str1.1
-                0x08007ab8      0x828 /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(cube_solver-9cb2d2c87d42d52d.cube_solver.7c6f56aa1cac7d27-cgu.0.rcgu.o)
+                0x08007828      0x828 /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(cube_solver-9cb2d2c87d42d52d.cube_solver.7c6f56aa1cac7d27-cgu.0.rcgu.o)
                                   0xb (size before relaxing)
  .rodata..Lanon.f66c01a572e6705801a7e6b14210b3c1.1
-                0x080082e0       0x10 /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(cube_solver-9cb2d2c87d42d52d.cube_solver.7c6f56aa1cac7d27-cgu.0.rcgu.o)
+                0x08008050       0x10 /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(cube_solver-9cb2d2c87d42d52d.cube_solver.7c6f56aa1cac7d27-cgu.0.rcgu.o)
  .rodata..Lanon.f66c01a572e6705801a7e6b14210b3c1.2
-                0x080082f0       0x10 /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(cube_solver-9cb2d2c87d42d52d.cube_solver.7c6f56aa1cac7d27-cgu.0.rcgu.o)
+                0x08008060       0x10 /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(cube_solver-9cb2d2c87d42d52d.cube_solver.7c6f56aa1cac7d27-cgu.0.rcgu.o)
  .rodata..Lanon.f66c01a572e6705801a7e6b14210b3c1.3
-                0x08008300       0x10 /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(cube_solver-9cb2d2c87d42d52d.cube_solver.7c6f56aa1cac7d27-cgu.0.rcgu.o)
+                0x08008070       0x10 /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(cube_solver-9cb2d2c87d42d52d.cube_solver.7c6f56aa1cac7d27-cgu.0.rcgu.o)
  .rodata..Lanon.f66c01a572e6705801a7e6b14210b3c1.4
-                0x08008310       0x10 /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(cube_solver-9cb2d2c87d42d52d.cube_solver.7c6f56aa1cac7d27-cgu.0.rcgu.o)
+                0x08008080       0x10 /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(cube_solver-9cb2d2c87d42d52d.cube_solver.7c6f56aa1cac7d27-cgu.0.rcgu.o)
  .rodata..Lanon.f66c01a572e6705801a7e6b14210b3c1.5
-                0x08008320       0x10 /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(cube_solver-9cb2d2c87d42d52d.cube_solver.7c6f56aa1cac7d27-cgu.0.rcgu.o)
+                0x08008090       0x10 /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(cube_solver-9cb2d2c87d42d52d.cube_solver.7c6f56aa1cac7d27-cgu.0.rcgu.o)
  .rodata..Lanon.f66c01a572e6705801a7e6b14210b3c1.6
-                0x08008330       0x10 /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(cube_solver-9cb2d2c87d42d52d.cube_solver.7c6f56aa1cac7d27-cgu.0.rcgu.o)
+                0x080080a0       0x10 /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(cube_solver-9cb2d2c87d42d52d.cube_solver.7c6f56aa1cac7d27-cgu.0.rcgu.o)
  .rodata..Lanon.f66c01a572e6705801a7e6b14210b3c1.7
-                0x08008340       0x10 /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(cube_solver-9cb2d2c87d42d52d.cube_solver.7c6f56aa1cac7d27-cgu.0.rcgu.o)
+                0x080080b0       0x10 /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(cube_solver-9cb2d2c87d42d52d.cube_solver.7c6f56aa1cac7d27-cgu.0.rcgu.o)
  .rodata..Lanon.f66c01a572e6705801a7e6b14210b3c1.8
-                0x08008350       0x10 /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(cube_solver-9cb2d2c87d42d52d.cube_solver.7c6f56aa1cac7d27-cgu.0.rcgu.o)
+                0x080080c0       0x10 /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(cube_solver-9cb2d2c87d42d52d.cube_solver.7c6f56aa1cac7d27-cgu.0.rcgu.o)
  .rodata..Lanon.f66c01a572e6705801a7e6b14210b3c1.9
-                0x08008360       0x10 /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(cube_solver-9cb2d2c87d42d52d.cube_solver.7c6f56aa1cac7d27-cgu.0.rcgu.o)
+                0x080080d0       0x10 /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(cube_solver-9cb2d2c87d42d52d.cube_solver.7c6f56aa1cac7d27-cgu.0.rcgu.o)
  .rodata..Lanon.f66c01a572e6705801a7e6b14210b3c1.10
-                0x08008370       0x10 /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(cube_solver-9cb2d2c87d42d52d.cube_solver.7c6f56aa1cac7d27-cgu.0.rcgu.o)
+                0x080080e0       0x10 /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(cube_solver-9cb2d2c87d42d52d.cube_solver.7c6f56aa1cac7d27-cgu.0.rcgu.o)
  .rodata..Lanon.f66c01a572e6705801a7e6b14210b3c1.11
-                0x08008380       0x10 /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(cube_solver-9cb2d2c87d42d52d.cube_solver.7c6f56aa1cac7d27-cgu.0.rcgu.o)
+                0x080080f0       0x10 /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(cube_solver-9cb2d2c87d42d52d.cube_solver.7c6f56aa1cac7d27-cgu.0.rcgu.o)
  .rodata..Lanon.f66c01a572e6705801a7e6b14210b3c1.12
-                0x08008390       0x10 /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(cube_solver-9cb2d2c87d42d52d.cube_solver.7c6f56aa1cac7d27-cgu.0.rcgu.o)
- .rodata..Lanon.f66c01a572e6705801a7e6b14210b3c1.13
-                0x080083a0       0x10 /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(cube_solver-9cb2d2c87d42d52d.cube_solver.7c6f56aa1cac7d27-cgu.0.rcgu.o)
- .rodata..Lanon.f66c01a572e6705801a7e6b14210b3c1.14
-                0x080083b0       0x10 /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(cube_solver-9cb2d2c87d42d52d.cube_solver.7c6f56aa1cac7d27-cgu.0.rcgu.o)
- .rodata..Lanon.f66c01a572e6705801a7e6b14210b3c1.15
-                0x080083c0       0x10 /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(cube_solver-9cb2d2c87d42d52d.cube_solver.7c6f56aa1cac7d27-cgu.0.rcgu.o)
- .rodata..Lanon.f66c01a572e6705801a7e6b14210b3c1.16
-                0x080083d0       0x10 /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(cube_solver-9cb2d2c87d42d52d.cube_solver.7c6f56aa1cac7d27-cgu.0.rcgu.o)
- .rodata..Lanon.f66c01a572e6705801a7e6b14210b3c1.17
-                0x080083e0       0x10 /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(cube_solver-9cb2d2c87d42d52d.cube_solver.7c6f56aa1cac7d27-cgu.0.rcgu.o)
- .rodata..Lanon.f66c01a572e6705801a7e6b14210b3c1.18
-                0x080083f0       0x10 /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(cube_solver-9cb2d2c87d42d52d.cube_solver.7c6f56aa1cac7d27-cgu.0.rcgu.o)
- .rodata..Lanon.f66c01a572e6705801a7e6b14210b3c1.19
-                0x08008400       0x10 /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(cube_solver-9cb2d2c87d42d52d.cube_solver.7c6f56aa1cac7d27-cgu.0.rcgu.o)
- .rodata..Lanon.f66c01a572e6705801a7e6b14210b3c1.20
-                0x08008410       0x10 /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(cube_solver-9cb2d2c87d42d52d.cube_solver.7c6f56aa1cac7d27-cgu.0.rcgu.o)
- .rodata..Lanon.f66c01a572e6705801a7e6b14210b3c1.21
-                0x08008420       0x10 /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(cube_solver-9cb2d2c87d42d52d.cube_solver.7c6f56aa1cac7d27-cgu.0.rcgu.o)
- .rodata..Lanon.f66c01a572e6705801a7e6b14210b3c1.22
-                0x08008430       0x10 /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(cube_solver-9cb2d2c87d42d52d.cube_solver.7c6f56aa1cac7d27-cgu.0.rcgu.o)
- .rodata..Lanon.f66c01a572e6705801a7e6b14210b3c1.23
-                0x08008440       0x10 /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(cube_solver-9cb2d2c87d42d52d.cube_solver.7c6f56aa1cac7d27-cgu.0.rcgu.o)
- .rodata..Lanon.f66c01a572e6705801a7e6b14210b3c1.24
-                0x08008450       0x10 /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(cube_solver-9cb2d2c87d42d52d.cube_solver.7c6f56aa1cac7d27-cgu.0.rcgu.o)
- .rodata..Lanon.f66c01a572e6705801a7e6b14210b3c1.25
-                0x08008460       0x10 /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(cube_solver-9cb2d2c87d42d52d.cube_solver.7c6f56aa1cac7d27-cgu.0.rcgu.o)
- .rodata..Lanon.f66c01a572e6705801a7e6b14210b3c1.26
-                0x08008470       0x10 /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(cube_solver-9cb2d2c87d42d52d.cube_solver.7c6f56aa1cac7d27-cgu.0.rcgu.o)
- .rodata..Lanon.f66c01a572e6705801a7e6b14210b3c1.27
-                0x08008480       0x10 /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(cube_solver-9cb2d2c87d42d52d.cube_solver.7c6f56aa1cac7d27-cgu.0.rcgu.o)
- .rodata..Lanon.f66c01a572e6705801a7e6b14210b3c1.28
-                0x08008490       0x10 /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(cube_solver-9cb2d2c87d42d52d.cube_solver.7c6f56aa1cac7d27-cgu.0.rcgu.o)
- .rodata..Lanon.f66c01a572e6705801a7e6b14210b3c1.29
-                0x080084a0       0x10 /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(cube_solver-9cb2d2c87d42d52d.cube_solver.7c6f56aa1cac7d27-cgu.0.rcgu.o)
- .rodata..Lanon.f66c01a572e6705801a7e6b14210b3c1.30
-                0x080084b0       0x10 /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(cube_solver-9cb2d2c87d42d52d.cube_solver.7c6f56aa1cac7d27-cgu.0.rcgu.o)
- .rodata..Lanon.f66c01a572e6705801a7e6b14210b3c1.31
-                0x080084c0       0x10 /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(cube_solver-9cb2d2c87d42d52d.cube_solver.7c6f56aa1cac7d27-cgu.0.rcgu.o)
- .rodata..Lanon.f66c01a572e6705801a7e6b14210b3c1.32
-                0x080084d0       0x10 /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(cube_solver-9cb2d2c87d42d52d.cube_solver.7c6f56aa1cac7d27-cgu.0.rcgu.o)
- .rodata..Lanon.f66c01a572e6705801a7e6b14210b3c1.33
-                0x080084e0       0x10 /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(cube_solver-9cb2d2c87d42d52d.cube_solver.7c6f56aa1cac7d27-cgu.0.rcgu.o)
- .rodata..Lanon.f66c01a572e6705801a7e6b14210b3c1.34
-                0x080084f0       0x10 /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(cube_solver-9cb2d2c87d42d52d.cube_solver.7c6f56aa1cac7d27-cgu.0.rcgu.o)
- .rodata..Lanon.f66c01a572e6705801a7e6b14210b3c1.35
-                0x08008500       0x10 /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(cube_solver-9cb2d2c87d42d52d.cube_solver.7c6f56aa1cac7d27-cgu.0.rcgu.o)
- .rodata..Lanon.f66c01a572e6705801a7e6b14210b3c1.36
-                0x08008510       0x10 /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(cube_solver-9cb2d2c87d42d52d.cube_solver.7c6f56aa1cac7d27-cgu.0.rcgu.o)
+                0x08008100       0x10 /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(cube_solver-9cb2d2c87d42d52d.cube_solver.7c6f56aa1cac7d27-cgu.0.rcgu.o)
  .rodata.str1.1
-                0x08008520      0x825 /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(core-6ada6be836d9a692.core.6c74236d6d32f994-cgu.0.rcgu.o)
+                0x08008110      0x825 /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(core-6ada6be836d9a692.core.6c74236d6d32f994-cgu.0.rcgu.o)
  .rodata..Lanon.81122077eaa6b9db369b1d42edd68fe1.14
-                0x08008520       0xc8 /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(core-6ada6be836d9a692.core.6c74236d6d32f994-cgu.0.rcgu.o)
+                0x08008110       0xc8 /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(core-6ada6be836d9a692.core.6c74236d6d32f994-cgu.0.rcgu.o)
  .rodata..Lanon.81122077eaa6b9db369b1d42edd68fe1.26
-                0x080085e8       0x10 /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(core-6ada6be836d9a692.core.6c74236d6d32f994-cgu.0.rcgu.o)
-                0x08008d48                        . = ALIGN (0x4)
+                0x080081d8       0x10 /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(core-6ada6be836d9a692.core.6c74236d6d32f994-cgu.0.rcgu.o)
+                0x08008938                        . = ALIGN (0x4)
 
-.ARM.extab      0x080085f8        0x0
-                0x080085f8                        . = ALIGN (0x4)
+.ARM.extab      0x080081e8        0x0
+                0x080081e8                        . = ALIGN (0x4)
  *(.ARM.extab* .gnu.linkonce.armextab.*)
-                0x080085f8                        . = ALIGN (0x4)
+                0x080081e8                        . = ALIGN (0x4)
 
-.ARM            0x080085f8        0x8
-                0x080085f8                        . = ALIGN (0x4)
-                0x080085f8                        __exidx_start = .
+.ARM            0x080081e8        0x8
+                0x080081e8                        . = ALIGN (0x4)
+                0x080081e8                        __exidx_start = .
  *(.ARM.exidx*)
  .ARM.exidx.text._RNvCshXwFllX56pT_7___rustc17rust_begin_unwind
-                0x080085f8        0x8 /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(cube_solver-9cb2d2c87d42d52d.cube_solver.7c6f56aa1cac7d27-cgu.0.rcgu.o)
+                0x080081e8        0x8 /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(cube_solver-9cb2d2c87d42d52d.cube_solver.7c6f56aa1cac7d27-cgu.0.rcgu.o)
  .ARM.exidx.text.solve_cube
-                0x08008600        0x0 /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(cube_solver-9cb2d2c87d42d52d.cube_solver.7c6f56aa1cac7d27-cgu.0.rcgu.o)
+                0x080081f0        0x0 /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(cube_solver-9cb2d2c87d42d52d.cube_solver.7c6f56aa1cac7d27-cgu.0.rcgu.o)
                                   0x8 (size before relaxing)
  .ARM.exidx.text._ZN4core3fmt3num3imp21_$LT$impl$u20$u32$GT$10_fmt_inner17h7e0fac834a52e1b2E
-                0x08008600        0x0 /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(core-6ada6be836d9a692.core.6c74236d6d32f994-cgu.0.rcgu.o)
+                0x080081f0        0x0 /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(core-6ada6be836d9a692.core.6c74236d6d32f994-cgu.0.rcgu.o)
                                   0x8 (size before relaxing)
  .ARM.exidx.text._ZN4core3fmt3num3imp52_$LT$impl$u20$core..fmt..Display$u20$for$u20$u32$GT$3fmt17hf6a4bfbde2c99e13E
-                0x08008600        0x0 /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(core-6ada6be836d9a692.core.6c74236d6d32f994-cgu.0.rcgu.o)
+                0x080081f0        0x0 /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(core-6ada6be836d9a692.core.6c74236d6d32f994-cgu.0.rcgu.o)
                                   0x8 (size before relaxing)
  .ARM.exidx.text._ZN4core3fmt9Formatter12pad_integral12write_prefix17h84006ed563cb6a22E
-                0x08008600        0x0 /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(core-6ada6be836d9a692.core.6c74236d6d32f994-cgu.0.rcgu.o)
+                0x080081f0        0x0 /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(core-6ada6be836d9a692.core.6c74236d6d32f994-cgu.0.rcgu.o)
                                   0x8 (size before relaxing)
  .ARM.exidx.text._ZN4core3fmt9Formatter12pad_integral17h7738abc4dcb7ef43E
-                0x08008600        0x0 /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(core-6ada6be836d9a692.core.6c74236d6d32f994-cgu.0.rcgu.o)
+                0x080081f0        0x0 /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(core-6ada6be836d9a692.core.6c74236d6d32f994-cgu.0.rcgu.o)
                                   0x8 (size before relaxing)
  .ARM.exidx.text._ZN4core3str5count14do_count_chars17h7996e4c50b069a42E
-                0x08008600        0x0 /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(core-6ada6be836d9a692.core.6c74236d6d32f994-cgu.0.rcgu.o)
+                0x080081f0        0x0 /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(core-6ada6be836d9a692.core.6c74236d6d32f994-cgu.0.rcgu.o)
                                   0x8 (size before relaxing)
  .ARM.exidx.text.unlikely._ZN4core9panicking18panic_bounds_check17h6511f546ab9d5ae5E
-                0x08008600        0x0 /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(core-6ada6be836d9a692.core.6c74236d6d32f994-cgu.0.rcgu.o)
+                0x080081f0        0x0 /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(core-6ada6be836d9a692.core.6c74236d6d32f994-cgu.0.rcgu.o)
                                   0x8 (size before relaxing)
  .ARM.exidx.text.unlikely._ZN4core9panicking9panic_fmt17ha5c8d1aa6e35ad31E
-                0x08008600        0x0 /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(core-6ada6be836d9a692.core.6c74236d6d32f994-cgu.0.rcgu.o)
+                0x080081f0        0x0 /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(core-6ada6be836d9a692.core.6c74236d6d32f994-cgu.0.rcgu.o)
                                   0x8 (size before relaxing)
  .ARM.exidx.text.memset
-                0x08008600        0x0 /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(compiler_builtins-39ac331f3ed62a2e.compiler_builtins.5b228f9b2b2289d6-cgu.302.rcgu.o)
+                0x080081f0        0x0 /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(compiler_builtins-39ac331f3ed62a2e.compiler_builtins.5b228f9b2b2289d6-cgu.302.rcgu.o)
                                   0x8 (size before relaxing)
  .ARM.exidx.text.memcpy
-                0x08008600        0x0 /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(compiler_builtins-39ac331f3ed62a2e.compiler_builtins.5b228f9b2b2289d6-cgu.340.rcgu.o)
+                0x080081f0        0x0 /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(compiler_builtins-39ac331f3ed62a2e.compiler_builtins.5b228f9b2b2289d6-cgu.340.rcgu.o)
                                   0x8 (size before relaxing)
  .ARM.exidx.text._ZN17compiler_builtins3mem6memcpy17h76d83c5a68c1995dE
-                0x08008600        0x0 /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(compiler_builtins-39ac331f3ed62a2e.compiler_builtins.5b228f9b2b2289d6-cgu.012.rcgu.o)
+                0x080081f0        0x0 /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(compiler_builtins-39ac331f3ed62a2e.compiler_builtins.5b228f9b2b2289d6-cgu.012.rcgu.o)
                                   0x8 (size before relaxing)
  .ARM.exidx.text.__udivmoddi4
-                0x08008600        0x0 /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(compiler_builtins-39ac331f3ed62a2e.compiler_builtins.5b228f9b2b2289d6-cgu.279.rcgu.o)
+                0x080081f0        0x0 /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(compiler_builtins-39ac331f3ed62a2e.compiler_builtins.5b228f9b2b2289d6-cgu.279.rcgu.o)
                                   0x8 (size before relaxing)
  .ARM.exidx.text._ZN17compiler_builtins3int19specialized_div_rem11u64_div_rem17h56a02874b2bc4b33E
-                0x08008600        0x0 /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(compiler_builtins-39ac331f3ed62a2e.compiler_builtins.5b228f9b2b2289d6-cgu.017.rcgu.o)
+                0x080081f0        0x0 /Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver/libcube_solver.a(compiler_builtins-39ac331f3ed62a2e.compiler_builtins.5b228f9b2b2289d6-cgu.017.rcgu.o)
                                   0x8 (size before relaxing)
-                0x08008600                        __exidx_end = .
-                0x08008600                        . = ALIGN (0x4)
+                0x080081f0                        __exidx_end = .
+                0x080081f0                        . = ALIGN (0x4)
 
-.preinit_array  0x08008600        0x0
-                0x08008600                        . = ALIGN (0x4)
-                0x08008600                        PROVIDE (__preinit_array_start = .)
+.preinit_array  0x080081f0        0x0
+                0x080081f0                        . = ALIGN (0x4)
+                0x080081f0                        PROVIDE (__preinit_array_start = .)
  *(.preinit_array*)
-                0x08008600                        PROVIDE (__preinit_array_end = .)
-                0x08008600                        . = ALIGN (0x4)
+                0x080081f0                        PROVIDE (__preinit_array_end = .)
+                0x080081f0                        . = ALIGN (0x4)
 
-.init_array     0x08008600        0x4
-                0x08008600                        . = ALIGN (0x4)
-                0x08008600                        PROVIDE (__init_array_start = .)
+.init_array     0x080081f0        0x4
+                0x080081f0                        . = ALIGN (0x4)
+                0x080081f0                        PROVIDE (__init_array_start = .)
  *(SORT_BY_NAME(.init_array.*))
  *(.init_array*)
- .init_array    0x08008600        0x4 /Applications/STM32CubeIDE.app/Contents/Eclipse/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.13.3.rel1.macos64_1.0.0.202411102158/tools/bin/../lib/gcc/arm-none-eabi/13.3.1/thumb/v7e-m+fp/hard/crtbegin.o
-                0x08008604                        PROVIDE (__init_array_end = .)
-                0x08008604                        . = ALIGN (0x4)
+ .init_array    0x080081f0        0x4 /Applications/STM32CubeIDE.app/Contents/Eclipse/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.13.3.rel1.macos64_1.0.0.202411102158/tools/bin/../lib/gcc/arm-none-eabi/13.3.1/thumb/v7e-m+fp/hard/crtbegin.o
+                0x080081f4                        PROVIDE (__init_array_end = .)
+                0x080081f4                        . = ALIGN (0x4)
 
-.fini_array     0x08008604        0x4
-                0x08008604                        . = ALIGN (0x4)
+.fini_array     0x080081f4        0x4
+                0x080081f4                        . = ALIGN (0x4)
                 [!provide]                        PROVIDE (__fini_array_start = .)
  *(SORT_BY_NAME(.fini_array.*))
  *(.fini_array*)
- .fini_array    0x08008604        0x4 /Applications/STM32CubeIDE.app/Contents/Eclipse/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.13.3.rel1.macos64_1.0.0.202411102158/tools/bin/../lib/gcc/arm-none-eabi/13.3.1/thumb/v7e-m+fp/hard/crtbegin.o
+ .fini_array    0x080081f4        0x4 /Applications/STM32CubeIDE.app/Contents/Eclipse/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.13.3.rel1.macos64_1.0.0.202411102158/tools/bin/../lib/gcc/arm-none-eabi/13.3.1/thumb/v7e-m+fp/hard/crtbegin.o
                 [!provide]                        PROVIDE (__fini_array_end = .)
-                0x08008608                        . = ALIGN (0x4)
-                0x08008608                        _sidata = LOADADDR (.data)
+                0x080081f8                        . = ALIGN (0x4)
+                0x080081f8                        _sidata = LOADADDR (.data)
 
-.rel.dyn        0x08008608        0x0
- .rel.iplt      0x08008608        0x0 /Applications/STM32CubeIDE.app/Contents/Eclipse/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.13.3.rel1.macos64_1.0.0.202411102158/tools/bin/../lib/gcc/arm-none-eabi/13.3.1/thumb/v7e-m+fp/hard/crtbegin.o
+.rel.dyn        0x080081f8        0x0
+ .rel.iplt      0x080081f8        0x0 /Applications/STM32CubeIDE.app/Contents/Eclipse/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.13.3.rel1.macos64_1.0.0.202411102158/tools/bin/../lib/gcc/arm-none-eabi/13.3.1/thumb/v7e-m+fp/hard/crtbegin.o
 
-.data           0x20000000       0x60 load address 0x08008608
+.data           0x20000000       0x60 load address 0x080081f8
                 0x20000000                        . = ALIGN (0x4)
                 0x20000000                        _sdata = .
  *(.data)
@@ -9130,11 +9083,11 @@ LOAD /Applications/STM32CubeIDE.app/Contents/Eclipse/plugins/com.st.stm32cube.id
                 0x20000060                        . = ALIGN (0x4)
                 0x20000060                        _edata = .
 
-.igot.plt       0x20000060        0x0 load address 0x08008668
+.igot.plt       0x20000060        0x0 load address 0x08008258
  .igot.plt      0x20000060        0x0 /Applications/STM32CubeIDE.app/Contents/Eclipse/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.13.3.rel1.macos64_1.0.0.202411102158/tools/bin/../lib/gcc/arm-none-eabi/13.3.1/thumb/v7e-m+fp/hard/crtbegin.o
                 0x20000060                        . = ALIGN (0x4)
 
-.bss            0x20000060     0x4e54 load address 0x08008668
+.bss            0x20000060     0x4e54 load address 0x08008258
                 0x20000060                        _sbss = .
                 0x20000060                        __bss_start__ = _sbss
  *(.bss)
@@ -9276,7 +9229,7 @@ LOAD /Applications/STM32CubeIDE.app/Contents/Eclipse/plugins/com.st.stm32cube.id
                 0x20004eb4                        __bss_end__ = _ebss
 
 ._user_heap_stack
-                0x20004eb4      0x604 load address 0x08008668
+                0x20004eb4      0x604 load address 0x08008258
                 0x20004eb8                        . = ALIGN (0x8)
  *fill*         0x20004eb4        0x4 
                 [!provide]                        PROVIDE (end = .)

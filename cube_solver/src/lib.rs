@@ -456,45 +456,60 @@ fn solve_internal(_cube: &mut Cube, out: &mut [solver_move_t]) -> usize{
     out[4]  = solver_move_t::F;
     out[5]  = solver_move_t::B;
 
-    out[6]  = solver_move_t::U2;
-    out[7]  = solver_move_t::D2;
-    out[8]  = solver_move_t::L2;
-    out[9]  = solver_move_t::R2;
-    out[10] = solver_move_t::F2;
-    out[11] = solver_move_t::B2;
+    out[6] = solver_move_t::Bi;
+    out[7] = solver_move_t::Fi;
+    out[8] = solver_move_t::Ri;
+    out[9] = solver_move_t::Li;
+    out[10] = solver_move_t::Di;
+    out[11] = solver_move_t::Ui;
 
-    out[12] = solver_move_t::Ui;
-    out[13] = solver_move_t::Di;
-    out[14] = solver_move_t::Li;
-    out[15] = solver_move_t::Ri;
-    out[16] = solver_move_t::Fi;
-    out[17] = solver_move_t::Bi;
+    12
 
-    // ***** inverse starts here *****
+    // out[0]  = solver_move_t::U;
+    // out[1]  = solver_move_t::D;
+    // out[2]  = solver_move_t::L;
+    // out[3]  = solver_move_t::R;
+    // out[4]  = solver_move_t::F;
+    // out[5]  = solver_move_t::B;
 
-    out[18] = solver_move_t::B;
-    out[19] = solver_move_t::F;
-    out[20] = solver_move_t::R;
-    out[21] = solver_move_t::L;
-    out[22] = solver_move_t::D;
-    out[23] = solver_move_t::U;
+    // out[6]  = solver_move_t::U2;
+    // out[7]  = solver_move_t::D2;
+    // out[8]  = solver_move_t::L2;
+    // out[9]  = solver_move_t::R2;
+    // out[10] = solver_move_t::F2;
+    // out[11] = solver_move_t::B2;
 
-    out[24] = solver_move_t::B2;
-    out[25] = solver_move_t::F2;
-    out[26] = solver_move_t::R2;
-    out[27] = solver_move_t::L2;
-    out[28] = solver_move_t::D2;
-    out[29] = solver_move_t::U2;
+    // out[12] = solver_move_t::Ui;
+    // out[13] = solver_move_t::Di;
+    // out[14] = solver_move_t::Li;
+    // out[15] = solver_move_t::Ri;
+    // out[16] = solver_move_t::Fi;
+    // out[17] = solver_move_t::Bi;
 
-    out[30] = solver_move_t::Bi;
-    out[31] = solver_move_t::Fi;
-    out[32] = solver_move_t::Ri;
-    out[33] = solver_move_t::Li;
-    out[34] = solver_move_t::Di;
-    out[35] = solver_move_t::Ui;
+    // // ***** inverse starts here *****
 
+    // out[18] = solver_move_t::B;
+    // out[19] = solver_move_t::F;
+    // out[20] = solver_move_t::R;
+    // out[21] = solver_move_t::L;
+    // out[22] = solver_move_t::D;
+    // out[23] = solver_move_t::U;
+
+    // out[24] = solver_move_t::B2;
+    // out[25] = solver_move_t::F2;
+    // out[26] = solver_move_t::R2;
+    // out[27] = solver_move_t::L2;
+    // out[28] = solver_move_t::D2;
+    // out[29] = solver_move_t::U2;
+
+    // out[30] = solver_move_t::Bi;
+    // out[31] = solver_move_t::Fi;
+    // out[32] = solver_move_t::Ri;
+    // out[33] = solver_move_t::Li;
+    // out[34] = solver_move_t::Di;
+    // out[35] = solver_move_t::Ui;
  
-    36
+    // 36
 }
 
 #[unsafe(no_mangle)] // Prevents function renaming (mangling) during compiling. C expects symbol named solve_cube
