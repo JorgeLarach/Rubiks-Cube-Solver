@@ -24,6 +24,21 @@ pub struct Cube {
     pub stickers: [u8; 54],
 }
 
+pub struct CornerState {
+    pub position: u8,    // which of the 8 corner slots this cubie is sitting in (0–7)
+    pub orientation: u8, // 0, 1, or 2
+}
+
+pub struct EdgeState {
+    pub position: u8,  // which of the 12 edge slots this cubie is sitting in (0–11)
+    pub flipped: bool,
+}
+
+pub struct CubieState {
+    pub corners: [CornerState; 8],  // corners[i] = state of corner cubie i
+    pub edges:   [EdgeState;  12],  // edges[i]   = state of edge cubie i
+}
+
 pub const U_FACE: usize = 0;
 pub const D_FACE: usize = 1;
 pub const L_FACE: usize = 2;
@@ -51,6 +66,11 @@ pub const F_FACE_MAX_IDX: usize = 44;
 pub const B_FACE_MIN_IDX: usize = 45;
 pub const B_FACE_MAX_IDX: usize = 53;
 
+
+
+
+
+
 pub const EDGES: [(usize, usize); 12] = [
     // There are 24 edge stickers in the cube (four on each face). 
     // Each edge sticker is adjacent to an edge sticker on another face. 
@@ -69,8 +89,8 @@ pub const EDGES: [(usize, usize); 12] = [
     (L_FACE * 9 + 3, B_FACE * 9 + 5), // Edge Piece 8 (Green-Orange)
     (L_FACE * 9 + 5, F_FACE * 9 + 3), // Edge Piece 9 (Green-Red)
 
-    (R_FACE * 9 + 3, F_FACE * 9 + 5), // Edge Piece 10 (Right-Front)
-    (R_FACE * 9 + 5, B_FACE * 9 + 3), // Edge Piece 11 (Right-Back)
+    (R_FACE * 9 + 3, F_FACE * 9 + 5), // Edge Piece 10 (Blue-Red)
+    (R_FACE * 9 + 5, B_FACE * 9 + 3), // Edge Piece 11 (Blue-Orange)
 ];
 
 // Helper function: get face from sticker index

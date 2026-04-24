@@ -1,0 +1,37 @@
+Rubik's Cube Robot Part 2
+
+4/23/26
+Using IDA* (Iterative deepening A*)
+Great news! Nearly all the code I wrote for the solver so far is useless!
+Full Korf IDA* algorithm won't fit on MCU. Have to modify it.
+
+This project will be divided in three parts:
+1. Cubie representation, rotation functions, etc
+2. Lookup Tables (nightmare?)
+3. IDA* core algorithm
+
+From Wikipedia:
+finds the shortest path between a start node and any member of a set of goal nodes in a weighted graph
+
+f(n)=g(n)+h(n), where g(n) is the cost to travel from the root to node n and h(n) is a problem-specific heuristic estimate of the cost to travel from n to the goal.
+
+IDA* is beneficial when the problem is memory constrained
+
+it requires an amount of memory that is only linear in the length of the solution that it constructs
+
+its worst-case time complexity can be significantly worse under certain conditions
+
+Solving the Rubik's Cube is an example of a planning problem that is amenable to solving with IDA*.
+
+From Finding Optimal Solutions to Rubik's Cube Using Pattern Databases by Richard E. Korf
+The problem is quite diffcult
+
+Thus, we can uniquely specify the state of a cube by giving the position and orientation of each of the 8 edge cubies and 12 corner cubies.
+
+Counting any of the three different twists of the six different faces as a primitive op erator leads to a search tree with a branching factor of 18
+
+IDA* running on our Sun Ultra-Sparc Model I workstation with this heuristic can search to depth 14 in about three days, but solving problem instances at depth 18 would take over 250 years. We need a better heuristic
+
+TODO:
+1. Write a cubie representation of the cube
+2. Write a conversion function between the 54 byte sticker array and cubie representation
