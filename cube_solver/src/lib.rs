@@ -18,6 +18,8 @@ pub enum solver_move_t {
     B, Bi, B2
 }
 
+
+
 pub const U_FACE: usize = 0;
 pub const D_FACE: usize = 1;
 pub const L_FACE: usize = 2;
@@ -95,6 +97,16 @@ const EDGE_CUBIE_COLORS: [[u8; 2]; 12] = [
     [BLUE,   ORANGE],  // cubie 11 (RB)
 ];
 
+pub const SOLVED_CUBE_STICKERS:[u8; 54] = [0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,2,2,2,2,2,2,2,2,2,3,3,3,3,3,3,3,3,3,4,4,4,4,4,4,4,4,4,5,5,5,5,5,5,5,5,5];
+
+pub const ALL_MOVES: [solver_move_t; 18] = [
+    solver_move_t::U,  solver_move_t::Ui, solver_move_t::U2,
+    solver_move_t::D,  solver_move_t::Di, solver_move_t::D2,
+    solver_move_t::L,  solver_move_t::Li, solver_move_t::L2,
+    solver_move_t::R,  solver_move_t::Ri, solver_move_t::R2,
+    solver_move_t::F,  solver_move_t::Fi, solver_move_t::F2,
+    solver_move_t::B,  solver_move_t::Bi, solver_move_t::B2,
+];
 /* Data Structures */
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub struct CornerState {
@@ -204,6 +216,10 @@ pub fn inverse_move(input_move: solver_move_t) -> solver_move_t{
 }
 
 impl CubieState {
+    pub fn make_solved() -> CubieState {
+        convert_to_cubie(SOLVED_CUBE_STICKERS)
+    }
+
     pub fn is_solved(&self) -> bool {
         for i in 0..8 {
             if self.corners[i].position != i as u8 { return false; }
@@ -235,7 +251,7 @@ impl CubieState {
         let mut coord = 0usize;
 
         // coord = Σ(i = 0 to 6) oi * 3^(6-i)
-        // Horner's Method of polynomial evaluation https://en.wikipedia.org/wiki/Horner%27s_method is exactly the same as above
+        // Horner's Method of polynomial evaluation (below) https://en.wikipedia.org/wiki/Horner%27s_method is exactly the same as above
         for i in 0..7 {
             // Shift existing value left one base-3 digit, add this corner's orientation
             coord = coord * 3 + self.corners[i].orientation as usize;
@@ -255,8 +271,13 @@ impl CubieState {
     // Encoded as a base-2 (binary) number: edges[0] is the most significant bit,
     // edges[10] is the least significant bit.
     // Solved state = all unflipped = coord 0.
+
+    
     pub fn edge_orient_coord(&self) -> usize {
         let mut coord = 0usize;
+
+        // coord = Σ(i = 0 to 10) ei * 2^(10-i)
+        // Horner's method of polynomial evaluation (below) is the same as above
         for i in 0..11 {
             // Shift left one binary digit, add 1 if flipped, 0 if not
             coord = coord * 2 + self.edges[i].flipped as usize;
@@ -286,7 +307,7 @@ impl CubieState {
     pub fn udslice_coord(&self) -> usize {
         // Step 1: Mark which slots currently contain a UD-slice edge.
         // UD-slice edges are cubie identities 8, 9, 10, 11.
-        // We look at where each one currently sits (its position field).
+        // Identify which positions (0 to 11) are occupied by a UD-edge
         let mut occupied = [false; 12];
         for i in 8..12 {
             occupied[self.edges[i].position as usize] = true;
@@ -320,7 +341,7 @@ impl CubieState {
     // completely ignoring orientation. There are 8! = 40,320 possible
     // permutations of 8 corners across 8 slots.
     //
-    // We use the Lehmer code (factoriadic encoding):
+    // We use the Lehmer code (factoriadic encoding): https://en.wikipedia.org/wiki/Lehmer_code 
     // For each corner i (left to right), count how many corners to its RIGHT
     // have a smaller position value. Multiply that count by (7-i)! and sum.
     //

@@ -16,13 +16,15 @@ pip install -r requirements.txt
 
 
 
-
 (in cube_solver directory)
 *** to build rust project for armv7 architecture ***
 cargo build --target thumbv7em-none-eabihf --release
 
 *** to remove nasty unneccesary cargo files ***
 cargo clean
+
+*** to generate the lookup tables ***
+cargo run --bin gen_tables --features std-env
 
 
 
