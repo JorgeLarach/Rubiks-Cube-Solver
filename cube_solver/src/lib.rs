@@ -1,7 +1,13 @@
-// This program hasn't seen the last of me yet
+//
+// lib.rs
+//
+//  Created on: Jan 23, 2026
+//      Author: jorgelarach
+//
 
 #![cfg_attr(not(feature = "std-env"), no_std)]
 
+mod tables;
 use core::slice;
 
 #[cfg(not(feature = "std-env"))]
@@ -17,8 +23,6 @@ pub enum solver_move_t {
     F, Fi, F2,
     B, Bi, B2
 }
-
-
 
 pub const U_FACE: usize = 0;
 pub const D_FACE: usize = 1;
@@ -97,7 +101,13 @@ const EDGE_CUBIE_COLORS: [[u8; 2]; 12] = [
     [BLUE,   ORANGE],  // cubie 11 (RB)
 ];
 
-pub const SOLVED_CUBE_STICKERS:[u8; 54] = [0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,2,2,2,2,2,2,2,2,2,3,3,3,3,3,3,3,3,3,4,4,4,4,4,4,4,4,4,5,5,5,5,5,5,5,5,5];
+pub const SOLVED_CUBE_STICKERS:[u8; 54] = 
+   [0,0,0,0,0,0,0,0,0,
+    1,1,1,1,1,1,1,1,1,
+    2,2,2,2,2,2,2,2,2,
+    3,3,3,3,3,3,3,3,3,
+    4,4,4,4,4,4,4,4,4,
+    5,5,5,5,5,5,5,5,5];
 
 pub const ALL_MOVES: [solver_move_t; 18] = [
     solver_move_t::U,  solver_move_t::Ui, solver_move_t::U2,
@@ -215,6 +225,20 @@ pub fn inverse_move(input_move: solver_move_t) -> solver_move_t{
     }
 }
 
+// BINOMIAL COEFFICIENT HELPER
+// Computes C(n, k) = n! / (k! * (n-k)!) — "n choose k"
+// Used by udslice_coord to rank combinations.
+// const fn means this can be evaluated at compile time.
+pub const fn choose(n: usize, k: usize) -> usize {
+    if k > n { return 0; }
+    match (n, k) {
+        (_, 0) => 1, // C(n,0) = 1: there's exactly one way to choose nothing
+        (0, _) => 0, // C(0,k>0) = 0: can't choose k>0 items from empty set
+        // Pascal's triangle recurrence: C(n,k) = C(n-1,k-1) + C(n-1,k)
+        _ => choose(n - 1, k - 1) + choose(n - 1, k)
+    }
+}
+
 impl CubieState {
     pub fn make_solved() -> CubieState {
         convert_to_cubie(SOLVED_CUBE_STICKERS)
@@ -248,13 +272,16 @@ impl CubieState {
     // most significant digit, corners[6] is the least significant.
     // Solved state = all orientations 0 = coord 0.
     pub fn corner_orient_coord(&self) -> usize {
-        let mut coord = 0usize;
+        let mut slot_orients = [0u8; 8];
+        for i in 0..8 {
+            slot_orients[self.corners[i].position as usize] = self.corners[i].orientation;
+        }
 
+        let mut coord = 0usize;
         // coord = Σ(i = 0 to 6) oi * 3^(6-i)
         // Horner's Method of polynomial evaluation (below) https://en.wikipedia.org/wiki/Horner%27s_method is exactly the same as above
-        for i in 0..7 {
-            // Shift existing value left one base-3 digit, add this corner's orientation
-            coord = coord * 3 + self.corners[i].orientation as usize;
+        for s in 0..7 {
+            coord = coord * 3 + slot_orients[s] as usize;
         }
         coord
     }
@@ -272,15 +299,19 @@ impl CubieState {
     // edges[10] is the least significant bit.
     // Solved state = all unflipped = coord 0.
 
-    
     pub fn edge_orient_coord(&self) -> usize {
-        let mut coord = 0usize;
+        let mut slot_flips = [0u8; 12];
+        for i in 0..12 {
+            slot_flips[self.edges[i].position as usize] = self.edges[i].flipped as u8;
+        }
 
+
+        let mut coord = 0usize;
         // coord = Σ(i = 0 to 10) ei * 2^(10-i)
         // Horner's method of polynomial evaluation (below) is the same as above
-        for i in 0..11 {
+        for s in 0..11 {
             // Shift left one binary digit, add 1 if flipped, 0 if not
-            coord = coord * 2 + self.edges[i].flipped as usize;
+            coord = coord * 2 + slot_flips[s] as usize;
         }
         coord
     }
@@ -328,7 +359,7 @@ impl CubieState {
                 k -= 1;
             } else {
                 // This slot does NOT have a UD-slice edge — add C(i,k) to rank
-                coord += Self::choose(i, k);
+                coord += choose(i, k);
             }
         }
         coord
@@ -364,19 +395,7 @@ impl CubieState {
         coord
     }
 
-    // BINOMIAL COEFFICIENT HELPER
-    // Computes C(n, k) = n! / (k! * (n-k)!) — "n choose k"
-    // Used by udslice_coord to rank combinations.
-    // const fn means this can be evaluated at compile time.
-    const fn choose(n: usize, k: usize) -> usize {
-        if k > n { return 0; }
-        match (n, k) {
-            (_, 0) => 1, // C(n,0) = 1: there's exactly one way to choose nothing
-            (0, _) => 0, // C(0,k>0) = 0: can't choose k>0 items from empty set
-            // Pascal's triangle recurrence: C(n,k) = C(n-1,k-1) + C(n-1,k)
-            _ => Self::choose(n - 1, k - 1) + Self::choose(n - 1, k)
-        }
-    }
+
 
     /* Rotation Functions  */
 
