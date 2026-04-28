@@ -50,10 +50,7 @@ $$
 time(n) = 8,784 * b^{*(n-10) }
 $$
 
-To predict how long it would take an 11- and 12-move scrambled cube:
-$$
-time(11) = 8,784 * 7.2^1 = 63,244ms  \approx1~min
-$$
+To predict how long it would take an 12-move scrambled cube, for example:
 $$
 time(12) = 8,784 * 7.2^2 = 455,362ms \approx7.5~mins
 $$
@@ -74,7 +71,7 @@ So then our final table looks like this (all values are approximations):
 |  20   |  1 century      |  4 millenia |
 
 Considering four things:
-1. The number of moves it takes to scramble the cube is generally the same number of moves the solver generates, 
+1. The number of moves it takes to scramble the cube is generally the same number of moves the solver generates.
 2. God's number states that any cube can be solved in 20 or less moves. 
 3. My weak heuristic almost entirely ensures that my solver will generate more than 20 moves for any sufficiently scrambled cube.
 4. I don't know how to kill time for a 4 millenia.
