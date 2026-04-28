@@ -55,7 +55,7 @@ $$
 time(11) = 8,784 * 7.2^1 = 63,244ms  \approx1~min
 $$
 $$
-time(12) = 8,784 * 7.2^2 = 455,362ms \approx 7.5~mins
+time(12) = 8,784 * 7.2^2 = 455,362ms \approx7.5~mins
 $$
 So then our final table looks like this (all values are approximations): 
 
@@ -72,6 +72,7 @@ So then our final table looks like this (all values are approximations):
 |  18   |  2 years        |  76.5 years |
 |  19   |  14.5 years     |  5 centuries|
 |  20   |  1 century      |  4 millenia |
+
 Considering four things:
 1. The number of moves it takes to scramble the cube is generally the same number of moves the solver generates, 
 2. God's number states that any cube can be solved in 20 or less moves. 
