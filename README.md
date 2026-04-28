@@ -51,9 +51,11 @@ time(n) = 8,784 * b^{*(n-10) }
 $$
 
 To predict how long it would take an 12-move scrambled cube, for example:
+
 $$
 time(12) = 8,784 * 7.2^2 = 455,362ms \approx7.5~mins
 $$
+
 So then our final table looks like this (all values are approximations): 
 
 | N-moves scrambled cube | Solve time on M1      | Solve time on MCU | 
