@@ -9,7 +9,8 @@ cd cube_solver
 --target thumbv7em-none-eabihf \
 --release \
 --no-default-features \
---crate-type staticlib
+--crate-type staticlib \
+--lib
 
 echo "[Rust] Copying static library..."
 

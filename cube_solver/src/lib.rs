@@ -13,6 +13,8 @@ use core::slice;
 #[cfg(not(feature = "std-env"))]
 use core::panic::PanicInfo;
 
+use crate::tables::{CORNER_ORIENT_TABLE, CORNER_PERMUTATION_TABLE, EDGE_ORIENT_TABLE, UD_SLICE_TABLE};
+
 #[repr(C)] // Lays out this enum/struct in memory exactly like C would
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub enum solver_move_t {
@@ -48,7 +50,6 @@ const CORNER_CUBIE_COORDINATES: [(usize, usize, usize); 8] = [
     (U_FACE * 9 + 2, B_FACE * 9 + 0, R_FACE * 9 + 2), // 1. UBR
     (U_FACE * 9 + 6, F_FACE * 9 + 0, L_FACE * 9 + 2), // 2. UFL
     (U_FACE * 9 + 8, F_FACE * 9 + 2, R_FACE * 9 + 0), // 3. UFR
-
     (D_FACE * 9 + 0, F_FACE * 9 + 6, L_FACE * 9 + 8), // 4. DFL
     (D_FACE * 9 + 2, F_FACE * 9 + 8, R_FACE * 9 + 6), // 5. DFR
     (D_FACE * 9 + 6, B_FACE * 9 + 8, L_FACE * 9 + 6), // 6. DBL
@@ -59,16 +60,16 @@ const EDGE_CUBIE_COORDINATES: [(usize, usize); 12] = [
     // There are 12 edge stickers in the cube (four on each face). 
     // Each face's edge stickers are located at [1, 3, 5, 7]
 
-    (U_FACE * 9 + 1, B_FACE * 9 + 1), // 0. UB
-    (U_FACE * 9 + 3, L_FACE * 9 + 1), // 1. UL 
-    (U_FACE * 9 + 5, R_FACE * 9 + 1), // 2. UR 
-    (U_FACE * 9 + 7, F_FACE * 9 + 1), // 3. UF 
-    (D_FACE * 9 + 1, F_FACE * 9 + 7), // 4. DF 
-    (D_FACE * 9 + 3, L_FACE * 9 + 7), // 5. DL 
-    (D_FACE * 9 + 5, R_FACE * 9 + 7), // 6. DR 
-    (D_FACE * 9 + 7, B_FACE * 9 + 7), // 7. DB 
-    (L_FACE * 9 + 3, B_FACE * 9 + 5), // 8. LB 
-    (L_FACE * 9 + 5, F_FACE * 9 + 3), // 9. LF 
+    (U_FACE * 9 + 1, B_FACE * 9 + 1), // 0.  UB
+    (U_FACE * 9 + 3, L_FACE * 9 + 1), // 1.  UL 
+    (U_FACE * 9 + 5, R_FACE * 9 + 1), // 2.  UR 
+    (U_FACE * 9 + 7, F_FACE * 9 + 1), // 3.  UF 
+    (D_FACE * 9 + 1, F_FACE * 9 + 7), // 4.  DF 
+    (D_FACE * 9 + 3, L_FACE * 9 + 7), // 5.  DL 
+    (D_FACE * 9 + 5, R_FACE * 9 + 7), // 6.  DR 
+    (D_FACE * 9 + 7, B_FACE * 9 + 7), // 7.  DB 
+    (L_FACE * 9 + 3, B_FACE * 9 + 5), // 8.  LB 
+    (L_FACE * 9 + 5, F_FACE * 9 + 3), // 9.  LF 
     (R_FACE * 9 + 3, F_FACE * 9 + 5), // 10. RF 
     (R_FACE * 9 + 5, B_FACE * 9 + 3)  // 11. RB 
 ];
@@ -101,13 +102,14 @@ const EDGE_CUBIE_COLORS: [[u8; 2]; 12] = [
     [BLUE,   ORANGE],  // cubie 11 (RB)
 ];
 
-pub const SOLVED_CUBE_STICKERS:[u8; 54] = 
-   [0,0,0,0,0,0,0,0,0,
+pub const SOLVED_CUBE_STICKERS:[u8; 54] = [
+    0,0,0,0,0,0,0,0,0,
     1,1,1,1,1,1,1,1,1,
     2,2,2,2,2,2,2,2,2,
     3,3,3,3,3,3,3,3,3,
     4,4,4,4,4,4,4,4,4,
-    5,5,5,5,5,5,5,5,5];
+    5,5,5,5,5,5,5,5,5
+];
 
 pub const ALL_MOVES: [solver_move_t; 18] = [
     solver_move_t::U,  solver_move_t::Ui, solver_move_t::U2,
@@ -117,6 +119,8 @@ pub const ALL_MOVES: [solver_move_t; 18] = [
     solver_move_t::F,  solver_move_t::Fi, solver_move_t::F2,
     solver_move_t::B,  solver_move_t::Bi, solver_move_t::B2,
 ];
+
+pub const FACTORIAL: [usize; 8] = [1, 1, 2, 6, 24, 120, 720, 5040];
 /* Data Structures */
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub struct CornerState {
@@ -243,6 +247,8 @@ impl CubieState {
     pub fn make_solved() -> CubieState {
         convert_to_cubie(SOLVED_CUBE_STICKERS)
     }
+    
+
 
     pub fn is_solved(&self) -> bool {
         for i in 0..8 {
@@ -335,6 +341,8 @@ impl CubieState {
     // We assign each such combination a unique number 0..494 using a standard
     // combinatorial ranking formula. Solved state = UD-slice edges in slots
     // 8,9,10,11 = coord 0.
+    // Combinatorial Number System: https://en.wikipedia.org/wiki/Combinatorial_number_system
+    // Interestingly also related to Lehmer
     pub fn udslice_coord(&self) -> usize {
         // Step 1: Mark which slots currently contain a UD-slice edge.
         // UD-slice edges are cubie identities 8, 9, 10, 11.
@@ -365,6 +373,46 @@ impl CubieState {
         coord
     }
 
+    // UDSLICE PERMUTATION COORDINATE
+    // Range: 0..24 (= 4!)
+    //
+    // PRECONDITION: only meaningful when udslice_coord() == 0,
+    // meaning all 4 UD-slice edges are already in slots 8-11.
+    // Phase 1 guarantees this before Phase 2 runs.
+    //
+    // The 4 UD-slice edges are cubies 8 (LB), 9 (LF), 10 (RF), 11 (RB).
+    // This coordinate encodes which of the 4! = 24 orderings they sit in
+    // across slots 8, 9, 10, 11.
+    //
+    // We use the same Lehmer encoding as corner_perm_coord, just over
+    // 4 elements instead of 8. For each slot s in {8,9,10,11}, count
+    // how many slots to its right (within the belt) hold a cubie with
+    // a smaller cubie ID. Multiply by (3 - local_index)! and sum.
+    pub fn udslice_perm_coord(&self) -> usize {
+        const FACTORIAL: [usize; 4] = [1, 1, 2, 6];
+
+        // Extract just the 4 cubie IDs sitting in belt slots 8..11,
+        // normalized to the range 0..3 for clean Lehmer encoding.
+        // Cubie IDs are 8,9,10,11 so subtract 8 to get 0,1,2,3.
+        let mut belt = [0u8; 4];
+        for i in 0..4 {
+            // find which cubie is in slot (8 + i)
+            let cubie = self.find_edge_at((8 + i) as u8);
+            // normalize: cubie 8->0, 9->1, 10->2, 11->3
+            belt[i] = (cubie - 8) as u8;
+        }
+
+        // Lehmer code over the 4-element permutation in belt[]
+        let mut coord = 0usize;
+        for i in 0..4 {
+            let smaller = ((i + 1)..4)
+                .filter(|&j| belt[j] < belt[i])
+                .count();
+            coord += smaller * FACTORIAL[3 - i];
+        }
+        coord
+    }
+
     // CORNER PERMUTATION COORDINATE
     // Range: 0..40320 (= 8!)
     //
@@ -381,7 +429,7 @@ impl CubieState {
     // so coord = 0. Any permutation maps to a unique number 0..40319.
     pub fn corner_perm_coord(&self) -> usize {
         // Precomputed factorials 0! through 7!
-        const FACTORIAL: [usize; 8] = [1, 1, 2, 6, 24, 120, 720, 5040];
+        
         let mut coord = 0usize;
         for i in 0..8 {
             // Count how many cubies at positions AFTER i have a smaller position value
@@ -398,7 +446,6 @@ impl CubieState {
 
 
     /* Rotation Functions  */
-
 
     // Orientation maps derived from CORNER_CUBIE_COORDINATES sticker ordering [UD, FB, LR]
     // Each move swaps the two sticker positions NOT on its own axis
@@ -538,24 +585,227 @@ impl CubieState {
     }
 }
 
+/* IDA Star Helper Functions */
+fn face_of(m: solver_move_t) -> u8 {
+    match m {
+        solver_move_t::U | solver_move_t::Ui | solver_move_t::U2 => U_FACE as u8,
+        solver_move_t::D | solver_move_t::Di | solver_move_t::D2 => D_FACE as u8,
+        solver_move_t::L | solver_move_t::Li | solver_move_t::L2 => L_FACE as u8,
+        solver_move_t::R | solver_move_t::Ri | solver_move_t::R2 => R_FACE as u8,
+        solver_move_t::F | solver_move_t::Fi | solver_move_t::F2 => F_FACE as u8,
+        solver_move_t::B | solver_move_t::Bi | solver_move_t::B2 => B_FACE as u8
 
-fn solve_internal(_cube: CubieState, out: &mut [solver_move_t]) -> usize{
+    }
+}
+
+// Technique to identify opposite faces:
+// Divide each face number by 2. If they result in the same number, they are opposites:
+// U_FACE (0/2) = 0, D_FACE (1/2) = 0
+// L_FACE (2/2) = 1, R_FACE (3/2) = 1
+// F_FACE (4/2) = 2, B_FACE (5/2) = 2
+
+// We want to enforce 2 pruning rules:
+// 1. Prune paths that apply two sequential moves on the same face. Should never be necessary
+// 2. Prune paths that apply moves to opposite faces but in the incorrect order. Always allow the higher-indexed face to come after the lower.
+fn should_prune(last_face: u8, m: solver_move_t) -> bool {
+    if last_face == 255 {return false;} // No previous move
+    let current_face = face_of(m);
+
+    // Application of Rule 1
+    if last_face == current_face {return true;}   
+
+    // Application of Rule 2                               
+    if last_face/2 == current_face/2 && current_face < last_face { return true;} 
+    false
+}
+
+
+/* Solve Algorithm */
+
+pub fn heuristic(cube: &CubieState) -> u8 {
+    // Compute all four coordinates for current cube state
+    let co_coord = cube.corner_orient_coord();
+    let eo_coord = cube.edge_orient_coord();
+    let ud_coord = cube.udslice_coord();
+    let cp_coord = cube.corner_perm_coord();
+
+    // Look up each coordinate's minimum move distance in its table.
+    // Each value is num of moves to fix just this aspect
+    let co = CORNER_ORIENT_TABLE[co_coord];
+    let eo = EDGE_ORIENT_TABLE[eo_coord];
+    let ud = UD_SLICE_TABLE[ud_coord];
+    let cp = CORNER_PERMUTATION_TABLE[cp_coord];
+
+    // Return the maximum. Since fixing any one aspect takes at least
+    // this many moves, and we need to fix ALL aspects, the max is a
+    // valid lower bound on the total solution length. This is what
+    // makes the heuristic admissible: it never overestimates.
+    co.max(eo).max(ud).max(cp)
+}
+
+// ============================================================
+// IDA* RECURSIVE SEARCH
+// ============================================================
+// Resources: https://en.wikipedia.org/wiki/Iterative_deepening_A*
+//
+// IDA* (Iterative Deepening A*) is a memory-efficient optimal search.
+// It runs repeated depth-first searches, each with a slightly higher
+// cost threshold. Because the threshold starts at the heuristic value
+// and grows by the minimum amount each iteration, it's guaranteed to
+// find the shortest solution.
+//
+// At each node:
+//   g = cost so far (number of moves made)
+//   h = heuristic estimate of remaining cost (four-table lookup)
+//   f = g + h = estimated total solution length through this node
+//
+// If f > threshold: prune this branch entirely (return the f value
+//   so the outer loop knows the minimum useful next threshold).
+// If cube is solved: we're done — record solution length and return None.
+// Otherwise: try all 18 moves and recurse.
+//
+// RETURN VALUE:
+//   None        -> solution found. sol_len has been written.
+//   Some(min_f) -> not found. min_f is the smallest f that exceeded
+//                  the threshold — the outer loop uses this as the
+//                  next threshold value.
+//
+// PARAMETERS:
+//   cube      - current cube state at this node
+//   g         - depth / number of moves made so far
+//   threshold - current IDA* cost threshold
+//   last_face - face index of the last applied move (255 = none)
+//   path      - the move sequence being built; path[0..g] is current path
+//   sol_len   - written with g when solution is found
+
+fn ida_search(
+    cube:      &CubieState,
+    g:         u8, 
+    threshold: u8,
+    last_face: u8,
+    path:      &mut [solver_move_t],
+    sol_len:   &mut usize
+) -> Option<u8> {
+    let heuristic = heuristic(&cube);
+    let f = g.saturating_add(heuristic);
+
+    if f > threshold {
+        return Some(f);
+    }
+
+    if cube.is_solved() {
+        *sol_len = g as usize;
+        return None;
+    }
+
+    if g as usize > path.len() {
+        return Some(u8::MAX);
+    }
+
+    let mut min_exceeded = u8::MAX;
+
+    for &m in ALL_MOVES.iter() {
+
+        if should_prune(last_face, m){
+            continue;
+        }
+
+        let mut next = *cube;
+        next.apply_move(m);
+
+        path[g as usize] = m;
+
+        let result = ida_search(
+            &next, 
+            g + 1, 
+            threshold, 
+            face_of(m), 
+            path, 
+            sol_len
+        );
+
+        match result {
+            None => return None,
+            Some(t) => {
+                if t < min_exceeded {
+                    min_exceeded = t;
+                }
+            }
+        }
+    }
+
+    Some(min_exceeded)
+}
+
+pub fn solve_internal(cube: CubieState, out: &mut [solver_move_t]) -> usize{
+
+    if cube.is_solved() {return 0;}
+
+    let mut threshold = heuristic(&cube);
+
+    let mut sol_len = 0usize;
+
+    // Each iteration of this loop is one complete DFS pass
+    loop {
+        let result = ida_search(
+            &cube, 
+            0, 
+            threshold, 
+            255, 
+            out, 
+            &mut sol_len
+        );
+        
+        match result {
+            None => return sol_len,
+            Some(u8::MAX) => return 0,
+            Some(new_threshold) => threshold = new_threshold
+        }
+    }
+
+}
+
+fn test_moves_short(out: &mut [solver_move_t]) -> usize{
+    out[0]  = solver_move_t::U;
+    out[1]  = solver_move_t::D;
+    out[2]  = solver_move_t::L;
+    out[3]  = solver_move_t::R;
+    out[4]  = solver_move_t::F;
+    out[5]  = solver_move_t::B;
+
+    out[6] = solver_move_t::Bi;
+    out[7] = solver_move_t::Fi;
+    out[8] = solver_move_t::Ri;
+    out[9] = solver_move_t::Li;
+    out[10] = solver_move_t::Di;
+    out[11] = solver_move_t::Ui;
+
+    12
+
     // out[0]  = solver_move_t::U;
-    // out[1]  = solver_move_t::D;
-    // out[2]  = solver_move_t::L;
-    // out[3]  = solver_move_t::R;
-    // out[4]  = solver_move_t::F;
+    // out[1]  = solver_move_t::L;
+    // out[2]  = solver_move_t::R;
+    // out[3]  = solver_move_t::F;
+    // out[4]  = solver_move_t::U2;
     // out[5]  = solver_move_t::B;
 
     // out[6] = solver_move_t::Bi;
-    // out[7] = solver_move_t::Fi;
-    // out[8] = solver_move_t::Ri;
-    // out[9] = solver_move_t::Li;
-    // out[10] = solver_move_t::Di;
+    // out[7]  = solver_move_t::U2;
+    // out[8] = solver_move_t::Fi;
+    // out[9] = solver_move_t::Ri;
+    // out[10] = solver_move_t::Li;
     // out[11] = solver_move_t::Ui;
-
     // 12
 
+    // out[0]  = solver_move_t::D;
+    // out[1]  = solver_move_t::D2;
+    // out[2]  = solver_move_t::Di;
+
+    // 3
+
+}
+
+fn test_moves_long(out: &mut [solver_move_t]) -> usize {
     out[0]  = solver_move_t::U;
     out[1]  = solver_move_t::D;
     out[2]  = solver_move_t::L;
@@ -626,6 +876,8 @@ pub extern "C" fn solve_cube(
     };
 
     solve_internal(cube, out_slice)
+    // test_moves_long(out_slice)
+    // test_moves_short(out_slice)
 }
 
 #[cfg(not(feature = "std-env"))]

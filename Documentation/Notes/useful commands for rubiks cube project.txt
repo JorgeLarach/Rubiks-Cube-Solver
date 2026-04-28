@@ -3,7 +3,7 @@ useful commands for rubiks cube project
 
 *** to launch python virtual env. for gui and transmission ***
 source venv/bin/activate
-python gui/test_usb.py
+python GUI/gui.py
 
 *** to deactivate env. ***
 deactivate

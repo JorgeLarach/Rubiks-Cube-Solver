@@ -57,7 +57,7 @@ UART_HandleTypeDef huart2;
 osThreadId_t CubeProcessTaskHandle;
 const osThreadAttr_t CubeProcessTask_attributes = {
   .name = "CubeProcessTask",
-  .stack_size = 128 * 4,
+  .stack_size = 4096 * 4,
   .priority = (osPriority_t) osPriorityNormal,
 };
 /* USER CODE BEGIN PV */

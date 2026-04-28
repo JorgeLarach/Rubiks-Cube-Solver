@@ -1,13 +1,122 @@
-Rubik's Cube Solver Part 2  
-April 24, 2026       
+# Rubik's Cube Solver Part 2  
+
+## April 27, 2026  
+I wrote the IDA* implementation with four modified databases. Korf's full implementation used the following pattern databases for the heuristic:   
+
+Corner PDB: position + orientation for all 8 corners -> 8! * 3^7 = 88MB  
+Edge PDB 1: position + orientation for first 6 of 12 edges -> P(12, 6) * 2^6 = 43MB  
+Edge PDB 2: position + orientation for other 6 of 12 edges -> 43MB  
+Total: 174MB. The Nucleo only has 512KB of flash.
+
+Instead of the canonical tables, I focused on the following state spaces:    
+Corner Orientation: 2187 bytes (3 ways to orient 7 corners, 3^7 = 2,187)     
+Corner Permutation: 40,320 bytes (all permutations of 8 corners: 8! = 40,320)     
+Edge Orientation: 2048 bytes (2 ways to orient 11 edges: 2^11 = 2,048)  
+UD Slice: 495 bytes (The number of ways to choose 4 slots out of 12 is C(12,4) = 495)     
+Total: 44KB. I did away with edge position altogether, save for the UD-slice edges.   
+
+The heuristic for the solver uses these tables to determine the lower bound solution length, and on my laptop, the solver works, kind of. It takes about 8 seconds on my 3.2GHz M1 Pro CPU to find a solution for a cube that was scrambled in 10 moves. The Nucleo has a 84MHz CPU, so:   
+3.2GHz / 84MHz = 38.1x slowdown. Therefore, it would take:    
+8 seconds * 38.1 = 4.75 minutes on MCU.    
+
+Even on my laptop, though, the algorithm suffers when it is tasked with solving a cube was scrambled in 11 or more moves. Table below shows how long it takes to solve an n-moves scrambled cube. The ratio from 0-moves to 5-moves is so small it won't be considered here. The Effective Branching Factor (b*) is a measure of the efficiency of a heuristic search algorithm. It represents the average number of successor nodes a search algorithm expands, weighted to account for the effectiveness of the pruning. If a heuristic is perfect, b* is 1.   
+For the Ratio column, 
+$$
+ratio(n) = time(n) / time(n-1):
+$$
+| Moves | Time (ms) | Ratio |
+| ----- | --------- | ----- |
+| 0     | 0.010     |   -   |
+| 1     | 0.096     |   -   |
+| 2     | 0.081     |   -   |
+| 3     | 0.123     |   -   |
+| 4     | 0.116     |   -   |
+| 5     | 0.430     |   -   |
+| 6     | 4         |  9.3  |
+| 7     | 16        |   4   |
+| 8     | 360       | 22.5  |
+| 9     | 797       |  2.2  |
+| 10    | 8784      |  7.7  |
+
+Taking the geometric mean of the last five ratios gives us our EFB
+
+$$
+b^* = (9.3 4.0 * 22.5 * 2.2 * 11.0) ^ {(1/5)} = 7.2
+$$
+
+So on average, every node visited expands to 7 succesor nodes. That's really not great. Either way, to predict forward, using the time taken to solve the 10-move scrambled cube, we just use the following equation:
+
+$$
+time(n) = 8,784 * b^{*(n-10) }
+$$
+
+To predict how long it would take an 11- and 12-move scrambled cube:
+$$
+time(11) = 8,784 * 7.2^1 = 63,244ms  \approx1~min
+$$
+$$
+time(12) = 8,784 * 7.2^2 = 455,362ms \approx 7.5~mins
+$$
+So then our final table looks like this (all values are approximations): 
+
+| N-moves scrambled cube | Solve time on M1      | Solve time on MCU | 
+| ----- | --------------- | ----------- |
+|  10   |  8.8 s          |  5.5 mins   |
+|  11   |  1 min          |  40 mins    |
+|  12   |  7.5 mins       |  4.8 hours  |
+|  13   |  1 hour         |  1.5 days   |
+|  14   |  6.5 hours      |  10.5 days  |
+|  15   |  2 days         |  75 days    |
+|  16   |  14 days        |  1.5 years  |
+|  17   |  102 days       |  10.5 years |
+|  18   |  2 years        |  76.5 years |
+|  19   |  14.5 years     |  5 centuries|
+|  20   |  1 century      |  4 millenia |
+Considering four things:
+1. The number of moves it takes to scramble the cube is generally the same number of moves the solver generates, 
+2. God's number states that any cube can be solved in 20 or less moves. 
+3. My weak heuristic almost entirely ensures that my solver will generate more than 20 moves for any sufficiently scrambled cube.
+4. I don't know how to kill time for a 4 millenia.
+
+That's a little more time than I'd like it to take, so the current implementation won't work. So, I'm switching gears and trying out a Kociemba 2-phase implementation:
+
+Kociemba splits the solve into two sequential IDA* searches, each over a much smaller search space than trying to solve the whole cube at once:    
+
+### Phase 1 
+Reduces the cube to a special subgroup called G1. G1 is the set of all cube states reachable using only the 6 moves U, D, R2, L2, F2, B2. A cube is in G1 when:   
+* All corners are correctly oriented (CO = 0)  <-- corner orientation  
+* All edges are correctly oriented (EO = 0)    <-- edge orientation
+* All UD-slice edges are in their belt (equatorial) slots (UD = 0)  <-- ud-slice combination
+
+That's the first IDA* search
+
+### Phase 2
+Solves from G1 to solved, using only the 10 moves U, U2, Ui, D, D2, Di, R2, L2, F2, B2. Because the move set is restricted, the search space collapses dramatically.
+* All corners are correctly positioned (CP = 0) <-- corner permutation
+* All UD-slice edges are correctly positioned (UP = 0) <-- ud slice permutation
+* All edges are correctly positioned (EP = 0) <-- edge permutation
+
+So all I have to do to write Kociemba from here is just add two more tables and coordinate functions (the UD-Slice Permutation and Edge Permutation tables), write each phase's DFS function, the entry point function, surely some helper functions, and that should be it!
+
+I already had four tables from my previous attempt, which total take up 44KB. Regarding the new tables' role and size:  
+
+UD-Slice Permutation Table: The UD-Slice Combination table from Phase 1 ensures the four equatorial edges indeed make it to the four equator slots. The Edge Orientation Table ensures all 12 edges are unflipped, including the UD-Slice ones, so that's great. But Phase 2 needs to make sure they get to the right position. So the search space for this table is the four equatorial cubies, and the number of ways to permute that is 4! = 24, so this table will only be 24 bytes long.
+
+Edge Permutation Table: The 8 remaining non UD-Slice edges need to be in the correct position. Again, thanks to the Edge Orientation table, we don't need to worry about flipping them. We just need to permute all 8 remaining edges for this table, which, just like the Corner Permutation table, needs 8! elements to cover all possible cube states. So another 40320 bytes
+
+All together, the six tables should take up 85KB of flash. Again, the Nucleo has 512KB of available flash space, so I should be good. With decent heuristics, I should be able to lower the EFB from 7.2 to something more reasonable, like a 3 or 4. Let's see how it turns out.
+
+
+
+## April 24, 2026       
 
 I underestimated this project before. I won't repeat that same mistake again.           
 Cards on the table, I still don't know how to solve a Rubik's Cube. But it turns out I might not have to in order to write this. I did some research, and it turns out there's an algorithm that I didn't pay much attention to when I was first taking a crack at this that sounds like it was designed for my exact case. I don't know how I missed it, but Wikipedia says that "solving the Rubik's Cube is an example of a planning problem that is amenable to solving with IDA*". Not only that, but the IDA* search algorithm "requires an amount of memory that is only linear in the length of the solution that it constructs", meaning that it is practically hand-made for embedded environments. So this project is my attempt at writing a modified iterative deepening A* algorithm in Rust no-std.      
-I say modified because in a research paper written by Richard Korf (the original writer of IDA*), he describes an application of the algorithm specifically for solving a Rubik's Cube, which requires about 86MB of lookup tables (after pruning). I'm using an STM32 Nucleo-F401RE, which has only 512KB flash and 96KB RAM, so I have to modify the heuristic of the algorithm to be even more memory friendly. I definitely have the option to write the full, unmodified IDA* solver on a PC, which would theoretically generate a solution in less than a second, but I like the idea of the robot itself doing all the thinking. 
+I say modified because in a research paper written by Richard Korf (the original writer of IDA*), he describes an application of the algorithm specifically for solving a Rubik's Cube, which requires about 174MB of lookup tables (after pruning). I'm using an STM32 Nucleo-F401RE, which has only 512KB flash and 96KB RAM, so I have to modify the heuristic of the algorithm to be even more memory friendly. I definitely have the option to write the full, unmodified IDA* solver on a PC, which would theoretically generate a solution in less than a second, but I like the idea of the robot itself doing all the thinking. 
 Included in the Documentation folder is the Korf research paper as well as my running notes for the project. I'll leave you with a rather germane message from Korf himself:                  
 "The problem is quite diffcult."
 
-Part 1:  
+# Rubik's Cube Solver Part 1:  
 March 15, 2026  
 
 Welcome to my Rubik's Cube Solver project!  

@@ -11,6 +11,7 @@
 #include "board_pins.h" // for button pins
 
 cube_state_t cube_state = {0};
+extern UART_HandleTypeDef huart2;
 
 void cube_processor_init(void) {
     cube_state.cube_ready = false;
@@ -35,12 +36,20 @@ void cube_process_uart_packet(void) {
 void cube_run_solver(void) {
     if (!cube_state.cube_ready) return;  // No cube to solve
 
+    HAL_UART_Transmit(&huart2, "SOLVING\r\n", 9, 100);
+    uint32_t start = HAL_GetTick();
+
     // Call Rust solver
     cube_state.move_count = solve_cube(
         cube_state.cube_state,
         cube_state.solver_moves,
         MAX_MOVES
     );
+
+    uint32_t elapsed = HAL_GetTick() - start;
+    char buf[32];
+    sprintf(buf, "DONE %d moves %dms\r\n", cube_state.move_count, elapsed);
+    HAL_UART_Transmit(&huart2, buf, strlen(buf), 100);
 
     // Translate solver_moves_t to motor_moves_t
     for (int i = 0; i < cube_state.move_count; i++) {
@@ -109,7 +118,7 @@ void execute_cube_move(stepper_move_t move) {
     stepper_move(move.motor, move.dir, move.degrees);
 
     // Small delay between moves
-    osDelay(200);
+    osDelay(400);
 }
 
 // Interrupt callback for control button presses
