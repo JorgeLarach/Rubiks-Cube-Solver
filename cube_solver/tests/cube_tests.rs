@@ -244,6 +244,55 @@ mod coord_tests {
             assert_ne!(coord, 0, "{:?} should change corner perm coord", m);
         }
     }
+    
+    // -------------------------------------------------------
+    // EDGE PERMUTATION (0..40320)
+    // -------------------------------------------------------
+
+   #[test]
+    fn edge_perm_solved_is_zero() {
+        assert_eq!(solved().edge_perm_coord(), 0);
+    }
+
+    #[test]
+    fn edge_perm_in_range() {
+        for &m in &ALL_MOVES {
+            let coord = apply_moves(&[m]).edge_perm_coord();
+            assert!(coord < 40320, "move {:?} gave coord {} >= 40320", m, coord);
+        }
+    }
+
+    #[test]
+    fn edge_perm_move_then_inverse_is_zero() {
+        let pairs = [
+            (solver_move_t::U,  solver_move_t::Ui),
+            (solver_move_t::D,  solver_move_t::Di),
+            (solver_move_t::L,  solver_move_t::Li),
+            (solver_move_t::R,  solver_move_t::Ri),
+            (solver_move_t::F,  solver_move_t::Fi),
+            (solver_move_t::B,  solver_move_t::Bi),
+        ];
+        for (m, mi) in pairs {
+            let coord = apply_moves(&[m, mi]).edge_perm_coord();
+            assert_eq!(coord, 0, "{:?} then {:?} should return to 0", m, mi);
+        }
+    }
+
+    #[test]
+    fn edge_perm_four_moves_is_zero() {
+        for &m in &ALL_MOVES {
+            let coord = apply_moves(&[m, m, m, m]).edge_perm_coord();
+            assert_eq!(coord, 0, "{:?} x4 should return to 0", m);
+        }
+    }
+
+    #[test]
+    fn edge_perm_actually_changes() {
+        for &m in &ALL_MOVES {
+            let coord = apply_moves(&[m]).edge_perm_coord();
+            assert_ne!(coord, 0, "{:?} should change corner perm coord", m);
+        }
+    }
 
     // -------------------------------------------------------
     // CROSS-COORDINATE
@@ -340,175 +389,579 @@ mod rotation_tests {
         assert_eq!(state, solved);
     }
 }
-mod ida_tests {
+
+mod kociemba_tests {
     use cube_solver::*;
 
-    // Helper
-    fn solve_scramble(scramble: &[solver_move_t]) -> usize {
+    use super::*;
+
+    // -------------------------------------------------------
+    // Helper: apply a scramble, run the full solver, verify
+    // the solution actually solves the cube, return total length
+    // -------------------------------------------------------
+    fn run_kociemba(scramble: &[solver_move_t]) -> usize {
         let mut cube = CubieState::make_solved();
         for &m in scramble {
             cube.apply_move(m);
         }
-        let mut out = [solver_move_t::U; 30];
+
+        let mut out = [solver_move_t::U; 70]; // 30 phase1 + 40 phase2
         let n = solve_internal(cube, &mut out);
 
+        // VERIFY: applying the solution to the scrambled cube must yield solved
         let mut verify = cube;
         for i in 0..n {
             verify.apply_move(out[i]);
         }
-        assert!(verify.is_solved());
+        assert!(
+            verify.is_solved(),
+            "Solution FAILED to solve the cube.\nScramble: {:?}\nSolution ({} moves): {:?}",
+            scramble,
+            n,
+            &out[..n]
+        );
+
         n
     }
 
+    // -------------------------------------------------------
+    // Helper: apply a scramble and check Phase 1 specifically.
+    // Verifies that after applying the returned moves, the cube
+    // is in G1 (CO=0, EO=0, UD-slice=0).
+    // -------------------------------------------------------
+    fn run_phase1_only(scramble: &[solver_move_t]) -> usize {
+        let mut cube = CubieState::make_solved();
+        for &m in scramble {
+            cube.apply_move(m);
+        }
+
+        let mut path = [solver_move_t::U; 30];
+        let n = kociemba_phase1(&cube, &mut path);
+
+        // Apply phase 1 moves and verify G1
+        let mut g1 = cube;
+        for i in 0..n {
+            g1.apply_move(path[i]);
+        }
+
+        assert!(
+            is_phase1_solved(&g1),
+            "Phase 1 did not reach G1.\nScramble: {:?}\nPhase 1 moves ({} moves): {:?}\nCO: {}, EO: {}, UD: {}",
+            scramble, n, &path[..n],
+            g1.corner_orient_coord(),
+            g1.edge_orient_coord(),
+            g1.udslice_coord()
+        );
+
+        n
+    }
+
+    // -------------------------------------------------------
+    // Helper: build a G1 cube by applying phase 1 first,
+    // then run phase 2 and verify fully solved
+    // -------------------------------------------------------
+    fn run_phase2_only(scramble: &[solver_move_t]) -> usize {
+        let mut cube = CubieState::make_solved();
+        for &m in scramble {
+            cube.apply_move(m);
+        }
+
+        // Get to G1 first
+        let mut p1_path = [solver_move_t::U; 30];
+        let p1_len = kociemba_phase1(&cube, &mut p1_path);
+        let mut g1_cube = cube;
+        for i in 0..p1_len {
+            g1_cube.apply_move(p1_path[i]);
+        }
+        assert!(is_phase1_solved(&g1_cube), "Could not reach G1 for phase 2 test");
+
+        // Now run phase 2
+        let mut p2_path = [solver_move_t::U; 40];
+        let p2_len = kociemba_phase2(&g1_cube, &mut p2_path);
+
+        // Apply phase 2 and verify fully solved
+        let mut result = g1_cube;
+        for i in 0..p2_len {
+            result.apply_move(p2_path[i]);
+        }
+        assert!(
+            result.is_solved(),
+            "Phase 2 did not fully solve the cube.\nPhase 2 moves ({} moves): {:?}",
+            p2_len, &p2_path[..p2_len]
+        );
+
+        p2_len
+    }
+
+    // -------------------------------------------------------
+    // TRIVIAL CASES
+    // -------------------------------------------------------
+
     #[test]
-    fn solved_cube_needs_zero_moves() {
+    fn already_solved_returns_zero() {
         let cube = CubieState::make_solved();
-        let mut out = [solver_move_t::U; 30];
+        let mut out = [solver_move_t::U; 70];
         let n = solve_internal(cube, &mut out);
-        assert_eq!(n, 0, "Solved cube should need 0 moves");
+        assert_eq!(n, 0, "Already solved cube should need 0 moves");
     }
 
     #[test]
-    fn solve_u() { assert_eq!(solve_scramble(&[solver_move_t::U]), 1); }
-
-    #[test]
-    fn solve_r() { assert_eq!(solve_scramble(&[solver_move_t::R]), 1); }
-
-    #[test]
-    fn solve_f() { assert_eq!(solve_scramble(&[solver_move_t::F]), 1); }
-
-    #[test]
-    fn solve_l() { assert_eq!(solve_scramble(&[solver_move_t::L]), 1); }
-
-    #[test]
-    fn solve_d() { assert_eq!(solve_scramble(&[solver_move_t::D]), 1); }
-
-    #[test]
-    fn solve_b() { assert_eq!(solve_scramble(&[solver_move_t::B]), 1); }
-
-    #[test]
-    fn solve_two_moves_same_face() {
-        // U then U = U2, should solve in 1 move (U2), not 2
-        assert_eq!(solve_scramble(&[solver_move_t::U, solver_move_t::U]), 1);
+    fn phase1_solved_cube_is_already_g1() {
+        assert!(is_phase1_solved(&CubieState::make_solved()));
     }
 
     #[test]
-    fn solve_two_moves_different_faces() {
-        let n = solve_scramble(&[solver_move_t::R, solver_move_t::U]);
-        assert_eq!(n, 2);
+    fn phase2_solved_cube_is_already_solved() {
+        assert!(is_phase2_solved(&CubieState::make_solved()));
     }
 
     #[test]
-    fn solve_two_moves_commuting() {
-        // R and L commute — still 2 moves to undo
-        let n = solve_scramble(&[solver_move_t::R, solver_move_t::L]);
-        assert_eq!(n, 2);
+    fn phase1_on_solved_cube_returns_zero() {
+        let cube = CubieState::make_solved();
+        let mut path = [solver_move_t::U; 30];
+        let n = kociemba_phase1(&cube, &mut path);
+        assert_eq!(n, 0);
     }
 
     #[test]
-    fn solve_sexy_move() {
-        // R U Ri Ui — the "sexy move". Applied once = 6 moves to undo
-        // (6 repetitions return to solved, so 1 application needs 5 to undo)
-        // Actually optimal solution is 4 (the inverse: U R Ui Ri)
-        let n = solve_scramble(&[
+    fn phase2_on_solved_cube_returns_zero() {
+        let cube = CubieState::make_solved();
+        let mut path = [solver_move_t::U; 40];
+        let n = kociemba_phase2(&cube, &mut path);
+        assert_eq!(n, 0);
+    }
+
+    // -------------------------------------------------------
+    // HEURISTIC SANITY
+    // -------------------------------------------------------
+
+    #[test]
+    fn phase1_heuristic_solved_is_zero() {
+        assert_eq!(heuristic_phase1(&CubieState::make_solved()), 0);
+    }
+
+    #[test]
+    fn phase2_heuristic_solved_is_zero() {
+        assert_eq!(heuristic_phase2(&CubieState::make_solved()), 0);
+    }
+
+    #[test]
+    fn phase1_heuristic_scrambled_is_nonzero() {
+        // R flips edges and twists corners — definitely not in G1
+        let mut cube = CubieState::make_solved();
+        cube.apply_move(solver_move_t::R);
+        assert!(heuristic_phase1(&cube) > 0);
+    }
+
+    #[test]
+    fn phase2_heuristic_scrambled_is_nonzero() {
+        // U moves corners out of home slots
+        let mut cube = CubieState::make_solved();
+        cube.apply_move(solver_move_t::U);
+        assert!(heuristic_phase2(&cube) > 0);
+    }
+
+    // -------------------------------------------------------
+    // 1-MOVE SCRAMBLES — full solver
+    // -------------------------------------------------------
+
+    #[test]
+    fn solve_u()  { assert!(run_kociemba(&[solver_move_t::U])  <= 2); }
+
+    #[test]
+    fn solve_d()  { assert!(run_kociemba(&[solver_move_t::D])  <= 2); }
+
+    #[test]
+    fn solve_r()  { assert!(run_kociemba(&[solver_move_t::R])  <= 2); }
+
+    #[test]
+    fn solve_l()  { assert!(run_kociemba(&[solver_move_t::L])  <= 2); }
+
+    #[test]
+    fn solve_f()  { assert!(run_kociemba(&[solver_move_t::F])  <= 2); }
+
+    #[test]
+    fn solve_b()  { assert!(run_kociemba(&[solver_move_t::B])  <= 2); }
+
+    #[test]
+    fn solve_r2() { assert!(run_kociemba(&[solver_move_t::R2]) <= 2); }
+
+    #[test]
+    fn solve_u2() { assert!(run_kociemba(&[solver_move_t::U2]) <= 2); }
+
+    // -------------------------------------------------------
+    // PHASE 1 ISOLATION TESTS
+    // Verify G1 is reached correctly before worrying about Phase 2
+    // -------------------------------------------------------
+
+    #[test]
+    fn phase1_reaches_g1_after_r() {
+        run_phase1_only(&[solver_move_t::R]);
+    }
+
+    #[test]
+    fn phase1_reaches_g1_after_sexy_move() {
+        // R U Ri Ui twists corners and flips edges — not in G1
+        run_phase1_only(&[
             solver_move_t::R, solver_move_t::U,
             solver_move_t::Ri, solver_move_t::Ui,
         ]);
-        assert_eq!(n, 4);
     }
+
     #[test]
-    fn solve_four_move_scramble() {
-        let n = solve_scramble(&[
-            solver_move_t::R, solver_move_t::U,
-            solver_move_t::R, solver_move_t::U,
+    fn phase1_reaches_g1_after_6_moves() {
+        run_phase1_only(&[
+            solver_move_t::R, solver_move_t::U, solver_move_t::Fi,
+            solver_move_t::L, solver_move_t::D, solver_move_t::Bi,
         ]);
-        // Optimal solution may be shorter than 4 if moves cancel
-        assert!(n <= 4, "Should solve in at most 4 moves, got {}", n);
     }
+
     #[test]
-    fn solve_eight_move_scramble() {
-        let n = solve_scramble(&[
+    fn phase1_reaches_g1_after_10_moves() {
+        run_phase1_only(&[
+            solver_move_t::R,  solver_move_t::U,  solver_move_t::Ri,
+            solver_move_t::Ui, solver_move_t::F,  solver_move_t::R,
+            solver_move_t::U,  solver_move_t::Ri, solver_move_t::Ui,
+            solver_move_t::Fi,
+        ]);
+    }
+
+    #[test]
+    fn phase1_timing_benchmark() {
+        use std::time::Instant;
+
+        // These are specifically chosen to stress Phase 1
+        let scrambles: &[(&str, &[solver_move_t])] = &[
+            ("R",          &[solver_move_t::R]),
+            ("R U Ri Ui",  &[solver_move_t::R, solver_move_t::U, solver_move_t::Ri, solver_move_t::Ui]),
+            ("6 moves",    &[solver_move_t::R, solver_move_t::U, solver_move_t::Fi,
+                            solver_move_t::L, solver_move_t::D, solver_move_t::Bi]),
+            ("8 moves",    &[solver_move_t::R, solver_move_t::U, solver_move_t::Ri,
+                            solver_move_t::Ui, solver_move_t::F, solver_move_t::R,
+                            solver_move_t::U,  solver_move_t::Ri]),
+        ];
+
+        for (name, scramble) in scrambles {
+            let mut cube = CubieState::make_solved();
+            for &m in *scramble { cube.apply_move(m); }
+
+            println!(
+                "Initial coords: CO={} EO={} UD={} CP={}",
+                cube.corner_orient_coord(),
+                cube.edge_orient_coord(),
+                cube.udslice_coord(),
+                cube.corner_perm_coord()
+            );
+
+            let mut path = [solver_move_t::U; 30];
+            let start = Instant::now();
+            let n = kociemba_phase1(&cube, &mut path);
+            let elapsed = start.elapsed();
+
+            println!(
+                "Phase 1 '{}': {} moves in {}ms",
+                name, n, elapsed.as_millis()
+            );
+
+            // After phase 1 completes, apply moves to get G1 cube first
+            let mut g1_cube = cube;
+            for j in 0..n { g1_cube.apply_move(path[j]); }
+
+            println!(
+                "P1 heuristic={} P2 heuristic(on G1 cube)={} True P1 depth={}",
+                heuristic_phase1(&cube),
+                heuristic_phase2(&g1_cube), // call on G1 cube, not scrambled cube
+                n
+            );
+
+        }
+    }
+
+    // -------------------------------------------------------
+    // PHASE 2 ISOLATION TESTS
+    // These confirm Phase 2 can close out from a G1 state
+    // -------------------------------------------------------
+
+    #[test]
+    fn phase2_solves_from_g1_after_r() {
+        run_phase2_only(&[solver_move_t::R]);
+    }
+
+    #[test]
+    fn phase2_solves_from_g1_after_sexy_move() {
+        run_phase2_only(&[
+            solver_move_t::R, solver_move_t::U,
+            solver_move_t::Ri, solver_move_t::Ui,
+        ]);
+    }
+
+    #[test]
+    fn phase2_solves_from_g1_after_10_moves() {
+        run_phase2_only(&[
+            solver_move_t::R,  solver_move_t::U,  solver_move_t::Ri,
+            solver_move_t::Ui, solver_move_t::F,  solver_move_t::R,
+            solver_move_t::U,  solver_move_t::Ri, solver_move_t::Ui,
+            solver_move_t::Fi,
+        ]);
+    }
+
+    // -------------------------------------------------------
+    // FULL SOLVER — correctness at increasing depths
+    // We don't assert exact solution length — Kociemba is not
+    // always optimal — but we verify the solution is valid and
+    // within a reasonable upper bound (70 moves worst case)
+    // -------------------------------------------------------
+
+    #[test]
+    fn solve_4_move_scramble() {
+        let n = run_kociemba(&[
+            solver_move_t::R, solver_move_t::U,
+            solver_move_t::L, solver_move_t::D,
+        ]);
+        assert!(n > 0 && n <= 70);
+    }
+
+    #[test]
+    fn solve_sexy_move_once() {
+        // R U Ri Ui — classic 4 move pattern
+        let n = run_kociemba(&[
+            solver_move_t::R,  solver_move_t::U,
+            solver_move_t::Ri, solver_move_t::Ui,
+        ]);
+        assert!(n > 0 && n <= 70);
+    }
+
+    #[test]
+    fn solve_6_move_scramble() {
+        let n = run_kociemba(&[
+            solver_move_t::R, solver_move_t::U, solver_move_t::Fi,
+            solver_move_t::L, solver_move_t::D, solver_move_t::Bi,
+        ]);
+        assert!(n > 0 && n <= 70);
+    }
+
+    #[test]
+    fn solve_8_move_scramble() {
+        let n = run_kociemba(&[
             solver_move_t::R, solver_move_t::U, solver_move_t::Ri,
             solver_move_t::F, solver_move_t::L, solver_move_t::D,
             solver_move_t::Fi, solver_move_t::Ui,
         ]);
-        assert!(n > 0 && n <= 20, "Expected valid solution length, got {}", n);
+        assert!(n > 0 && n <= 70);
     }
 
-    use::std::time::Instant;
     #[test]
-    fn solve_n_move_scrambles() {
-        let all_moves = [
+    fn solve_10_move_scramble() {
+        let n = run_kociemba(&[
             solver_move_t::R,  solver_move_t::U,  solver_move_t::Ri,
             solver_move_t::Ui, solver_move_t::F,  solver_move_t::R,
             solver_move_t::U,  solver_move_t::Ri, solver_move_t::Ui,
-            solver_move_t::Fi, 
-        ];
-        let n = all_moves.len();
+            solver_move_t::Fi,
+        ]);
+        assert!(n > 0 && n <= 70);
+    }
 
+    #[test]
+    fn solve_12_move_scramble() {
+        let n = run_kociemba(&[
+            solver_move_t::R,  solver_move_t::U,  solver_move_t::Ri,
+            solver_move_t::Ui, solver_move_t::R,  solver_move_t::U,
+            solver_move_t::Ri, solver_move_t::Ui, solver_move_t::R,
+            solver_move_t::U,  solver_move_t::Ri, solver_move_t::Ui,
+        ]);
+        assert!(n > 0 && n <= 70);
+    }
+
+    #[test]
+    fn solve_15_move_scramble() {
+        let n = run_kociemba(&[
+            solver_move_t::R,  solver_move_t::U,  solver_move_t::Bi,
+            solver_move_t::D,  solver_move_t::Li, solver_move_t::F,
+            solver_move_t::R2, solver_move_t::U2, solver_move_t::B,
+            solver_move_t::Di, solver_move_t::L,  solver_move_t::Fi,
+            solver_move_t::R,  solver_move_t::U,  solver_move_t::Ri,
+        ]);
+        assert!(n > 0 && n <= 70);
+    }
+
+    #[test]
+    fn solve_20_move_scramble() {
+        // A deep scramble — the real test of the algorithm
+        let n = run_kociemba(&[
+            solver_move_t::R,  solver_move_t::U,  solver_move_t::Bi,
+            solver_move_t::D,  solver_move_t::Li, solver_move_t::F,
+            solver_move_t::R2, solver_move_t::U2, solver_move_t::B,
+            solver_move_t::Di, solver_move_t::L,  solver_move_t::Fi,
+            solver_move_t::R,  solver_move_t::U,  solver_move_t::Ri,
+            solver_move_t::Ui, solver_move_t::F2, solver_move_t::L2,
+            solver_move_t::D2, solver_move_t::B2,
+        ]);
+        assert!(n > 0 && n <= 70);
+    }
+
+    #[test]
+    fn solve_n_move_scrambles_kociemba() {
+        use std::time::Instant;
+
+        let all_moves = [
+            solver_move_t::R,  solver_move_t::U,  solver_move_t::Bi,
+            solver_move_t::D,  solver_move_t::Li, solver_move_t::F,
+            solver_move_t::R2, solver_move_t::U2, solver_move_t::B,
+            solver_move_t::Di, solver_move_t::L,  solver_move_t::Fi,
+            solver_move_t::R,  solver_move_t::U,  solver_move_t::Ri,
+            solver_move_t::Ui, solver_move_t::F2, solver_move_t::L2,
+            solver_move_t::D2, solver_move_t::B2,
+        ];
+
+        let n = all_moves.len();
 
         for i in 0..=n {
             let scramble = &all_moves[..i];
-            println!("SOLVING {} MOVES!", i);
-            let start = Instant::now();
-            let moves = solve_scramble(scramble);
-            if i >= 6 {println!("DONE {} MOVES IN {}ms", moves, start.elapsed().as_millis());}
-            else {println!("DONE {} MOVES IN {}micros", moves, start.elapsed().as_micros());}
-            assert!(
-                i == 0 || (moves > 0 && moves <= 30),
-                "Expected valid solution length for {}-move scramble, got {}",
-                i, moves
+
+            // Build scrambled cube
+            let mut cube = CubieState::make_solved();
+            for &m in scramble { cube.apply_move(m); }
+
+            // let mut out = [solver_move_t::U; 70];
+
+            println!("--- SOLVING {}-MOVE SCRAMBLE ---", i);
+
+            // Time Phase 1 in isolation
+            let mut p1_path = [solver_move_t::U; 30];
+            let p1_start = Instant::now();
+            let p1_len = kociemba_phase1(&cube, &mut p1_path);
+            let p1_elapsed = p1_start.elapsed();
+
+            // Apply Phase 1 to get G1 cube
+            let mut g1_cube = cube;
+            for j in 0..p1_len { g1_cube.apply_move(p1_path[j]); }
+
+            println!(
+                "  Phase 1: {} moves in {}",
+                p1_len,
+                if p1_elapsed.as_millis() > 0 {
+                    format!("{}ms", p1_elapsed.as_millis())
+                } else {
+                    format!("{}μs", p1_elapsed.as_micros())
+                }
             );
+            println!(
+                "  G1 check after Phase 1: CO={} EO={} UD={}",
+                g1_cube.corner_orient_coord(),
+                g1_cube.edge_orient_coord(),
+                g1_cube.udslice_coord()
+            );
+
+            // Time Phase 2 in isolation
+            let mut p2_path = [solver_move_t::U; 40];
+            let p2_start = Instant::now();
+            let p2_len = kociemba_phase2(&g1_cube, &mut p2_path);
+            let p2_elapsed = p2_start.elapsed();
+
+            println!(
+                "  Phase 2: {} moves in {}",
+                p2_len,
+                if p2_elapsed.as_millis() > 0 {
+                    format!("{}ms", p2_elapsed.as_millis())
+                } else {
+                    format!("{}μs", p2_elapsed.as_micros())
+                }
+            );
+
+            // // Time full solver end to end
+            // let total_start = Instant::now();
+            // let total_len = solve_internal(cube, &mut out);
+            // let total_elapsed = total_start.elapsed();
+
+            // println!(
+            //     "  Total:   {} moves in {}",
+            //     total_len,
+            //     if total_elapsed.as_millis() > 0 {
+            //         format!("{}ms", total_elapsed.as_millis())
+            //     } else {
+            //         format!("{}μs", total_elapsed.as_micros())
+            //     }
+            // );
+
+            let total_len = p1_len + p2_len;
+            // Verify solution correctness
+            if total_len > 0 {
+                let mut verify = cube;
+                for j in 0..p1_len { verify.apply_move(p1_path[j]); }
+                for j in 0..p2_len { verify.apply_move(p2_path[j]); }
+                assert!(
+                    verify.is_solved(),
+                    "{}-move scramble: solution is WRONG ({} moves returned)",
+                    i, total_len
+                );
+                println!("  Correctness: PASS");
+            }
+
+            assert!(
+                i == 0 || (total_len > 0 && total_len <= 70),
+                "Expected valid solution for {}-move scramble, got {}",
+                i, total_len
+            );
+
+            println!();
         }
     }
     // -------------------------------------------------------
-    // Heuristic sanity: h(solved) == 0, h(scrambled) > 0
+    // G1 INVARIANT: Phase 2 moves must never break G1
+    // If Phase 1 solved correctly, Phase 2 moves must keep
+    // CO=0, EO=0, UD-slice=0 throughout
     // -------------------------------------------------------
 
     #[test]
-    fn heuristic_solved_is_zero() {
-        assert_eq!(heuristic(&CubieState::make_solved()), 0);
+    fn phase2_moves_preserve_g1() {
+        // Start from solved (which is in G1)
+        // Apply every Phase 2 move and confirm G1 is preserved
+        let phase2_moves = [
+            solver_move_t::U,  solver_move_t::Ui, solver_move_t::U2,
+            solver_move_t::D,  solver_move_t::Di, solver_move_t::D2,
+            solver_move_t::R2, solver_move_t::L2,
+            solver_move_t::F2, solver_move_t::B2,
+        ];
+        for &m in &phase2_moves {
+            let mut cube = CubieState::make_solved();
+            cube.apply_move(m);
+            assert!(
+                is_phase1_solved(&cube),
+                "Phase 2 move {:?} broke G1: CO={}, EO={}, UD={}",
+                m,
+                cube.corner_orient_coord(),
+                cube.edge_orient_coord(),
+                cube.udslice_coord()
+            );
+        }
     }
 
+    // -------------------------------------------------------
+    // SOLUTION VALIDITY: explicitly verify the move sequence
+    // works when applied step by step
+    // -------------------------------------------------------
+
     #[test]
-    fn heuristic_scrambled_is_nonzero() {
-        let mut cube = CubieState::make_solved();
-        cube.apply_move(solver_move_t::R);
-        cube.apply_move(solver_move_t::U);
-        assert!(heuristic(&cube) > 0, "Scrambled cube should have nonzero heuristic");
-    }
-    #[test]
-    fn solution_actually_solves_the_cube() {
+    fn solution_applies_correctly_step_by_step() {
         let scramble = [
             solver_move_t::R, solver_move_t::U, solver_move_t::Fi,
             solver_move_t::L, solver_move_t::D, solver_move_t::Bi,
         ];
+
         let mut cube = CubieState::make_solved();
         for &m in &scramble { cube.apply_move(m); }
 
-        let mut out = [solver_move_t::U; 30];
+        let mut out = [solver_move_t::U; 70];
         let n = solve_internal(cube, &mut out);
+        assert!(n > 0, "Solver returned 0 moves for a scrambled cube");
 
-        // Apply solution to the scrambled cube
+        // Apply each move one at a time and confirm final state is solved
         let mut result = cube;
-        for i in 0..n { result.apply_move(out[i]); }
-
+        for i in 0..n {
+            result.apply_move(out[i]);
+        }
         assert!(result.is_solved(),
-            "Applying solution to scrambled cube did not produce solved state");
+            "Step-by-step application of solution did not yield solved cube");
     }
-
-    // #[test]
-    // fn solve_test_cube_lol() {
-    //     let stickers: [u8; 54] = [5,5,0,0,0,2,2,3,5,4,5,0,1,1,5,5,1,4,3,3,4,1,2,4,1,2,1,1,0,5,2,3,4,4,0,3,0,4,3,2,4,5,2,1,3,2,3,0,0,5,3,1,4,2];
-    //     let cube = convert_to_cubie(stickers);
-    //     let mut out = [solver_move_t::U; 30];
-        
-    //     let n = solve_internal(cube, &mut out);
-    //     let mut result = cube;
-
-    //     for i in 0..n { result.apply_move(out[i]);}
-
-    //     assert!(result.is_solved());
-    // }
 
 }

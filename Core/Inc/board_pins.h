@@ -52,8 +52,4 @@
 //wiring order:
 //U, L, B, D, R, F
 
-// Notes after rewiring:
-// L doesn't work
-// F is going in wrong direction
-
 #endif /* BOARD_PINS_H */

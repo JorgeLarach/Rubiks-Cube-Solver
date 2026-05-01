@@ -1,5 +1,25 @@
 # Rubik's Cube Solver Part 2  
 
+## May 1, 2026
+Well I tried the Kociemba approach I described below, and it seems its a lot faster than IDA* implementation, but still way too slow. Here's a performance ratio table:
+
+| Moves | Phase 1 Time(s)  | Phase 2 Time(s)  | Ratio P1 | Ratio P2 |
+| ----- | ---------------- | ---------------- | -------- | -------- |
+| 10    | 32.17            |   390 (6.5 m)    |     -    |   -      |
+| 11    | 62.10            |   2706 (45 m)    |   1.930  |  43.59   |
+| 12    | 36.10            |   66.05          |   0.580  |  0.024   |
+| 13    | 09.73            |   53.29          |   0.270  |  0.806   |
+| 14    | 02.61            |   53.27          |   0.268  |  0.999   |
+| 15    | 02.76            |   24.65          |   1.058  |  0.463   |
+| 16    | 01.79            |   24.75          |   0.646  |  1.003   |
+| 17    | 23.04            |   1705 (28 m)    |   12.90  |  68.91   |
+| 18    | 13.55            |   2811 (47 m)    |   0.588  |  1.648   |
+| 19    | 16.38            |   04.18          |   1.208  |  0.001   |
+| 20    | 03.33            |   1879 (31 m)    |   0.203  |  449.2   |
+
+Obviously this isn't a perfect measurement of performance but it can give you an idea of what's going on.
+
+
 ## April 27, 2026  
 I wrote the IDA* implementation with four modified databases. Korf's full implementation used the following pattern databases for the heuristic:   
 
@@ -19,11 +39,14 @@ The heuristic for the solver uses these tables to determine the lower bound solu
 3.2GHz / 84MHz = 38.1x slowdown. Therefore, it would take:    
 8 seconds * 38.1 = 4.75 minutes on MCU.    
 
-Even on my laptop, though, the algorithm suffers when it is tasked with solving a cube was scrambled in 11 or more moves. Table below shows how long it takes to solve an n-moves scrambled cube. The ratio from 0-moves to 5-moves is so small it won't be considered here. The Effective Branching Factor (b*) is a measure of the efficiency of a heuristic search algorithm. It represents the average number of successor nodes a search algorithm expands, weighted to account for the effectiveness of the pruning. If a heuristic is perfect, b* is 1.   
+Even on my laptop, though, the algorithm suffers when it is tasked with solving a cube was scrambled in 11 or more moves. Table below shows how long it takes to solve an n-moves scrambled cube. The ratio from 0-moves to 5-moves is so small it won't be considered here. The Effective Branching Factor (b*) is a measure of the efficiency of a heuristic search algorithm. It represents the average number of successor nodes a search algorithm expands, weighted to account for the effectiveness of the pruning. If a heuristic is perfect, b* is 1. The table below is not the right application of finding b*, but it provides useful information nonetheless, and it can give us an idea as to what the b* might be.
+
 For the Ratio column, 
+
 $$
 ratio(n) = time(n) / time(n-1):
 $$
+
 | Moves | Time (ms) | Ratio |
 | ----- | --------- | ----- |
 | 0     | 0.010     |   -   |
@@ -41,7 +64,7 @@ $$
 Taking the geometric mean of the last five ratios gives us our EFB
 
 $$
-b^* = (9.3 4.0 * 22.5 * 2.2 * 11.0) ^ {(1/5)} = 7.2
+b^* = (9.3 * 4.0 * 22.5 * 2.2 * 11.0) ^ {(1/5)} = 7.2
 $$
 
 So on average, every node visited expands to 7 succesor nodes. That's really not great. Either way, to predict forward, using the time taken to solve the 10-move scrambled cube, we just use the following equation:

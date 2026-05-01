@@ -13,7 +13,10 @@ use core::slice;
 #[cfg(not(feature = "std-env"))]
 use core::panic::PanicInfo;
 
-use crate::tables::{CORNER_ORIENT_TABLE, CORNER_PERMUTATION_TABLE, EDGE_ORIENT_TABLE, UD_SLICE_TABLE};
+use crate::tables::{
+    CORNER_ORIENT_TABLE, CORNER_PERMUTATION_TABLE, EDGE_ORIENT_TABLE, 
+    UD_SLICE_TABLE, UDSLICE_PERMUTATION_TABLE, EDGE_PERMUTATION_TABLE
+};
 
 #[repr(C)] // Lays out this enum/struct in memory exactly like C would
 #[derive(Copy, Clone, Debug, PartialEq)]
@@ -413,6 +416,28 @@ impl CubieState {
         coord
     }
 
+    // EDGE PERMUTATION COORDINATE
+
+    pub fn edge_perm_coord(&self) -> usize {
+        // PRECONDITION: only meaningful in Phase 2, when UD-slice edges
+        // are guaranteed to occupy slots 8-11. That means edges 0-7
+        // (UB, UL, UR, UF, DF, DL, DR, DB) are guaranteed to occupy
+        // slots 0-7, so their positions form a clean permutation of 0..7
+        // and the Lehmer code below is well-defined.
+        // Calling this during Phase 1 (before UD-slice edges are in their
+        // belt) will produce meaningless values.
+        let mut coord = 0usize;
+        for i in 0..8 {
+            let smaller = ((i + 1)..8)
+                .filter(|&j| self.edges[j].position < self.edges[i].position)
+                .count();
+
+            coord += smaller * FACTORIAL[7 - i];
+        }
+        
+        coord
+    }
+
     // CORNER PERMUTATION COORDINATE
     // Range: 0..40320 (= 8!)
     //
@@ -622,26 +647,82 @@ fn should_prune(last_face: u8, m: solver_move_t) -> bool {
 
 /* Solve Algorithm */
 
-pub fn heuristic(cube: &CubieState) -> u8 {
-    // Compute all four coordinates for current cube state
-    let co_coord = cube.corner_orient_coord();
-    let eo_coord = cube.edge_orient_coord();
-    let ud_coord = cube.udslice_coord();
-    let cp_coord = cube.corner_perm_coord();
 
-    // Look up each coordinate's minimum move distance in its table.
-    // Each value is num of moves to fix just this aspect
-    let co = CORNER_ORIENT_TABLE[co_coord];
-    let eo = EDGE_ORIENT_TABLE[eo_coord];
-    let ud = UD_SLICE_TABLE[ud_coord];
-    let cp = CORNER_PERMUTATION_TABLE[cp_coord];
-
-    // Return the maximum. Since fixing any one aspect takes at least
-    // this many moves, and we need to fix ALL aspects, the max is a
-    // valid lower bound on the total solution length. This is what
-    // makes the heuristic admissible: it never overestimates.
-    co.max(eo).max(ud).max(cp)
+// ============================================================
+// PHASE 1 HEURISTIC
+// ============================================================
+// Lower bound on moves needed to reach G1.
+// G1 is reached when CO=0, EO=0, UD-slice=0 simultaneously.
+// Each table gives the minimum moves to fix that one aspect alone.
+// The max is a valid lower bound for fixing all three together.
+pub fn heuristic_phase1(cube: &CubieState) -> u8 {
+    let co = CORNER_ORIENT_TABLE[cube.corner_orient_coord()];
+    let eo = EDGE_ORIENT_TABLE[cube.edge_orient_coord()];
+    let ud = UD_SLICE_TABLE[cube.udslice_coord()];
+    co.max(eo).max(ud)
 }
+
+// ============================================================
+// PHASE 2 HEURISTIC
+// ============================================================
+// Lower bound on moves needed to fully solve from G1.
+// Phase 2 is done when CP=0, UP=0, EP=0 simultaneously.
+pub fn heuristic_phase2(cube: &CubieState) -> u8 {
+    // udslice_perm_coord is only valid when UD-slice edges are
+    // in their belt slots, which is only guaranteed after Phase 1.
+    // If called on a non-G1 cube, return a safe fallback.
+    // In practice this should never happen — Phase 2 only runs
+    // on cubes that have passed through Phase 1.
+    if cube.udslice_coord() != 0 {
+        return u8::MAX; // signals "not in G1, don't call this"
+    }
+    let cp = CORNER_PERMUTATION_TABLE[cube.corner_perm_coord()];
+    let up = UDSLICE_PERMUTATION_TABLE[cube.udslice_perm_coord()];
+    let ep = EDGE_PERMUTATION_TABLE[cube.edge_perm_coord()];
+    cp.max(up).max(ep)
+}
+
+// ============================================================
+// PHASE 1 GOAL CHECK
+// ============================================================
+// Returns true when the cube is in G1:
+// all corners untwisted, all edges unflipped, all belt edges in belt.
+pub fn is_phase1_solved(cube: &CubieState) -> bool {
+    cube.corner_orient_coord() == 0
+        && cube.edge_orient_coord() == 0
+        && cube.udslice_coord() == 0
+}
+
+// ============================================================
+// PHASE 2 GOAL CHECK
+// ============================================================
+// Returns true when the cube is fully solved:
+// corners in home slots, belt edges in correct belt order,
+// non-belt edges in home slots.
+// NOTE: we use coord checks rather than cube.is_solved() because
+// is_solved() also checks orientations, which are guaranteed to be
+// correct by Phase 1 and never disturbed by Phase 2 moves.
+// Both approaches are correct — coord checks are slightly faster.
+pub fn is_phase2_solved(cube: &CubieState) -> bool {
+    cube.corner_perm_coord() == 0
+        && cube.udslice_perm_coord() == 0
+        && cube.edge_perm_coord() == 0
+}
+
+// ============================================================
+// PHASE 2 MOVE SET
+// ============================================================
+// Only these 10 moves are allowed in Phase 2.
+// Quarter turns of R, L, F, B are excluded because they:
+//   - flip edges (destroying EO=0 guarantee from Phase 1)
+//   - displace belt edges into non-belt slots (destroying UD-slice=0)
+// Every move in this set keeps the cube within G1.
+const PHASE2_MOVES: [solver_move_t; 10] = [
+    solver_move_t::U,  solver_move_t::Ui, solver_move_t::U2,
+    solver_move_t::D,  solver_move_t::Di, solver_move_t::D2,
+    solver_move_t::R2, solver_move_t::L2,
+    solver_move_t::F2, solver_move_t::B2,
+];
 
 // ============================================================
 // IDA* RECURSIVE SEARCH
@@ -678,50 +759,163 @@ pub fn heuristic(cube: &CubieState) -> u8 {
 //   path      - the move sequence being built; path[0..g] is current path
 //   sol_len   - written with g when solution is found
 
-fn ida_search(
+pub fn ida_phase1_recursive(
     cube:      &CubieState,
-    g:         u8, 
+    g:         u8,
     threshold: u8,
     last_face: u8,
     path:      &mut [solver_move_t],
-    sol_len:   &mut usize
+    sol_len:   &mut usize,
 ) -> Option<u8> {
-    let heuristic = heuristic(&cube);
-    let f = g.saturating_add(heuristic);
 
+    let h = heuristic_phase1(cube);
+    let f = g.saturating_add(h);
+
+    // Prune: this branch cannot possibly improve on the current threshold
     if f > threshold {
         return Some(f);
     }
 
-    if cube.is_solved() {
+    // Goal: cube is in G1
+    if is_phase1_solved(cube) {
         *sol_len = g as usize;
-        return None;
+        return None; // None = success
     }
 
-    if g as usize > path.len() {
+    // Safety: buffer full
+    if g as usize >= path.len() {
         return Some(u8::MAX);
     }
 
-    let mut min_exceeded = u8::MAX;
+    let mut min_exceeded: u8 = u8::MAX;
 
     for &m in ALL_MOVES.iter() {
-
-        if should_prune(last_face, m){
+        if should_prune(last_face, m) {
             continue;
         }
 
         let mut next = *cube;
         next.apply_move(m);
-
         path[g as usize] = m;
 
-        let result = ida_search(
-            &next, 
-            g + 1, 
-            threshold, 
-            face_of(m), 
-            path, 
-            sol_len
+        let result = ida_phase1_recursive(
+            &next,
+            g + 1,
+            threshold,
+            face_of(m),
+            path,
+            sol_len,
+        );
+
+        match result {
+            // Success — propagate immediately, don't try other moves
+            None => return None,
+            Some(t) => {
+                if t < min_exceeded {
+                    min_exceeded = t;
+                }
+            }
+        }
+    }
+
+    Some(min_exceeded)
+}
+
+// ============================================================
+// PHASE 1 OUTER LOOP
+// ============================================================
+// Manages the IDA* threshold and drives iterative deepening.
+// Returns the number of Phase 1 moves written to path.
+pub fn kociemba_phase1(
+    cube: &CubieState,
+    path: &mut [solver_move_t],
+) -> usize {
+
+    // Already in G1 — nothing to do
+    if is_phase1_solved(cube) {
+        return 0;
+    }
+
+    // Initial threshold: tightest possible lower bound on Phase 1 depth
+    let mut threshold = heuristic_phase1(cube);
+    let mut sol_len = 0usize;
+
+    loop {
+        let result = ida_phase1_recursive(
+            cube,
+            0,
+            threshold,
+            255,        // 255 = no last face, no pruning at root
+            path,
+            &mut sol_len,
+        );
+
+        match result {
+            // Solution found — sol_len moves written to path
+            None => return sol_len,
+
+            // Buffer full or other abort — should not happen
+            // if path is sized correctly (30 moves is enough for Phase 1)
+            Some(u8::MAX) => return 0,
+
+            // Not found — raise threshold to minimum exceeded value
+            // and try again. This is tighter than blindly adding 1.
+            Some(new_threshold) => threshold = new_threshold,
+        }
+    }
+}
+
+// ============================================================
+// PHASE 2 RECURSIVE IDA*
+// ============================================================
+// Same structure as Phase 1 but with two key differences:
+//   1. Goal check is is_phase2_solved()
+//   2. Only PHASE2_MOVES are tried — all 18 would break G1
+pub fn ida_phase2_recursive(
+    cube:      &CubieState,
+    g:         u8,
+    threshold: u8,
+    last_face: u8,
+    path:      &mut [solver_move_t],
+    sol_len:   &mut usize,
+) -> Option<u8> {
+
+    let h = heuristic_phase2(cube);
+    let f = g.saturating_add(h);
+
+    if f > threshold {
+        return Some(f);
+    }
+
+    // Goal: cube is fully solved
+    if is_phase2_solved(cube) {
+        *sol_len = g as usize;
+        return None;
+    }
+
+    if g as usize >= path.len() {
+        return Some(u8::MAX);
+    }
+
+    let mut min_exceeded: u8 = u8::MAX;
+
+    // CRITICAL: only iterate PHASE2_MOVES, not ALL_MOVES
+    for &m in PHASE2_MOVES.iter() {
+        if should_prune(last_face, m) {
+            continue;
+        }
+
+        let mut next = *cube;
+        next.apply_move(m);
+        path[g as usize] = m;
+
+        let result = ida_phase2_recursive(
+            &next,
+            g + 1,
+            threshold,
+            face_of(m),
+            path,
+            sol_len,
         );
 
         match result {
@@ -737,32 +931,82 @@ fn ida_search(
     Some(min_exceeded)
 }
 
-pub fn solve_internal(cube: CubieState, out: &mut [solver_move_t]) -> usize{
+// ============================================================
+// PHASE 2 OUTER LOOP
+// ============================================================
+// path here is a slice starting AFTER the Phase 1 moves.
+// The caller is responsible for passing the correct offset.
+pub fn kociemba_phase2(
+    cube: &CubieState,
+    path: &mut [solver_move_t],
+) -> usize {
 
-    if cube.is_solved() {return 0;}
+    // Already fully solved — nothing to do
+    if is_phase2_solved(cube) {
+        return 0;
+    }
 
-    let mut threshold = heuristic(&cube);
-
+    let mut threshold = heuristic_phase2(cube);
     let mut sol_len = 0usize;
 
-    // Each iteration of this loop is one complete DFS pass
     loop {
-        let result = ida_search(
-            &cube, 
-            0, 
-            threshold, 
-            255, 
-            out, 
-            &mut sol_len
+        let result = ida_phase2_recursive(
+            cube,
+            0,
+            threshold,
+            255,
+            path,
+            &mut sol_len,
         );
-        
+
         match result {
             None => return sol_len,
             Some(u8::MAX) => return 0,
-            Some(new_threshold) => threshold = new_threshold
+            Some(new_threshold) => threshold = new_threshold,
         }
     }
+}
 
+// ============================================================
+// TOP LEVEL ENTRY POINT
+// ============================================================
+// Called by the existing solve_cube FFI function 
+pub fn solve_internal(cube: CubieState, out: &mut [solver_move_t]) -> usize {
+
+    // Already solved — nothing to do
+    if is_phase2_solved(&cube) {
+        return 0;
+    }
+
+    // Phase 1: find moves to reach G1.
+    // Write Phase 1 moves into the front of out.
+    // Reserve 30 slots — worst case Phase 1 is ~12 moves with headroom.
+    let p1_len = kociemba_phase1(&cube, &mut out[..30]);
+
+    // If Phase 1 returned 0 but cube isn't in G1, something is wrong
+    if p1_len == 0 && !is_phase1_solved(&cube) {
+        return 0; // abort
+    }
+
+    // Apply Phase 1 moves to get the G1 cube
+    let mut g1_cube = cube;
+    for i in 0..p1_len {
+        g1_cube.apply_move(out[i]);
+    }
+
+    // Sanity check: g1_cube must now be in G1
+    // If this fails, there is a bug in Phase 1
+    if !is_phase1_solved(&g1_cube) {
+        return 0; // abort
+    }
+
+    // Phase 2: solve from G1 to fully solved.
+    // Write Phase 2 moves into out AFTER the Phase 1 moves.
+    // Reserve 40 slots — worst case Phase 2 is ~18 moves with headroom.
+    let p2_len = kociemba_phase2(&g1_cube, &mut out[p1_len..p1_len + 40]);
+
+    // Total solution length is Phase 1 + Phase 2
+    p1_len + p2_len
 }
 
 fn test_moves_short(out: &mut [solver_move_t]) -> usize{
