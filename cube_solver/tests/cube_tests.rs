@@ -5,16 +5,6 @@
 //      Author: jorgelarach
 //
 
-use std::sync::OnceLock;
-
-static TABLES_INIT: OnceLock<()> = OnceLock::new();
-
-fn init_tables() {
-    TABLES_INIT.get_or_init(|| {
-        cube_solver::runtime_tables::init();
-    });
-}
-
 #[cfg(test)]
 mod coord_tests {
     use cube_solver::*;
@@ -320,6 +310,7 @@ mod coord_tests {
         assert!(cube.is_solved());
     }
 }
+
 mod rotation_tests {
     use cube_solver::*;
 
@@ -402,8 +393,6 @@ mod rotation_tests {
 
 mod kociemba_tests {
     use cube_solver::*;
-
-    use super::*;
 
     // -------------------------------------------------------
     // Helper: apply a scramble, run the full solver, verify
@@ -548,40 +537,6 @@ mod kociemba_tests {
     }
 
     // -------------------------------------------------------
-    // HEURISTIC SANITY
-    // -------------------------------------------------------
-
-    #[test]
-    fn phase1_heuristic_solved_is_zero() {
-        runtime_tables::init();
-        assert_eq!(heuristic_phase1(&CubieState::make_solved()), 0);
-    }
-
-    #[test]
-    fn phase2_heuristic_solved_is_zero() {
-        runtime_tables::init();
-        assert_eq!(heuristic_phase2(&CubieState::make_solved()), 0);
-    }
-
-    #[test]
-    fn phase1_heuristic_scrambled_is_nonzero() {
-        runtime_tables::init();
-        // R flips edges and twists corners — definitely not in G1
-        let mut cube = CubieState::make_solved();
-        cube.apply_move(solver_move_t::R);
-        assert!(heuristic_phase1(&cube) > 0);
-    }
-
-    #[test]
-    fn phase2_heuristic_scrambled_is_nonzero() {
-        runtime_tables::init();
-        // U moves corners out of home slots
-        let mut cube = CubieState::make_solved();
-        cube.apply_move(solver_move_t::U);
-        assert!(heuristic_phase2(&cube) > 0);
-    }
-
-    // -------------------------------------------------------
     // 1-MOVE SCRAMBLES — full solver
     // -------------------------------------------------------
 
@@ -688,13 +643,6 @@ mod kociemba_tests {
             // After phase 1 completes, apply moves to get G1 cube first
             let mut g1_cube = cube;
             for j in 0..n { g1_cube.apply_move(path[j]); }
-
-            println!(
-                "P1 heuristic={} P2 heuristic(on G1 cube)={} True P1 depth={}",
-                heuristic_phase1(&cube),
-                heuristic_phase2(&g1_cube), // call on G1 cube, not scrambled cube
-                n
-            );
 
         }
     }
@@ -952,6 +900,9 @@ mod kociemba_tests {
         use std::time::Instant;
         runtime_tables::init();
 
+        // This is a super scrambled cube configuration
+        // I wouldn't have considered the solver complete until it can solve this cube in a timely manner
+        // With the May 3 implementation, it found a 23 move solution in 88ms
         let stickers:[u8;54] = [5,5,0,0,0,2,2,3,5,4,5,0,1,1,5,5,1,4,3,3,4,1,2,4,1,2,1,1,0,5,2,3,4,4,0,3,0,4,3,2,4,5,2,1,3,2,3,0,0,5,3,1,4,2];
         let cube = convert_to_cubie(stickers);
         let mut out = [solver_move_t::U; 70];

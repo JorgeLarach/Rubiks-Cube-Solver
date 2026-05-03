@@ -481,8 +481,6 @@ impl CubieState {
 
     /* Rotation Functions */
 
-
-
     fn find_corner_at(&self, slot: u8) -> usize {
         (0..8).find(|&i| self.corners[i].position == slot)
             .expect("no corner found in slot")
@@ -652,23 +650,6 @@ fn should_prune(last_face: u8, m: solver_move_t) -> bool {
 
 /* Solve Algorithm */
 
-pub fn heuristic_phase1(cube: &CubieState) -> u8 {
-    let co = CORNER_ORIENT_TABLE[cube.corner_orient_coord()];
-    let fu = lookup_flip_udslice(
-        cube.edge_orient_coord(),
-        cube.udslice_coord()
-    );
-    co.max(fu)
-}
-
-pub fn heuristic_phase2(cube: &CubieState) -> u8 {
-    if cube.udslice_coord() != 0 { return u8::MAX; }
-    let sp = cube.udslice_perm_coord();
-    let cs = lookup_corners_slice2(cube.corner_perm_coord(), sp);
-    let es = lookup_edges_slice2(cube.edge_perm_coord(), sp);
-    cs.max(es)
-}
-
 // ============================================================
 // PHASE 1 GOAL CHECK
 // ============================================================
@@ -760,6 +741,7 @@ pub fn ida_phase1_recursive(
 
     let h = CORNER_ORIENT_TABLE[co as usize]
         .max(lookup_flip_udslice(eo as usize, ud as usize));
+
     let f = g.saturating_add(h);
     if f > threshold { return Some(f); }
 
@@ -853,6 +835,7 @@ pub fn ida_phase2_recursive(
 
     let h = lookup_corners_slice2(cp as usize, sp as usize)
         .max(lookup_edges_slice2(ep as usize, sp as usize));
+    
     let f = g.saturating_add(h);
     if f > threshold { return Some(f); }
 

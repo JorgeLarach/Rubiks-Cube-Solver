@@ -139,12 +139,6 @@ class RubiksCubeGUI:
             self.canvas.create_text(x + face_size//2, y - 30, 
                                    text=face_name, font=("Arial", 14, "bold"), fill='black')
             
-            # Draw a background for the face
-            # self.canvas.create_rectangle(
-            #     x - 5, y - 5,
-            #     x + face_size + 5, y + face_size + 5,
-            #     fill="black", outline="black", width=2
-            # )
             
             # Create 3x3 grid of entry boxes for this face
             for row in range(3):
