@@ -5,6 +5,9 @@
 //      Author: jorgelarach
 //
 
+// To build this project for armv7 architecture, 
+// cargo build --target thumbv7em-none-eabihf --release
+
 #![cfg_attr(not(feature = "std-env"), no_std)]
 
 mod tables;
@@ -15,14 +18,10 @@ use core::panic::PanicInfo;
 
 use crate::tables::{
     CORNER_ORIENT_TABLE, 
-    CO_MOVE_TABLE, EO_MOVE_TABLE, UD_MOVE_TABLE,
+    CO_MOVE_TABLE, 
+    EO_MOVE_TABLE, 
+    UD_MOVE_TABLE,
     SP_MOVE_TABLE,
-
-//     FLIP_UDSLICE_TABLE,
-// CORNERS_SLICE2_TABLE,
-// EDGES_SLICE2_TABLE,
-// CP_MOVE_TABLE,
-// EP_MOVE_TABLE
 };
 
 #[repr(C)] // Lays out this enum/struct in memory exactly like C would
@@ -111,6 +110,12 @@ const EDGE_CUBIE_COLORS: [[u8; 2]; 12] = [
     [BLUE,   RED   ],  // cubie 10 (RF)
     [BLUE,   ORANGE],  // cubie 11 (RB)
 ];
+
+// Orientation maps derived from CORNER_CUBIE_COORDINATES sticker ordering [UD, FB, LR]
+// Each move swaps the two sticker positions NOT on its own axis
+pub const ORIENT_UD: [u8; 3] = [0, 2, 1]; // U, D: swap FB(1) and LR(2)
+pub const ORIENT_LR: [u8; 3] = [1, 0, 2]; // R, L: swap UD(0) and FB(1)
+pub const ORIENT_FB: [u8; 3] = [2, 1, 0]; // F, B: swap UD(0) and LR(2)
 
 pub const SOLVED_CUBE_STICKERS:[u8; 54] = [
     0,0,0,0,0,0,0,0,0,
@@ -215,6 +220,7 @@ pub fn convert_to_cubie(stickers: [u8; 54]) -> CubieState {
     cube
 }
 
+// Used in cube_tests.rs
 pub fn inverse_move(input_move: solver_move_t) -> solver_move_t{
     match input_move {
         solver_move_t::U => solver_move_t::Ui,
@@ -254,12 +260,11 @@ pub const fn choose(n: usize, k: usize) -> usize {
 }
 
 impl CubieState {
+
     pub fn make_solved() -> CubieState {
         convert_to_cubie(SOLVED_CUBE_STICKERS)
     }
     
-
-
     pub fn is_solved(&self) -> bool {
         for i in 0..8 {
             if self.corners[i].position != i as u8 { return false; }
@@ -399,8 +404,6 @@ impl CubieState {
     // how many slots to its right (within the belt) hold a cubie with
     // a smaller cubie ID. Multiply by (3 - local_index)! and sum.
     pub fn udslice_perm_coord(&self) -> usize {
-        const FACTORIAL: [usize; 4] = [1, 1, 2, 6];
-
         // Extract just the 4 cubie IDs sitting in belt slots 8..11,
         // normalized to the range 0..3 for clean Lehmer encoding.
         // Cubie IDs are 8,9,10,11 so subtract 8 to get 0,1,2,3.
@@ -424,7 +427,6 @@ impl CubieState {
     }
 
     // EDGE PERMUTATION COORDINATE
-
     pub fn edge_perm_coord(&self) -> usize {
         // PRECONDITION: only meaningful in Phase 2, when UD-slice edges
         // are guaranteed to occupy slots 8-11. That means edges 0-7
@@ -477,13 +479,9 @@ impl CubieState {
 
 
 
-    /* Rotation Functions  */
+    /* Rotation Functions */
 
-    // Orientation maps derived from CORNER_CUBIE_COORDINATES sticker ordering [UD, FB, LR]
-    // Each move swaps the two sticker positions NOT on its own axis
-    const ORIENT_UD: [u8; 3] = [0, 2, 1]; // U, D: swap FB(1) and LR(2)
-    const ORIENT_LR: [u8; 3] = [1, 0, 2]; // R, L: swap UD(0) and FB(1)
-    const ORIENT_FB: [u8; 3] = [2, 1, 0]; // F, B: swap UD(0) and LR(2)
+
 
     fn find_corner_at(&self, slot: u8) -> usize {
         (0..8).find(|&i| self.corners[i].position == slot)
@@ -548,42 +546,42 @@ impl CubieState {
 
     fn u(&mut self) {
         // Corners: UFR(3) -> UFL(2) -> UBL(0) -> UBR(1)
-        self.cycle_corners([3, 2, 0, 1], Self::ORIENT_UD);
+        self.cycle_corners([3, 2, 0, 1], ORIENT_UD);
         // Edges:   UB(0) -> UR(2) -> UF(3) -> UL(1)  — no flips
         self.cycle_edges([0, 2, 3, 1], false);
     }
 
     fn d(&mut self) {
         // Corners: DFL(4) -> DFR(5) -> DBR(7) -> DBL(6)
-        self.cycle_corners([4, 5, 7, 6], Self::ORIENT_UD);
+        self.cycle_corners([4, 5, 7, 6], ORIENT_UD);
         // Edges:   DF(4) -> DR(6) -> DB(7) -> DL(5)  — no flips
         self.cycle_edges([4, 6, 7, 5], false);
     }
 
     fn r(&mut self) {
         // Corners: UFR(3) -> UBR(1) -> DBR(7) -> DFR(5)
-        self.cycle_corners([3, 1, 7, 5], Self::ORIENT_LR);
+        self.cycle_corners([3, 1, 7, 5], ORIENT_LR);
         // Edges:   UR(2) -> RB(11) -> DR(6) -> RF(10)  — all flip
         self.cycle_edges([2, 11, 6, 10], true);
     }
 
     fn l(&mut self) {
         // Corners: UBL(0) -> UFL(2) -> DFL(4) -> DBL(6)
-        self.cycle_corners([0, 2, 4, 6], Self::ORIENT_LR);
+        self.cycle_corners([0, 2, 4, 6], ORIENT_LR);
         // Edges:   UL(1) -> LF(9) -> DL(5) -> LB(8)  — all flip
         self.cycle_edges([1, 9, 5, 8], true);
     }
 
     fn f(&mut self) {
         // Corners: UFL(2) -> UFR(3) -> DFR(5) -> DFL(4)
-        self.cycle_corners([2, 3, 5, 4], Self::ORIENT_FB);
+        self.cycle_corners([2, 3, 5, 4], ORIENT_FB);
         // Edges:   UF(3) -> RF(10) -> DF(4) -> LF(9)  — no flips
         self.cycle_edges([3, 10, 4, 9], false);
     }
 
     fn b(&mut self) {
         // Corners: UBL(0) -> DBL(6) -> DBR(7) -> UBR(1)
-        self.cycle_corners([0, 6, 7, 1], Self::ORIENT_FB);
+        self.cycle_corners([0, 6, 7, 1], ORIENT_FB);
         // Edges:   UB(0) -> LB(8) -> DB(7) -> RB(11)  — no flips
         self.cycle_edges([0, 8, 7, 11], false);
     }
@@ -654,9 +652,8 @@ fn should_prune(last_face: u8, m: solver_move_t) -> bool {
 
 /* Solve Algorithm */
 
-
 pub fn heuristic_phase1(cube: &CubieState) -> u8 {
-    let co = tables::CORNER_ORIENT_TABLE[cube.corner_orient_coord()];
+    let co = CORNER_ORIENT_TABLE[cube.corner_orient_coord()];
     let fu = lookup_flip_udslice(
         cube.edge_orient_coord(),
         cube.udslice_coord()
@@ -1006,7 +1003,6 @@ fn test_moves_short(out: &mut [solver_move_t]) -> usize{
     // 3
 
 }
-
 fn test_moves_long(out: &mut [solver_move_t]) -> usize {
     out[0]  = solver_move_t::U;
     out[1]  = solver_move_t::D;

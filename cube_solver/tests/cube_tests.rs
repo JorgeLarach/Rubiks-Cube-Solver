@@ -440,6 +440,7 @@ mod kociemba_tests {
     // is in G1 (CO=0, EO=0, UD-slice=0).
     // -------------------------------------------------------
     fn run_phase1_only(scramble: &[solver_move_t]) -> usize {
+        runtime_tables::init();
         let mut cube = CubieState::make_solved();
         let mut total_nodes: u32 = 0;
         for &m in scramble {
@@ -472,6 +473,7 @@ mod kociemba_tests {
     // then run phase 2 and verify fully solved
     // -------------------------------------------------------
     fn run_phase2_only(scramble: &[solver_move_t]) -> usize {
+        runtime_tables::init();
         let mut cube = CubieState::make_solved();
         let mut total_nodes: u32 = 0;
         for &m in scramble {
@@ -551,16 +553,19 @@ mod kociemba_tests {
 
     #[test]
     fn phase1_heuristic_solved_is_zero() {
+        runtime_tables::init();
         assert_eq!(heuristic_phase1(&CubieState::make_solved()), 0);
     }
 
     #[test]
     fn phase2_heuristic_solved_is_zero() {
+        runtime_tables::init();
         assert_eq!(heuristic_phase2(&CubieState::make_solved()), 0);
     }
 
     #[test]
     fn phase1_heuristic_scrambled_is_nonzero() {
+        runtime_tables::init();
         // R flips edges and twists corners — definitely not in G1
         let mut cube = CubieState::make_solved();
         cube.apply_move(solver_move_t::R);
@@ -569,6 +574,7 @@ mod kociemba_tests {
 
     #[test]
     fn phase2_heuristic_scrambled_is_nonzero() {
+        runtime_tables::init();
         // U moves corners out of home slots
         let mut cube = CubieState::make_solved();
         cube.apply_move(solver_move_t::U);
@@ -643,6 +649,7 @@ mod kociemba_tests {
     #[test]
     fn phase1_timing_benchmark() {
         use std::time::Instant;
+        runtime_tables::init();
 
         // These are specifically chosen to stress Phase 1
         let scrambles: &[(&str, &[solver_move_t])] = &[
@@ -937,6 +944,59 @@ mod kociemba_tests {
             );
 
             println!();
+        }
+    }
+
+    #[test]
+    fn solve_lol() {
+        use std::time::Instant;
+        runtime_tables::init();
+
+        let stickers:[u8;54] = [5,5,0,0,0,2,2,3,5,4,5,0,1,1,5,5,1,4,3,3,4,1,2,4,1,2,1,1,0,5,2,3,4,4,0,3,0,4,3,2,4,5,2,1,3,2,3,0,0,5,3,1,4,2];
+        let cube = convert_to_cubie(stickers);
+        let mut out = [solver_move_t::U; 70];
+        // Time full solver end to end
+        let total_start = Instant::now();
+        let total_len = solve_internal(cube, &mut out);
+        let total_elapsed = total_start.elapsed();
+
+        println!(
+            "  Total:   {} moves in {}",
+            total_len,
+            if total_elapsed.as_millis() > 0 {
+                format!("{}ms", total_elapsed.as_millis())
+            } else {
+                format!("{}μs", total_elapsed.as_micros())
+            }
+        );
+
+        for i in 0..total_len {
+            print_move(out[i]);
+        }
+
+
+    }
+
+    fn print_move(m: solver_move_t) {
+        match m {
+            solver_move_t::U => println!("U, "),
+            solver_move_t::Ui => println!("Ui, "),
+            solver_move_t::U2 => println!("U2, "),
+            solver_move_t::D => println!("D, "),
+            solver_move_t::Di => println!("Di, "),
+            solver_move_t::D2 => println!("D2, "),
+            solver_move_t::L => println!("L, "),
+            solver_move_t::Li => println!("Li, "),
+            solver_move_t::L2 => println!("L2, "),
+            solver_move_t::R => println!("R, "),
+            solver_move_t::Ri => println!("Ri, "),
+            solver_move_t::R2 => println!("R2, "),
+            solver_move_t::F => println!("F, "),
+            solver_move_t::Fi => println!("Fi, "),
+            solver_move_t::F2 => println!("F2, "),
+            solver_move_t::B => println!("B, "),
+            solver_move_t::Bi => println!("Bi, "),
+            solver_move_t::B2 => println!("B2, "),
         }
     }
     // -------------------------------------------------------

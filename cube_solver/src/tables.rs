@@ -4782,6 +4782,9 @@ pub const UD_MOVE_TABLE: [[u16; 18]; 495] = [
     [494, 494, 494, 494, 494, 494, 366, 422, 487, 163, 283, 478, 284, 368, 493, 421, 161, 456],
 ];
 
+/* Remaining Phase 1 table is saved as .bin file due to large size
+FLIP_UDSLICE_TABLE:   [u8;1013760] */
+
 // Phase 2 Tables
 pub const SP_MOVE_TABLE: [[u8; 10]; 24] = [
     [0, 0, 0, 0, 0, 0, 1, 6, 2, 21],
@@ -4811,11 +4814,7 @@ pub const SP_MOVE_TABLE: [[u8; 10]; 24] = [
 ];
 
 /*  Remaining Phase 2 tables are saved as .bin files due to large size
-FLIP_UDSLICE_TABLE:   [u8;1013760] 
 CORNERS_SLICE2_TABLE: [u8; 967680] 
 EDGES_SLICE2_TABLE:   [u8; 967680] 
 CP_MOVE_TABLE:        [[u16; 10]; 40320]  
 EP_MOVE_TABLE:        [[u16; 10]; 40320] */
-
-
-
