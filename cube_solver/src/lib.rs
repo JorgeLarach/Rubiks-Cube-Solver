@@ -14,8 +14,15 @@ use core::slice;
 use core::panic::PanicInfo;
 
 use crate::tables::{
-    CORNER_ORIENT_TABLE, CORNER_PERMUTATION_TABLE, EDGE_ORIENT_TABLE, 
-    UD_SLICE_TABLE, UDSLICE_PERMUTATION_TABLE, EDGE_PERMUTATION_TABLE
+    CORNER_ORIENT_TABLE, 
+    CO_MOVE_TABLE, EO_MOVE_TABLE, UD_MOVE_TABLE,
+    SP_MOVE_TABLE,
+
+//     FLIP_UDSLICE_TABLE,
+// CORNERS_SLICE2_TABLE,
+// EDGES_SLICE2_TABLE,
+// CP_MOVE_TABLE,
+// EP_MOVE_TABLE
 };
 
 #[repr(C)] // Lays out this enum/struct in memory exactly like C would
@@ -648,38 +655,21 @@ fn should_prune(last_face: u8, m: solver_move_t) -> bool {
 /* Solve Algorithm */
 
 
-// ============================================================
-// PHASE 1 HEURISTIC
-// ============================================================
-// Lower bound on moves needed to reach G1.
-// G1 is reached when CO=0, EO=0, UD-slice=0 simultaneously.
-// Each table gives the minimum moves to fix that one aspect alone.
-// The max is a valid lower bound for fixing all three together.
 pub fn heuristic_phase1(cube: &CubieState) -> u8 {
-    let co = CORNER_ORIENT_TABLE[cube.corner_orient_coord()];
-    let eo = EDGE_ORIENT_TABLE[cube.edge_orient_coord()];
-    let ud = UD_SLICE_TABLE[cube.udslice_coord()];
-    co.max(eo).max(ud)
+    let co = tables::CORNER_ORIENT_TABLE[cube.corner_orient_coord()];
+    let fu = lookup_flip_udslice(
+        cube.edge_orient_coord(),
+        cube.udslice_coord()
+    );
+    co.max(fu)
 }
 
-// ============================================================
-// PHASE 2 HEURISTIC
-// ============================================================
-// Lower bound on moves needed to fully solve from G1.
-// Phase 2 is done when CP=0, UP=0, EP=0 simultaneously.
 pub fn heuristic_phase2(cube: &CubieState) -> u8 {
-    // udslice_perm_coord is only valid when UD-slice edges are
-    // in their belt slots, which is only guaranteed after Phase 1.
-    // If called on a non-G1 cube, return a safe fallback.
-    // In practice this should never happen — Phase 2 only runs
-    // on cubes that have passed through Phase 1.
-    if cube.udslice_coord() != 0 {
-        return u8::MAX; // signals "not in G1, don't call this"
-    }
-    let cp = CORNER_PERMUTATION_TABLE[cube.corner_perm_coord()];
-    let up = UDSLICE_PERMUTATION_TABLE[cube.udslice_perm_coord()];
-    let ep = EDGE_PERMUTATION_TABLE[cube.edge_perm_coord()];
-    cp.max(up).max(ep)
+    if cube.udslice_coord() != 0 { return u8::MAX; }
+    let sp = cube.udslice_perm_coord();
+    let cs = lookup_corners_slice2(cube.corner_perm_coord(), sp);
+    let es = lookup_edges_slice2(cube.edge_perm_coord(), sp);
+    cs.max(es)
 }
 
 // ============================================================
@@ -717,7 +707,7 @@ pub fn is_phase2_solved(cube: &CubieState) -> bool {
 //   - flip edges (destroying EO=0 guarantee from Phase 1)
 //   - displace belt edges into non-belt slots (destroying UD-slice=0)
 // Every move in this set keeps the cube within G1.
-const PHASE2_MOVES: [solver_move_t; 10] = [
+pub const PHASE2_MOVES: [solver_move_t; 10] = [
     solver_move_t::U,  solver_move_t::Ui, solver_move_t::U2,
     solver_move_t::D,  solver_move_t::Di, solver_move_t::D2,
     solver_move_t::R2, solver_move_t::L2,
@@ -760,107 +750,88 @@ const PHASE2_MOVES: [solver_move_t; 10] = [
 //   sol_len   - written with g when solution is found
 
 pub fn ida_phase1_recursive(
-    cube:      &CubieState,
+    co:        u16,           // corner orient coord
+    eo:        u16,           // edge orient coord
+    ud:        u16,           // udslice coord
     g:         u8,
     threshold: u8,
     last_face: u8,
     path:      &mut [solver_move_t],
     sol_len:   &mut usize,
+    nodes:     &mut u32
 ) -> Option<u8> {
 
-    let h = heuristic_phase1(cube);
+    let h = CORNER_ORIENT_TABLE[co as usize]
+        .max(lookup_flip_udslice(eo as usize, ud as usize));
     let f = g.saturating_add(h);
+    if f > threshold { return Some(f); }
 
-    // Prune: this branch cannot possibly improve on the current threshold
-    if f > threshold {
-        return Some(f);
-    }
-
-    // Goal: cube is in G1
-    if is_phase1_solved(cube) {
+    if co == 0 && eo == 0 && ud == 0 {
         *sol_len = g as usize;
-        return None; // None = success
+        return None;
     }
 
-    // Safety: buffer full
-    if g as usize >= path.len() {
-        return Some(u8::MAX);
-    }
+    if g as usize >= path.len() { return Some(u8::MAX); }
 
-    let mut min_exceeded: u8 = u8::MAX;
+    *nodes += 1;
+    let mut min_exceeded = u8::MAX;
 
-    for &m in ALL_MOVES.iter() {
-        if should_prune(last_face, m) {
-            continue;
-        }
+    for (mi, &m) in ALL_MOVES.iter().enumerate() {
+        if should_prune(last_face, m) { continue; }
 
-        let mut next = *cube;
-        next.apply_move(m);
+        // Single array lookup replaces copy + permute + encode
+        let next_co = CO_MOVE_TABLE[co as usize][mi];
+        let next_eo = EO_MOVE_TABLE[eo as usize][mi];
+        let next_ud = UD_MOVE_TABLE[ud as usize][mi];
+
         path[g as usize] = m;
 
         let result = ida_phase1_recursive(
-            &next,
-            g + 1,
-            threshold,
-            face_of(m),
-            path,
+            next_co, 
+            next_eo, 
+            next_ud,
+            g + 1, 
+            threshold, 
+            face_of(m), 
+            path, 
             sol_len,
+            nodes
         );
 
         match result {
-            // Success — propagate immediately, don't try other moves
-            None => return None,
-            Some(t) => {
-                if t < min_exceeded {
-                    min_exceeded = t;
-                }
-            }
+            None    => return None,
+            Some(t) => { if t < min_exceeded { min_exceeded = t; } }
         }
     }
-
     Some(min_exceeded)
 }
+
 
 // ============================================================
 // PHASE 1 OUTER LOOP
 // ============================================================
 // Manages the IDA* threshold and drives iterative deepening.
 // Returns the number of Phase 1 moves written to path.
-pub fn kociemba_phase1(
-    cube: &CubieState,
-    path: &mut [solver_move_t],
-) -> usize {
+pub fn kociemba_phase1(cube: &CubieState, path: &mut [solver_move_t], nodes: &mut u32) -> usize {
+    if is_phase1_solved(cube) { return 0; }
 
-    // Already in G1 — nothing to do
-    if is_phase1_solved(cube) {
-        return 0;
-    }
+    // Compute coords once at entry — never recomputed during search
+    let co = cube.corner_orient_coord() as u16;
+    let eo = cube.edge_orient_coord() as u16;
+    let ud = cube.udslice_coord() as u16;
 
-    // Initial threshold: tightest possible lower bound on Phase 1 depth
-    let mut threshold = heuristic_phase1(cube);
+    let mut threshold = CORNER_ORIENT_TABLE[co as usize]
+        .max(lookup_flip_udslice(eo as usize, ud as usize));
     let mut sol_len = 0usize;
 
     loop {
         let result = ida_phase1_recursive(
-            cube,
-            0,
-            threshold,
-            255,        // 255 = no last face, no pruning at root
-            path,
-            &mut sol_len,
+            co, eo, ud, 0, threshold, 255, path, &mut sol_len, nodes
         );
-
         match result {
-            // Solution found — sol_len moves written to path
-            None => return sol_len,
-
-            // Buffer full or other abort — should not happen
-            // if path is sized correctly (30 moves is enough for Phase 1)
-            Some(u8::MAX) => return 0,
-
-            // Not found — raise threshold to minimum exceeded value
-            // and try again. This is tighter than blindly adding 1.
-            Some(new_threshold) => threshold = new_threshold,
+            None              => return sol_len,
+            Some(u8::MAX)     => return 0,
+            Some(t)           => threshold = t,
         }
     }
 }
@@ -872,97 +843,82 @@ pub fn kociemba_phase1(
 //   1. Goal check is is_phase2_solved()
 //   2. Only PHASE2_MOVES are tried — all 18 would break G1
 pub fn ida_phase2_recursive(
-    cube:      &CubieState,
+    cp:        u16, // corner permutation
+    ep:        u16, // edge permutation
+    sp:        u8,  // belt permutation
     g:         u8,
     threshold: u8,
     last_face: u8,
     path:      &mut [solver_move_t],
     sol_len:   &mut usize,
+    nodes:     &mut u32
 ) -> Option<u8> {
 
-    let h = heuristic_phase2(cube);
+    let h = lookup_corners_slice2(cp as usize, sp as usize)
+        .max(lookup_edges_slice2(ep as usize, sp as usize));
     let f = g.saturating_add(h);
+    if f > threshold { return Some(f); }
 
-    if f > threshold {
-        return Some(f);
-    }
-
-    // Goal: cube is fully solved
-    if is_phase2_solved(cube) {
+    if cp == 0 && ep == 0 && sp == 0 {
         *sol_len = g as usize;
         return None;
     }
 
-    if g as usize >= path.len() {
-        return Some(u8::MAX);
-    }
+    if g as usize >= path.len() { return Some(u8::MAX); }
 
-    let mut min_exceeded: u8 = u8::MAX;
+    *nodes += 1;
+    let mut min_exceeded = u8::MAX;
 
-    // CRITICAL: only iterate PHASE2_MOVES, not ALL_MOVES
-    for &m in PHASE2_MOVES.iter() {
-        if should_prune(last_face, m) {
-            continue;
-        }
+    for (mi, &m) in PHASE2_MOVES.iter().enumerate() {
+        if should_prune(last_face, m) { continue; }
 
-        let mut next = *cube;
-        next.apply_move(m);
+        let next_cp = lookup_cp_move(cp as usize, mi as usize);
+        let next_ep = lookup_ep_move(ep as usize, mi as usize);
+        let next_sp = SP_MOVE_TABLE[sp as usize][mi];
+
         path[g as usize] = m;
 
         let result = ida_phase2_recursive(
-            &next,
-            g + 1,
-            threshold,
-            face_of(m),
-            path,
-            sol_len,
+            next_cp, next_ep, next_sp,
+            g + 1, threshold, face_of(m), 
+            path, sol_len, nodes
         );
 
         match result {
-            None => return None,
-            Some(t) => {
-                if t < min_exceeded {
-                    min_exceeded = t;
-                }
-            }
+            None    => return None,
+            Some(t) => { if t < min_exceeded { min_exceeded = t; } }
         }
     }
-
     Some(min_exceeded)
 }
 
-// ============================================================
-// PHASE 2 OUTER LOOP
-// ============================================================
-// path here is a slice starting AFTER the Phase 1 moves.
-// The caller is responsible for passing the correct offset.
-pub fn kociemba_phase2(
-    cube: &CubieState,
-    path: &mut [solver_move_t],
-) -> usize {
+pub fn kociemba_phase2(cube: &CubieState, path: &mut [solver_move_t], nodes: &mut u32) -> usize {
+    if is_phase2_solved(cube) { return 0; }
 
-    // Already fully solved — nothing to do
-    if is_phase2_solved(cube) {
-        return 0;
-    }
+    let cp = cube.corner_perm_coord() as u16;
+    let ep = cube.edge_perm_coord() as u16;
+    let sp = cube.udslice_perm_coord() as u8;
 
-    let mut threshold = heuristic_phase2(cube);
+    let mut threshold = lookup_corners_slice2(cp as usize, sp as usize)
+        .max(lookup_edges_slice2(ep as usize, sp as usize));
     let mut sol_len = 0usize;
 
     loop {
         let result = ida_phase2_recursive(
-            cube,
-            0,
-            threshold,
-            255,
-            path,
+            cp, 
+            ep, 
+            sp, 
+            0, 
+            threshold, 
+            255, 
+            path, 
             &mut sol_len,
+            nodes
         );
-
         match result {
-            None => return sol_len,
+            None          => return sol_len,
             Some(u8::MAX) => return 0,
-            Some(new_threshold) => threshold = new_threshold,
+            Some(t)       => threshold = t,
         }
     }
 }
@@ -972,16 +928,19 @@ pub fn kociemba_phase2(
 // ============================================================
 // Called by the existing solve_cube FFI function 
 pub fn solve_internal(cube: CubieState, out: &mut [solver_move_t]) -> usize {
-
+    runtime_tables::init();
+    
     // Already solved — nothing to do
     if is_phase2_solved(&cube) {
         return 0;
     }
 
+    let mut total_nodes: u32 = 0;
+
     // Phase 1: find moves to reach G1.
     // Write Phase 1 moves into the front of out.
     // Reserve 30 slots — worst case Phase 1 is ~12 moves with headroom.
-    let p1_len = kociemba_phase1(&cube, &mut out[..30]);
+    let p1_len = kociemba_phase1(&cube, &mut out[..30], &mut total_nodes);
 
     // If Phase 1 returned 0 but cube isn't in G1, something is wrong
     if p1_len == 0 && !is_phase1_solved(&cube) {
@@ -994,8 +953,7 @@ pub fn solve_internal(cube: CubieState, out: &mut [solver_move_t]) -> usize {
         g1_cube.apply_move(out[i]);
     }
 
-    // Sanity check: g1_cube must now be in G1
-    // If this fails, there is a bug in Phase 1
+    // g1_cube must now be in G1
     if !is_phase1_solved(&g1_cube) {
         return 0; // abort
     }
@@ -1003,7 +961,7 @@ pub fn solve_internal(cube: CubieState, out: &mut [solver_move_t]) -> usize {
     // Phase 2: solve from G1 to fully solved.
     // Write Phase 2 moves into out AFTER the Phase 1 moves.
     // Reserve 40 slots — worst case Phase 2 is ~18 moves with headroom.
-    let p2_len = kociemba_phase2(&g1_cube, &mut out[p1_len..p1_len + 40]);
+    let p2_len = kociemba_phase2(&g1_cube, &mut out[p1_len..p1_len + 40], &mut total_nodes);
 
     // Total solution length is Phase 1 + Phase 2
     p1_len + p2_len
@@ -1128,4 +1086,244 @@ pub extern "C" fn solve_cube(
 #[panic_handler]
 fn panic(_info: &PanicInfo) -> ! {
     loop {}
+}
+
+// ============================================================
+// LARGE TABLE ACCESS — CONDITIONAL ON TARGET
+// ============================================================
+//
+// The three large tables (FLIP_UDSLICE, CORNERS_SLICE2, EDGES_SLICE2)
+// and two large move tables (CP_MOVE, EP_MOVE) don't fit in internal
+// flash. They live in different places depending on target:
+//
+//   std-env (PC):  loaded from .bin files on disk at test startup
+//   no_std  (MCU): read from QSPI memory-mapped flash via raw pointer
+//
+// The accessor functions below have identical signatures in both cases.
+// Everything above this block (heuristics, search) calls these
+// accessors and is completely unaware of where the data lives.
+// ============================================================
+
+// -------------------------------------------------------
+// PC VERSION — load binary files into memory at startup
+// -------------------------------------------------------
+#[cfg(feature = "std-env")]
+pub mod runtime_tables {
+    use std::sync::OnceLock;
+
+    // OnceLock: initialized exactly once, then read-only forever.
+    // Safe to access from multiple test threads after init() is called.
+    static FLIP_UDSLICE:    OnceLock<Vec<u8>>       = OnceLock::new();
+    static CORNERS_SLICE2:  OnceLock<Vec<u8>>       = OnceLock::new();
+    static EDGES_SLICE2:    OnceLock<Vec<u8>>       = OnceLock::new();
+    static CP_MOVE:         OnceLock<Vec<[u16; 10]>> = OnceLock::new();
+    static EP_MOVE:         OnceLock<Vec<[u16; 10]>> = OnceLock::new();
+
+    // Call this ONCE before any solver tests run.
+    // Reads all .bin files from disk into heap memory.
+    // Panics with a clear message if any file is missing.
+    pub fn init() {
+        // -- FLIP_UDSLICE --
+        // 2048 * 495 = 1,013,760 bytes
+        FLIP_UDSLICE.set(
+            std::fs::read("flip_udslice.bin")
+                .expect("flip_udslice.bin not found — run gen_tables first")
+        ).ok();
+
+        // -- CORNERS_SLICE2 --
+        // 40320 * 24 = 967,680 bytes
+        CORNERS_SLICE2.set(
+            std::fs::read("corners_slice2.bin")
+                .expect("corners_slice2.bin not found — run gen_tables first")
+        ).ok();
+
+        // -- EDGES_SLICE2 --
+        // 40320 * 24 = 967,680 bytes
+        EDGES_SLICE2.set(
+            std::fs::read("edges_slice2.bin")
+                .expect("edges_slice2.bin not found — run gen_tables first")
+        ).ok();
+
+        // -- CP_MOVE --
+        // 40320 * 10 * 2 = 806,400 bytes → parsed into Vec<[u16; 10]>
+        let raw = std::fs::read("cp_move.bin")
+            .expect("cp_move.bin not found — run gen_tables first");
+        let cp: Vec<[u16; 10]> = raw
+            .chunks_exact(20) // 10 u16s × 2 bytes each = 20 bytes per row
+            .map(|chunk| {
+                let mut row = [0u16; 10];
+                for (i, pair) in chunk.chunks_exact(2).enumerate() {
+                    row[i] = u16::from_le_bytes([pair[0], pair[1]]);
+                }
+                row
+            })
+            .collect();
+        assert_eq!(cp.len(), 40320, "cp_move.bin has wrong number of rows");
+        CP_MOVE.set(cp).ok();
+
+        // -- EP_MOVE --
+        // same structure as CP_MOVE
+        let raw = std::fs::read("ep_move.bin")
+            .expect("ep_move.bin not found — run gen_tables first");
+        let ep: Vec<[u16; 10]> = raw
+            .chunks_exact(20)
+            .map(|chunk| {
+                let mut row = [0u16; 10];
+                for (i, pair) in chunk.chunks_exact(2).enumerate() {
+                    row[i] = u16::from_le_bytes([pair[0], pair[1]]);
+                }
+                row
+            })
+            .collect();
+        assert_eq!(ep.len(), 40320, "ep_move.bin has wrong number of rows");
+        EP_MOVE.set(ep).ok();
+    }
+
+    // -------------------------------------------------------
+    // Accessor functions — called by heuristics and search.
+    // Panic if init() was never called (OnceLock not set).
+    // -------------------------------------------------------
+
+    pub fn flip_udslice(eo: usize, ud: usize) -> u8 {
+        FLIP_UDSLICE.get()
+            .expect("runtime_tables not initialized — call init() first")
+            [eo * 495 + ud]
+    }
+
+    pub fn corners_slice2(cp: usize, sp: usize) -> u8 {
+        CORNERS_SLICE2.get()
+            .expect("runtime_tables not initialized — call init() first")
+            [cp * 24 + sp]
+    }
+
+    pub fn edges_slice2(ep: usize, sp: usize) -> u8 {
+        EDGES_SLICE2.get()
+            .expect("runtime_tables not initialized — call init() first")
+            [ep * 24 + sp]
+    }
+
+    pub fn cp_move(cp: usize, mi: usize) -> u16 {
+        CP_MOVE.get()
+            .expect("runtime_tables not initialized — call init() first")
+            [cp][mi]
+    }
+
+    pub fn ep_move(ep: usize, mi: usize) -> u16 {
+        EP_MOVE.get()
+            .expect("runtime_tables not initialized — call init() first")
+            [ep][mi]
+    }
+}
+
+// -------------------------------------------------------
+// MCU VERSION — QSPI memory-mapped flash access
+// -------------------------------------------------------
+//
+// In memory-mapped QSPI mode, the F446RE QUADSPI peripheral
+// exposes the flash chip as a read-only region starting at
+// 0x9000_0000. All tables are concatenated in this exact
+// layout when written to the flash chip:
+//
+//   Offset 0x000000: flip_udslice     1,013,760 bytes
+//   Offset 0x0F7700: corners_slice2     967,680 bytes
+//   Offset 0x1EEE80: edges_slice2       967,680 bytes
+//   Offset 0x2E6600: cp_move            806,400 bytes
+//   Offset 0x3C9A00: ep_move            806,400 bytes
+//
+// Total: 4,561,920 bytes ≈ 4.35MB — fits easily in 16MB chip.
+//
+// Raw pointer reads are unsafe but correct here because:
+//   1. The QSPI region is read-only
+//   2. The addresses are fixed and known at compile time
+//   3. The QUADSPI peripheral is configured before solve_cube is called
+// -------------------------------------------------------
+#[cfg(not(feature = "std-env"))]
+mod qspi_tables {
+    // Base address of QSPI memory-mapped region on F446RE
+    // Configure this in CubeMX under QUADSPI → Bank 1 base address
+    const QSPI_BASE: usize = 0x9000_0000;
+
+    // Byte offsets for each table within the QSPI flash
+    const FLIP_UDSLICE_OFFSET:   usize = 0x000000;
+    const CORNERS_SLICE2_OFFSET: usize = 0x0F7700;
+    const EDGES_SLICE2_OFFSET:   usize = 0x1EEE80;
+    const CP_MOVE_OFFSET:        usize = 0x2E6600; // u16 table
+    const EP_MOVE_OFFSET:        usize = 0x3C9A00; // u16 table
+
+    #[inline(always)]
+    pub fn flip_udslice(eo: usize, ud: usize) -> u8 {
+        let addr = QSPI_BASE + FLIP_UDSLICE_OFFSET + (eo * 495 + ud);
+        unsafe { *(addr as *const u8) }
+    }
+
+    #[inline(always)]
+    pub fn corners_slice2(cp: usize, sp: usize) -> u8 {
+        let addr = QSPI_BASE + CORNERS_SLICE2_OFFSET + (cp * 24 + sp);
+        unsafe { *(addr as *const u8) }
+    }
+
+    #[inline(always)]
+    pub fn edges_slice2(ep: usize, sp: usize) -> u8 {
+        let addr = QSPI_BASE + EDGES_SLICE2_OFFSET + (ep * 24 + sp);
+        unsafe { *(addr as *const u8) }
+    }
+
+    #[inline(always)]
+    pub fn cp_move(cp: usize, mi: usize) -> u16 {
+        // u16 table: each row has 10 u16s = 20 bytes
+        let addr = QSPI_BASE + CP_MOVE_OFFSET + (cp * 10 + mi) * 2;
+        unsafe { *(addr as *const u16) }
+    }
+
+    #[inline(always)]
+    pub fn ep_move(ep: usize, mi: usize) -> u16 {
+        let addr = QSPI_BASE + EP_MOVE_OFFSET + (ep * 10 + mi) * 2;
+        unsafe { *(addr as *const u16) }
+    }
+}
+
+// -------------------------------------------------------
+// Unified accessor — same call site regardless of target.
+// std-env routes to runtime_tables (heap Vec).
+// no_std routes to qspi_tables (raw pointer).
+// -------------------------------------------------------
+
+#[inline(always)]
+fn lookup_flip_udslice(eo: usize, ud: usize) -> u8 {
+    #[cfg(feature = "std-env")]
+    { runtime_tables::flip_udslice(eo, ud) }
+    #[cfg(not(feature = "std-env"))]
+    { qspi_tables::flip_udslice(eo, ud) }
+}
+
+#[inline(always)]
+fn lookup_corners_slice2(cp: usize, sp: usize) -> u8 {
+    #[cfg(feature = "std-env")]
+    { runtime_tables::corners_slice2(cp, sp) }
+    #[cfg(not(feature = "std-env"))]
+    { qspi_tables::corners_slice2(cp, sp) }
+}
+
+#[inline(always)]
+fn lookup_edges_slice2(ep: usize, sp: usize) -> u8 {
+    #[cfg(feature = "std-env")]
+    { runtime_tables::edges_slice2(ep, sp) }
+    #[cfg(not(feature = "std-env"))]
+    { qspi_tables::edges_slice2(ep, sp) }
+}
+
+#[inline(always)]
+fn lookup_cp_move(cp: usize, mi: usize) -> u16 {
+    #[cfg(feature = "std-env")]
+    { runtime_tables::cp_move(cp, mi) }
+    #[cfg(not(feature = "std-env"))]
+    { qspi_tables::cp_move(cp, mi) }
+}
+
+#[inline(always)]
+fn lookup_ep_move(ep: usize, mi: usize) -> u16 {
+    #[cfg(feature = "std-env")]
+    { runtime_tables::ep_move(ep, mi) }
+    #[cfg(not(feature = "std-env"))]
+    { qspi_tables::ep_move(ep, mi) }
 }

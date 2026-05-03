@@ -1,21 +1,176 @@
 # Rubik's Cube Solver Part 2  
 
-## May 1, 2026
-Well I tried the Kociemba approach I described below, and it seems its a lot faster than IDA* implementation, but still way too slow. Here's a performance ratio table:
+## May 2, 2026
+I found an approach that works. My solver can now find a solution for a cube that was scrambled in 33 moves in 26ms on my laptop. I realized it just wasn't feasable to write a well performing solver with less than a megabyte of tables. I did some googling and found that I can use external flash to store and access larger tables, particularly for phase 2. The plan right now is to use a QSPI external flash device, particularly the Adafruit W25Q128. It is an external Quad-SPI flash memory chip that can provide up to 16MB of storage. The access latency at runtime will be around 350ns, compared to 10ns internal flash access, but it shouldn't be that noticeable. 
 
-| Moves | Phase 1 Time(s)  | Phase 2 Time(s)  | Ratio P1 | Ratio P2 |
-| ----- | ---------------- | ---------------- | -------- | -------- |
-| 10    | 32.17            |   390 (6.5 m)    |     -    |   -      |
-| 11    | 62.10            |   2706 (45 m)    |   1.930  |  43.59   |
-| 12    | 36.10            |   66.05          |   0.580  |  0.024   |
-| 13    | 09.73            |   53.29          |   0.270  |  0.806   |
-| 14    | 02.61            |   53.27          |   0.268  |  0.999   |
-| 15    | 02.76            |   24.65          |   1.058  |  0.463   |
-| 16    | 01.79            |   24.75          |   0.646  |  1.003   |
-| 17    | 23.04            |   1705 (28 m)    |   12.90  |  68.91   |
-| 18    | 13.55            |   2811 (47 m)    |   0.588  |  1.648   |
-| 19    | 16.38            |   04.18          |   1.208  |  0.001   |
-| 20    | 03.33            |   1879 (31 m)    |   0.203  |  449.2   |
+The problem is, my current MCU, the Nucleo-F401RE, doesn't have a dedicated QSPI peripheral, so for this approach, I would also need to get something like a Nucleo-F446RE. I might have to reconfigure the whole project from scratch on the CubeMX IOC for the new MCU, and then manually port over all the code and linker settings, but I'm not sure yet. I'll need to keep looking into that. 
+
+Either way, I generated the large tables and have been able to run some tests.
+
+| Scramble Moves | P1 Time(ms) | P1 Nodes | P1 Depth  | P2 Time(ms) | P2 Nodes  | P2 Depth |
+| -------------- | ----------- | -------- | --------  | ----------- | --------  | -------- |
+| 10             | 234         |  5,415    |    10    |  18         |  24,887   |    14    |
+| 11             | 732         | 16,866    |    10    |  73         |  97,484   |    15    |
+| 12             | 394         |  9,054    |    10    |   3         |  12,532   |    13    |
+| 13             | 109         |  2,530    |    10    |  25         |  30,785   |    13    | 
+| 14             |  52         |  1,200    |     9    |  24         |  29,455   |    13    |
+| 15             |  28         |    655    |     9    |   2         |   2,879   |    13    |
+| 16             |  23         |    538    |     9    |   2         |   2,762   |    13    |
+| 17             | 222         |  5,202    |    10    |  49         |  62,167   |    15    |
+| 18             | 130         |  3,016    |    10    | 147         | 179,396   |    15    |
+| 19             | 133         |  3,113    |    10    |   1         |   4,562   |    12    |
+| 20             |  25         |    604    |     9    |  82         |  95,389   |    15    |
+| 21             | 181         |  4,221    |    10    |  23         |  28,666   |    13    |
+| 22             |  28         |    639    |     9    |   1         |   2,491   |    12    |
+| 23             | 379         |  8,851    |    10    |   1         |  10,703   |    12    |
+| 24             | 532         | 12,421    |    10    |   4         |  16,215   |    12    |
+| 25             | 577         | 13,428    |    10    |  27         |  43,061   |    13    |
+
+As you can see, the solver is significantly faster than the previous implementations
+Now we can do an actual EBF calculation, unlike the one I did a few days ago. 
+
+$$
+b^*=N^{(1/d)}
+$$
+where N is total nodes explored in the search and d is depth where solution was found. Of course, for Phase 1, the "solution" is just getting the cube in the G1 subgroup.  
+
+We can find the EBF for both IDA* searches by calculating it for each n-moves scrambled cube test, after which taking the geometric mean of all of them would result in a EBF score for each phase. Remember, an EBF of 1 means the heuristic is perfect.
+
+I won't show the whole calculation here, but for example, for the EFB for Phase 1, we would start with the 10 move scrambled cube test.
+
+$$
+b^*[10] = 5,415 ^ {(1/10)} = 2.19
+$$
+
+I would then do the same for the 11 move test, 12 move test, etc. Then, taking the geometric mean of each test's EBF (specifically the 16 tests 10-25),
+
+$$
+(\prod_{i=10}^{25}b^*[i] )^{(1/16)}
+$$
+
+We get 2.25 as the overall Effective Branching Factor for Phase 1. That means for every node explored, it expands on average to 2.25 more nodes. This means the algorithm is exploring a small fraction of the search space, and that the heuristic is efficient in cutting it down. We do the same computations over Phase 2's test results, and get a EBF of 2.13, indicating better performance when Phase 1, which makes sense due to the larger size and number of tables Phase 2 has access to. About that, below is the current setup for the tables:
+
+Stored in Internal Flash (F446RE has 1MB): 
+| Table               | Size (B)     | Purpose 
+| -----               | ------------ | -------  
+| CORNER_ORIENT_TABLE |  2,187       | Phase 1 heuristic
+| CO_MOVE_TABLE       | 78,732       | Phase 1 search
+| EO_MOVE_TABLE       | 73,728       | Phase 1 search
+| UD_MOVE_TABLE       | 17,820       | Phase 1 search
+| SP_MOVE_TABLE       |    240       | Phase 2 search
+  
+Total internal: 172,707 bytes
+
+QSPI External Flash (W25Q128 = 16MB):
+| Table               | Size (B)     | Purpose 
+| -----               | ------------ | -------  
+| FLIP_UDSLICE_TABLE   |      1,013,760 bytes | Phase 1 heuristic
+| CORNERS_SLICE2_TABLE |        967,680 bytes | Phase 2 heuristic
+| EDGES_SLICE2_TABLE   |        967,680 bytes | Phase 2 heuristic
+| CP_MOVE_TABLE        |        806,400 bytes | Phase 2 search
+| EP_MOVE_TABLE        |        806,400 bytes | Phase 2 search
+
+Total QSPI: 4,561,920 bytes of 16,777,216 available
+
+Each phase has two heuristic tables and three search tables. The phase 1 tables are 1,186,227 bytes, and the phase 2 tables are 3,548,400 bytes. In total, I am using 4,734,627 bytes of tables. As for what each of them do:
+
+### CORNER_ORIENT_TABLE
+Size: 2,187 bytes  
+What it stands for: Corner orientation pruning. Each of the 8 corners can be twisted 0, 1, or 2 times. The 8th corner's twist is always determined by the other 7 (physical invariant), so there are 3^7 = 2,187 possible states.  
+What the value means: The minimum number of moves required to make all 8 corners untwisted, ignoring everything else about the cube.  
+Why this size: One byte per state. 3^7 = 2,187 states. 2,187 × 1 byte = 2,187 bytes.  
+When used: Phase 1 heuristic. Every node in the Phase 1 search does one lookup here and uses the result as part of the lower bound estimate.
+
+### FLIP_UDSLICE_TABLE    
+Size: 1,013,760 bytes ≈ 1MB  
+What it stands for: Combined edge orientation + UD-slice membership pruning. This is the key Phase 1 table. It jointly encodes EO (2,048 states) and UD-slice membership (495 states).  
+What the value means: The minimum moves to simultaneously achieve EO=0 AND UD=0.  
+Why this size: 2,048 EO states × 495 UD states × 1 byte = 1,013,760 bytes.  
+When used: Phase 1 heuristic, every node:  
+Lives in: QSPI external flash.
+
+### CORNERS_SLICE2_TABLE
+Size: 967,680 bytes ≈ 945KB  
+What it stands for: Combined corner permutation + belt permutation pruning. Jointly encodes CP (40,320 states) and SP (24 states).
+What the value means: The minimum Phase 2 moves to simultaneously achieve CP=0 AND SP=0. 
+Why this size: 40,320 CP states × 24 SP states × 1 byte = 967,680 bytes.  
+When used: Phase 2 heuristic, every node.  
+Lives in: QSPI external flash.
+
+### EDGES_SLICE2_TABLE
+Size: 967,680 bytes ≈ 945KB  
+What it stands for: Combined non-belt edge permutation + belt permutation pruning. Same structure as CORNERS_SLICE2 but for the 8 non-belt edges instead of the 8 corners.  
+What the value means: The minimum Phase 2 moves to simultaneously achieve EP=0 AND SP=0.  
+Why this size: 40,320 EP states × 24 SP states × 1 byte = 967,680 bytes.  
+When used: Phase 2 heuristic alongside CORNERS_SLICE2.  
+Lives in: QSPI external flash.
+
+### CO_MOVE_TABLE
+Size: 78,732 bytes ≈ 77KB  
+What it stands for: Corner orientation move transitions. For every CO coordinate value and every one of the 18 moves, stores the resulting CO coordinate.  
+What the value means: CO_MOVE[co][mi] = the new corner orient coord after applying move mi to a cube with CO coord co.  
+Why this size: 2,187 CO states × 18 moves × 2 bytes (u16, since values reach 2,186) = 78,732 bytes.  
+When used: Phase 1 search, every node, every move tried.  
+Lives in: Internal flash.
+
+### EO_MOVE_TABLE
+Size: 73,728 bytes ≈ 72KB  
+What it stands for: Edge orientation move transitions. Same structure as CO_MOVE but for the 2,048 EO states.  
+What the value means: EO_MOVE[eo][mi] = new edge orient coord after applying move mi.  
+Why this size: 2,048 EO states × 18 moves × 2 bytes = 73,728 bytes.  
+When used: Phase 1 search, every node.  
+Lives in: Internal flash.
+
+### UD_MOVE_TABLE
+Size: 17,820 bytes ≈ 17KB  
+What it stands for: UD-slice membership move transitions. For every UD coord and every move, stores the resulting UD coord.  
+What the value means: UD_MOVE[ud][mi] = new UD-slice membership coord after applying move mi.  
+Why this size: 495 UD states × 18 moves × 2 bytes = 17,820 bytes.  
+When used: Phase 1 search, every node.  
+Lives in: Internal flash.
+
+### CP_MOVE_TABLE
+Size: 806,400 bytes ≈ 787KB
+What it stands for: Corner permutation move transitions. For every CP coord and every one of the 10 Phase 2 moves, stores the resulting CP coord.
+What the value means: CP_MOVE[cp][mi] = new corner perm coord after applying Phase 2 move mi.
+Why this size: 40,320 CP states × 10 Phase 2 moves × 2 bytes = 806,400 bytes.
+When used: Phase 2 search, every node, every move tried.
+Lives in: QSPI external flash.
+
+### EP_MOVE_TABLE
+Size: 806,400 bytes ≈ 787KB  
+What it stands for: Non-belt edge permutation move transitions. Same structure as CP_MOVE but for the 40,320 EP states.  
+What the value means: EP_MOVE[ep][mi] = new edge perm coord after applying Phase 2 move mi.  
+Why this size: 40,320 EP states × 10 Phase 2 moves × 2 bytes = 806,400 bytes.  
+When used: Phase 2 search, every node.  
+Lives in: QSPI external flash.
+
+### SP_MOVE_TABLE
+Size: 240 bytes  
+What it stands for: Belt permutation move transitions. For every SP coord and every Phase 2 move, stores the resulting SP coord.  
+What the value means: SP_MOVE[sp][mi] = new belt perm coord after applying Phase 2 move mi.  
+Why this size: 24 SP states × 10 Phase 2 moves × 1 byte (u8, values reach 23) = 240 bytes.  
+When used: Phase 2 search, every node.  
+Lives in: Internal flash.
+
+I'll be doing more research into QSPI, as well as figuring out how to migrate my project between target MCUs on the IDE, but for now I'll just be happy that I now have a solver that can actually solve a cube in my lifetime!
+
+## May 1, 2026
+Well I tried the Kociemba approach I described below, and it seems its a lot faster than the single IDA* implementation, but still way too slow. Here's a performance ratio table:
+
+| Moves | Phase 1 Time(s)  | Phase 2 Time(s)  |
+| ----- | ---------------- | ---------------- |
+| 10    | 32.17            |   390 (6.5 m)    |
+| 11    | 62.10            |   2706 (45 m)    |
+| 12    | 36.10            |   66.05          |
+| 13    | 09.73            |   53.29          |
+| 14    | 02.61            |   53.27          |
+| 15    | 02.76            |   24.65          |
+| 16    | 01.79            |   24.75          |
+| 17    | 23.04            |   1705 (28 m)    |
+| 18    | 13.55            |   2811 (47 m)    |
+| 19    | 16.38            |   04.18          |
+| 20    | 03.33            |   1879 (31 m)    |
 
 Obviously this isn't a perfect measurement of performance but it can give you an idea of what's going on.
 

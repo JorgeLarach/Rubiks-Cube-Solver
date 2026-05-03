@@ -5,6 +5,16 @@
 //      Author: jorgelarach
 //
 
+use std::sync::OnceLock;
+
+static TABLES_INIT: OnceLock<()> = OnceLock::new();
+
+fn init_tables() {
+    TABLES_INIT.get_or_init(|| {
+        cube_solver::runtime_tables::init();
+    });
+}
+
 #[cfg(test)]
 mod coord_tests {
     use cube_solver::*;
@@ -431,12 +441,13 @@ mod kociemba_tests {
     // -------------------------------------------------------
     fn run_phase1_only(scramble: &[solver_move_t]) -> usize {
         let mut cube = CubieState::make_solved();
+        let mut total_nodes: u32 = 0;
         for &m in scramble {
             cube.apply_move(m);
         }
 
         let mut path = [solver_move_t::U; 30];
-        let n = kociemba_phase1(&cube, &mut path);
+        let n = kociemba_phase1(&cube, &mut path, &mut total_nodes);
 
         // Apply phase 1 moves and verify G1
         let mut g1 = cube;
@@ -462,13 +473,14 @@ mod kociemba_tests {
     // -------------------------------------------------------
     fn run_phase2_only(scramble: &[solver_move_t]) -> usize {
         let mut cube = CubieState::make_solved();
+        let mut total_nodes: u32 = 0;
         for &m in scramble {
             cube.apply_move(m);
         }
 
         // Get to G1 first
         let mut p1_path = [solver_move_t::U; 30];
-        let p1_len = kociemba_phase1(&cube, &mut p1_path);
+        let p1_len = kociemba_phase1(&cube, &mut p1_path, &mut total_nodes);
         let mut g1_cube = cube;
         for i in 0..p1_len {
             g1_cube.apply_move(p1_path[i]);
@@ -477,7 +489,7 @@ mod kociemba_tests {
 
         // Now run phase 2
         let mut p2_path = [solver_move_t::U; 40];
-        let p2_len = kociemba_phase2(&g1_cube, &mut p2_path);
+        let p2_len = kociemba_phase2(&g1_cube, &mut p2_path, &mut total_nodes);
 
         // Apply phase 2 and verify fully solved
         let mut result = g1_cube;
@@ -518,16 +530,18 @@ mod kociemba_tests {
     #[test]
     fn phase1_on_solved_cube_returns_zero() {
         let cube = CubieState::make_solved();
+        let mut total_nodes: u32 = 0;
         let mut path = [solver_move_t::U; 30];
-        let n = kociemba_phase1(&cube, &mut path);
+        let n = kociemba_phase1(&cube, &mut path, &mut total_nodes);
         assert_eq!(n, 0);
     }
 
     #[test]
     fn phase2_on_solved_cube_returns_zero() {
         let cube = CubieState::make_solved();
+        let mut total_nodes: u32 = 0;
         let mut path = [solver_move_t::U; 40];
-        let n = kociemba_phase2(&cube, &mut path);
+        let n = kociemba_phase2(&cube, &mut path, &mut total_nodes);
         assert_eq!(n, 0);
     }
 
@@ -655,7 +669,8 @@ mod kociemba_tests {
 
             let mut path = [solver_move_t::U; 30];
             let start = Instant::now();
-            let n = kociemba_phase1(&cube, &mut path);
+            let mut total_nodes: u32 = 0;
+            let n = kociemba_phase1(&cube, &mut path, &mut total_nodes);
             let elapsed = start.elapsed();
 
             println!(
@@ -723,6 +738,7 @@ mod kociemba_tests {
 
     #[test]
     fn solve_sexy_move_once() {
+        
         // R U Ri Ui — classic 4 move pattern
         let n = run_kociemba(&[
             solver_move_t::R,  solver_move_t::U,
@@ -802,6 +818,7 @@ mod kociemba_tests {
     #[test]
     fn solve_n_move_scrambles_kociemba() {
         use std::time::Instant;
+        runtime_tables::init();
 
         let all_moves = [
             solver_move_t::R,  solver_move_t::U,  solver_move_t::Bi,
@@ -810,7 +827,14 @@ mod kociemba_tests {
             solver_move_t::Di, solver_move_t::L,  solver_move_t::Fi,
             solver_move_t::R,  solver_move_t::U,  solver_move_t::Ri,
             solver_move_t::Ui, solver_move_t::F2, solver_move_t::L2,
-            solver_move_t::D2, solver_move_t::B2,
+            solver_move_t::D2, solver_move_t::B2, solver_move_t::R,
+            solver_move_t::F2, solver_move_t::Li, solver_move_t::R,
+            solver_move_t::L,  solver_move_t::Ui,  solver_move_t::Ri,
+            solver_move_t::D2,  solver_move_t::U,  solver_move_t::Fi,
+            solver_move_t::Li, solver_move_t::F2, solver_move_t::B2,
+            solver_move_t::R2, solver_move_t::Li, solver_move_t::Di,
+            solver_move_t::U2,  solver_move_t::L,  solver_move_t::R2,
+            solver_move_t::U,
         ];
 
         let n = all_moves.len();
@@ -820,6 +844,7 @@ mod kociemba_tests {
 
             // Build scrambled cube
             let mut cube = CubieState::make_solved();
+            let mut total_nodes: u32 = 0;
             for &m in scramble { cube.apply_move(m); }
 
             // let mut out = [solver_move_t::U; 70];
@@ -829,7 +854,7 @@ mod kociemba_tests {
             // Time Phase 1 in isolation
             let mut p1_path = [solver_move_t::U; 30];
             let p1_start = Instant::now();
-            let p1_len = kociemba_phase1(&cube, &mut p1_path);
+            let p1_len = kociemba_phase1(&cube, &mut p1_path, &mut total_nodes);
             let p1_elapsed = p1_start.elapsed();
 
             // Apply Phase 1 to get G1 cube
@@ -846,6 +871,10 @@ mod kociemba_tests {
                 }
             );
             println!(
+                "  Phase 1 total nodes explored: {}",
+                total_nodes
+            );
+            println!(
                 "  G1 check after Phase 1: CO={} EO={} UD={}",
                 g1_cube.corner_orient_coord(),
                 g1_cube.edge_orient_coord(),
@@ -855,7 +884,7 @@ mod kociemba_tests {
             // Time Phase 2 in isolation
             let mut p2_path = [solver_move_t::U; 40];
             let p2_start = Instant::now();
-            let p2_len = kociemba_phase2(&g1_cube, &mut p2_path);
+            let p2_len = kociemba_phase2(&g1_cube, &mut p2_path, &mut total_nodes);
             let p2_elapsed = p2_start.elapsed();
 
             println!(
@@ -866,6 +895,10 @@ mod kociemba_tests {
                 } else {
                     format!("{}μs", p2_elapsed.as_micros())
                 }
+            );
+            println!(
+                "  Phase 2 total nodes explored: {}",
+                total_nodes
             );
 
             // // Time full solver end to end
