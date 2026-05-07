@@ -4783,7 +4783,7 @@ pub const UD_MOVE_TABLE: [[u16; 18]; 495] = [
 ];
 
 /* Remaining Phase 1 table is saved as .bin file due to large size
-FLIP_UDSLICE_TABLE:   [u8;1013760] */
+FLIP_UDSLICE_TABLE:   [u8; 1013760] */
 
 // Phase 2 Tables
 pub const SP_MOVE_TABLE: [[u8; 10]; 24] = [

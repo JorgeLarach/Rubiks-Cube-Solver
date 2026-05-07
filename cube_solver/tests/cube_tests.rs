@@ -903,7 +903,7 @@ mod kociemba_tests {
         // This is a super scrambled cube configuration
         // I wouldn't have considered the solver complete until it can solve this cube in a timely manner
         // With the May 3 implementation, it found a 23 move solution in 88ms
-        let stickers:[u8;54] = [5,5,0,0,0,2,2,3,5,4,5,0,1,1,5,5,1,4,3,3,4,1,2,4,1,2,1,1,0,5,2,3,4,4,0,3,0,4,3,2,4,5,2,1,3,2,3,0,0,5,3,1,4,2];
+        let stickers:[u8;54] = [0,2,4,4,0,5,3,3,4,5,4,2,0,1,1,2,1,1,3,2,5,0,2,2,5,3,1,3,3,0,0,3,0,0,3,2,0,4,1,1,4,5,3,1,5,2,5,4,4,5,2,4,5,1];
         let cube = convert_to_cubie(stickers);
         let mut out = [solver_move_t::U; 70];
         // Time full solver end to end

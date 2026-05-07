@@ -117,8 +117,10 @@ stepper_move_t translate_solver_move(solver_move_t move) {
 void execute_cube_move(stepper_move_t move) {
     stepper_move(move.motor, move.dir, move.degrees);
 
-    // Small delay between moves
-    osDelay(400);
+    while (stepper_is_busy(move.motor)) {
+        osDelay(1);
+    }
+    osDelay(500); // small settling delay between moves
 }
 
 // Interrupt callback for control button presses

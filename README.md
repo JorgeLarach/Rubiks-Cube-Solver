@@ -87,7 +87,7 @@ Size: 1,013,760 bytes ≈ 1MB
 What it stands for: Combined edge orientation + UD-slice membership pruning. This is the key Phase 1 table. It jointly encodes EO (2,048 states) and UD-slice membership (495 states).  
 What the value means: The minimum moves to simultaneously achieve EO=0 AND UD=0.  
 Why this size: 2,048 EO states × 495 UD states × 1 byte = 1,013,760 bytes.  
-When used: Phase 1 heuristic, every node:  
+When used: Phase 1 heuristic, every node.  
 Lives in: QSPI external flash.
 
 ### CORNERS_SLICE2_TABLE
@@ -292,10 +292,10 @@ I underestimated this project before. I won't repeat that same mistake again.
 Cards on the table, I still don't know how to solve a Rubik's Cube. But it turns out I might not have to in order to write this. I did some research, and I learned about an algorithm that I didn't pay much attention to when I was first taking a crack at this that sounds like it was designed for my exact case. I don't know how I missed it, but Wikipedia says that "solving the Rubik's Cube is an example of a planning problem that is amenable to solving with IDA*". Not only that, but the IDA* search algorithm "requires an amount of memory that is only linear in the length of the solution that it constructs", meaning that it is practically hand-made for embedded environments. So this project is my attempt at writing a modified iterative deepening A* algorithm in Rust no-std.      
 I say modified because in a research paper written by Richard Korf (the original writer of IDA*), he describes an application of the algorithm specifically for solving a Rubik's Cube, which requires about 174MB of lookup tables (after pruning). I'm using an STM32 Nucleo-F401RE, which has only 512KB flash and 96KB RAM, so I have to modify the heuristic of the algorithm to be even more memory friendly. I definitely have the option to write the full, unmodified IDA* solver on a PC, which would theoretically generate a solution in less than a second, but I like the idea of the robot itself doing all the thinking. 
 Included in the Documentation folder is the Korf research paper as well as my running notes for the project. I'll leave you with a rather germane message from Korf himself:    
-                
+
 "The problem is quite diffcult."
 
-# Rubik's Cube Solver Part 1:  
+# Rubik's Cube Solver Part 1  
 March 15, 2026  
 
 Welcome to my Rubik's Cube Solver project!  

@@ -24,16 +24,7 @@ use crate::tables::{
     SP_MOVE_TABLE,
 };
 
-#[repr(C)] // Lays out this enum/struct in memory exactly like C would
-#[derive(Copy, Clone, Debug, PartialEq)]
-pub enum solver_move_t {
-    U, Ui, U2,
-    D, Di, D2,
-    L, Li, L2,
-    R, Ri, R2,
-    F, Fi, F2,
-    B, Bi, B2
-}
+/* Section 1: Constants */
 
 pub const U_FACE: usize = 0;
 pub const D_FACE: usize = 1;
@@ -49,7 +40,7 @@ pub const BLUE:   u8 = 3;
 pub const RED:    u8 = 4;
 pub const ORANGE: u8 = 5;
 
-/* Constants */
+
 const CORNER_CUBIE_COORDINATES: [(usize, usize, usize); 8] = [
     // There are 8 corner cubies in the cube
     // Each face's corner cubies are located at [0, 2, 6, 8]
@@ -136,7 +127,19 @@ pub const ALL_MOVES: [solver_move_t; 18] = [
 ];
 
 pub const FACTORIAL: [usize; 8] = [1, 1, 2, 6, 24, 120, 720, 5040];
-/* Data Structures */
+
+/* Section 2: Data Structures */
+
+#[repr(C)] // Lays out this enum/struct in memory exactly like C would
+#[derive(Copy, Clone, Debug, PartialEq)]
+pub enum solver_move_t {
+    U, Ui, U2,
+    D, Di, D2,
+    L, Li, L2,
+    R, Ri, R2,
+    F, Fi, F2,
+    B, Bi, B2
+}
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub struct CornerState {
     pub position: u8,    // which of the 8 corner slots this cubie is sitting in (0–7)
@@ -155,7 +158,7 @@ pub struct CubieState {
     pub edges:   [EdgeState;  12],  // edges[i]   = state of edge cubie i
 }
 
-/* Helper Functions */
+/* Section 3: General Helper Functions */
 pub fn convert_to_cubie(stickers: [u8; 54]) -> CubieState {
     let mut cube = CubieState {
         corners: [CornerState {position: 0, orientation: 0}; 8],
@@ -277,7 +280,7 @@ impl CubieState {
         true
     }
 
-    /* State Space Compression */
+    /* Section 4: State Space Compression Coordiante Functions */
 
     // CORNER ORIENTATION COORDINATE
     // Range: 0..2187 (= 3^7)
@@ -479,7 +482,7 @@ impl CubieState {
 
 
 
-    /* Rotation Functions */
+    /* Section 5: Rotation Functions */
 
     fn find_corner_at(&self, slot: u8) -> usize {
         (0..8).find(|&i| self.corners[i].position == slot)
@@ -613,7 +616,7 @@ impl CubieState {
     }
 }
 
-/* IDA Star Helper Functions */
+/* Section 6: Kociemba Helper Functions */
 fn face_of(m: solver_move_t) -> u8 {
     match m {
         solver_move_t::U | solver_move_t::Ui | solver_move_t::U2 => U_FACE as u8,
@@ -646,9 +649,6 @@ fn should_prune(last_face: u8, m: solver_move_t) -> bool {
     if last_face/2 == current_face/2 && current_face < last_face { return true;} 
     false
 }
-
-
-/* Solve Algorithm */
 
 // ============================================================
 // PHASE 1 GOAL CHECK
@@ -691,6 +691,8 @@ pub const PHASE2_MOVES: [solver_move_t; 10] = [
     solver_move_t::R2, solver_move_t::L2,
     solver_move_t::F2, solver_move_t::B2,
 ];
+
+/* Section 7: Kociemba Solver */
 
 // ============================================================
 // IDA* RECURSIVE SEARCH
@@ -835,7 +837,7 @@ pub fn ida_phase2_recursive(
 
     let h = lookup_corners_slice2(cp as usize, sp as usize)
         .max(lookup_edges_slice2(ep as usize, sp as usize));
-    
+
     let f = g.saturating_add(h);
     if f > threshold { return Some(f); }
 
@@ -908,7 +910,7 @@ pub fn kociemba_phase2(cube: &CubieState, path: &mut [solver_move_t], nodes: &mu
 // ============================================================
 // Called by the existing solve_cube FFI function 
 pub fn solve_internal(cube: CubieState, out: &mut [solver_move_t]) -> usize {
-    runtime_tables::init();
+    // runtime_tables::init();
     
     // Already solved — nothing to do
     if is_phase2_solved(&cube) {
@@ -945,6 +947,52 @@ pub fn solve_internal(cube: CubieState, out: &mut [solver_move_t]) -> usize {
 
     // Total solution length is Phase 1 + Phase 2
     p1_len + p2_len
+}
+
+fn test_scrambled_cube(out: &mut [solver_move_t]) -> usize {
+    let solve_list:[solver_move_t; 22] = [
+solver_move_t::L,
+solver_move_t::F,
+solver_move_t::Li,
+solver_move_t::Di,
+solver_move_t::B2,
+solver_move_t::Li,
+solver_move_t::U2,
+solver_move_t::L,
+solver_move_t::B,
+solver_move_t::Ui,
+solver_move_t::D,
+solver_move_t::R2,
+solver_move_t::B2,
+solver_move_t::D,
+solver_move_t::R2,
+solver_move_t::F2,
+solver_move_t::Di,
+solver_move_t::B2,
+solver_move_t::R2,
+solver_move_t::B2,
+solver_move_t::D,
+solver_move_t::B2
+
+
+    ]; 
+
+
+
+
+
+
+
+
+
+
+
+ 
+    for (mi, m) in solve_list.iter().enumerate() {
+        out[mi] = *m;
+    }
+
+    22
 }
 
 fn test_moves_short(out: &mut [solver_move_t]) -> usize{
@@ -1056,9 +1104,10 @@ pub extern "C" fn solve_cube(
         slice::from_raw_parts_mut(out_moves, max_moves)
     };
 
-    solve_internal(cube, out_slice)
+    // solve_internal(cube, out_slice)
     // test_moves_long(out_slice)
     // test_moves_short(out_slice)
+    test_scrambled_cube(out_slice)
 }
 
 #[cfg(not(feature = "std-env"))]
@@ -1209,7 +1258,7 @@ pub mod runtime_tables {
 //   Offset 0x2E6600: cp_move            806,400 bytes
 //   Offset 0x3C9A00: ep_move            806,400 bytes
 //
-// Total: 4,561,920 bytes ≈ 4.35MB — fits easily in 16MB chip.
+// Total: 4,561,920 bytes ≈ 4.35MB. Fits in 16MB chip.
 //
 // Raw pointer reads are unsafe but correct here because:
 //   1. The QSPI region is read-only

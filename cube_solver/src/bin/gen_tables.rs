@@ -87,15 +87,6 @@ fn main() {
 // Format is always little-endian, row-major.
 // -------------------------------------------------------
 
-fn write_u16_table(filename: &str, table: &[[u16; 18]]) {
-    use std::io::Write;
-    let mut f = std::fs::File::create(filename).unwrap();
-    for row in table {
-        for &v in row { f.write_all(&v.to_le_bytes()).unwrap(); }
-    }
-    println!("Written {} bytes -> {}", table.len() * 18 * 2, filename);
-}
-
 fn write_u16_table_10(filename: &str, table: &[[u16; 10]]) {
     use std::io::Write;
     let mut f = std::fs::File::create(filename).unwrap();
