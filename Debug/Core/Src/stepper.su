@@ -1,3 +1,0 @@
-../Core/Src/stepper.c:23:6:stepper_init_all	128	static
-../Core/Src/stepper.c:63:6:stepper_move	24	static
-../Core/Src/stepper.c:82:9:stepper_is_busy	16	static

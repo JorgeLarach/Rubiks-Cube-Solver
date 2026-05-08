@@ -9,10 +9,6 @@ RM := rm -rf
 
 # All of the sources participating in the build are defined here
 -include sources.mk
--include Middlewares/Third_Party/FreeRTOS/Source/portable/MemMang/subdir.mk
--include Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/subdir.mk
--include Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2/subdir.mk
--include Middlewares/Third_Party/FreeRTOS/Source/subdir.mk
 -include Drivers/STM32F4xx_HAL_Driver/Src/subdir.mk
 -include Core/Startup/subdir.mk
 -include Core/Src/subdir.mk
@@ -65,8 +61,8 @@ all:
 main-build: Rubiks\ Cube.elf secondary-outputs
 
 # Tool invocations
-Rubiks\ Cube.elf Rubiks\ Cube.map: $(OBJS) $(USER_OBJS) /Users/jorgelarach/Desktop/STM\ PROJECT\ WOOO/Rubiks\ Cube/STM32F401RETX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "Rubiks Cube.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"/Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/STM32F401RETX_FLASH.ld" --specs=nosys.specs -Wl,-Map="Rubiks Cube.map" -Wl,--gc-sections -static -L"/Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver" -Wl,-z,noexecstack --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+Rubiks\ Cube.elf Rubiks\ Cube.map: $(OBJS) $(USER_OBJS) fail-specified-linker-script-missing makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-gcc -o "Rubiks Cube.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 --specs=nosys.specs -Wl,-Map="Rubiks Cube.map" -Wl,--gc-sections -static -L"/Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver" -Wl,-z,noexecstack --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 
