@@ -54,15 +54,14 @@ Rubiks\ Cube.list \
 
 
 # All Target
-all:
-	+@$(MAKE) --no-print-directory pre-build && $(MAKE) --no-print-directory main-build
+all: main-build
 
 # Main-build Target
 main-build: Rubiks\ Cube.elf secondary-outputs
 
 # Tool invocations
-Rubiks\ Cube.elf Rubiks\ Cube.map: $(OBJS) $(USER_OBJS) fail-specified-linker-script-missing makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "Rubiks Cube.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 --specs=nosys.specs -Wl,-Map="Rubiks Cube.map" -Wl,--gc-sections -static -L"/Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/Middlewares/cube_solver" -Wl,-z,noexecstack --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+Rubiks\ Cube.elf Rubiks\ Cube.map: $(OBJS) $(USER_OBJS) /Users/jorgelarach/Desktop/STM\ PROJECT\ WOOO/Rubiks\ Cube/STM32F446RETX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-gcc -o "Rubiks Cube.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"/Users/jorgelarach/Desktop/STM PROJECT WOOO/Rubiks Cube/STM32F446RETX_FLASH.ld" --specs=nosys.specs -Wl,-Map="Rubiks Cube.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 
@@ -81,10 +80,6 @@ clean:
 	-$(RM) Rubiks\ Cube.elf Rubiks\ Cube.list Rubiks\ Cube.map Rubiks\\ Cube.elf default.size.stdout
 	-@echo ' '
 
-pre-build:
-	cd .. && ./build_rust_solver.sh
-	-@echo ' '
-
 secondary-outputs: $(SIZE_OUTPUT) $(OBJDUMP_LIST)
 
 fail-specified-linker-script-missing:
@@ -94,6 +89,6 @@ fail-specified-linker-script-missing:
 warn-no-linker-script-specified:
 	@echo 'Warning: No linker script specified. Check the linker settings in the build configuration.'
 
-.PHONY: all clean dependents main-build fail-specified-linker-script-missing warn-no-linker-script-specified pre-build
+.PHONY: all clean dependents main-build fail-specified-linker-script-missing warn-no-linker-script-specified
 
 -include ../makefile.targets
