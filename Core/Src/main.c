@@ -22,7 +22,14 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include <stdio.h>
+#include <stepper_primitives.h>
+#include <string.h>
+#include "cube_solver.h"
+#include "stepper_timer.h"
+#include "stepper.h"
+#include "uart_cube.h"
+#include "cube_processor.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -312,7 +319,7 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pin = B_DIR_Pin|B_STEP_Pin|U_DIR_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
   /*Configure GPIO pins : U_STEP_Pin L_STEP_Pin LD2_Pin F_STEP_Pin
@@ -321,7 +328,7 @@ static void MX_GPIO_Init(void)
                           |D_DIR_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
   /*Configure GPIO pins : SOLVE_BUTTON_Pin EXECUTE_BUTTON_Pin */
@@ -336,7 +343,7 @@ static void MX_GPIO_Init(void)
                           |R_DIR_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   /* EXTI interrupt init*/
@@ -362,10 +369,18 @@ static void MX_GPIO_Init(void)
 __weak void CubeProcessStart(void *argument)
 {
   /* USER CODE BEGIN 5 */
+  cube_processor_init();
+  stepper_tim3_enable_ir();
+  stepper_init_all();
+  uart_start_reception(&huart2);
   /* Infinite loop */
   for(;;)
   {
-    osDelay(1);
+    if(rx_ready){
+	  rx_ready = 0;
+	  cube_process_uart_packet();
+    }
+	osDelay(1000);
   }
   /* USER CODE END 5 */
 }
