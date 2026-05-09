@@ -13,8 +13,13 @@
 #define U_STEP_GPIO_Port GPIOA
 #define U_STEP_Pin  GPIO_PIN_0
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 #define U_DIR_GPIO_Port  GPIOC
 #define U_DIR_Pin   GPIO_PIN_2
+=======
+#define U_DIR_GPIO_Port  GPIOA
+#define U_DIR_Pin   GPIO_PIN_1
+>>>>>>> Stashed changes
 =======
 #define U_DIR_GPIO_Port  GPIOA
 #define U_DIR_Pin   GPIO_PIN_1
