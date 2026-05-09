@@ -1,0 +1,239 @@
+    pub fn swc_white_orange(
+        &mut self, 
+        out: &mut [solver_move_t], 
+        mut out_idx: usize
+    ) -> usize {
+        let (white_idx, orange_idx) = match self.find_edge(WHITE, ORANGE){
+            Some(val) => val,
+            None => panic!("cube is invalid (white-orange edge does not exist)"),
+        };
+
+        let white_face  = identify_face_from_sticker_idx(white_idx);
+        let orange_face = identify_face_from_sticker_idx(orange_idx);
+
+        let (u_min, u_max) = face_sticker_range(U_FACE);
+        let (l_min, _)            = face_sticker_range(L_FACE);
+        let (_, b_max)            = face_sticker_range(B_FACE);
+        let (d_min, d_max) = face_sticker_range(D_FACE);
+
+        if white_idx >= u_min && white_idx <= u_max {
+            out_idx += self.swc_white_orange_on_u_face(orange_face, out, out_idx);
+        } else if white_idx >= l_min && white_idx <= b_max {
+            match white_face {
+                L_FACE => out_idx += self.swc_white_orange_on_l_face(orange_face, out, out_idx),
+                R_FACE => out_idx += self.swc_white_orange_on_r_face(orange_face, out, out_idx),
+                F_FACE => out_idx += self.swc_white_orange_on_f_face(orange_face, out, out_idx),
+                B_FACE => out_idx += self.swc_white_orange_on_b_face(orange_face, out, out_idx),
+                _ => {}
+            }
+        } else if white_idx >= d_min && white_idx <= d_max {
+            out_idx += self.swc_white_orange_on_d_face(orange_face, out, out_idx);
+        }
+
+        out_idx
+    }
+
+    fn swc_white_orange_on_l_face(
+        &mut self, 
+        orange_face: usize, 
+        out: &mut [solver_move_t], 
+        mut out_idx: usize
+    ) -> usize {
+        match orange_face {
+            U_FACE => {
+                self.apply_and_record(out, &mut out_idx, solver_move_t::Li);
+                self.apply_and_record(out, &mut out_idx, solver_move_t::Bi);
+            }
+            D_FACE => {
+                self.apply_and_record(out, &mut out_idx, solver_move_t::L);
+                self.apply_and_record(out, &mut out_idx, solver_move_t::Bi);
+            }
+            B_FACE => {
+                self.apply_and_record(out, &mut out_idx, solver_move_t::B);
+                out_idx += self.swc_white_orange_on_d_face(B_FACE, out, out_idx);
+            }
+            F_FACE => {
+                self.apply_and_record(out, &mut out_idx, solver_move_t::L2);
+                self.apply_and_record(out, &mut out_idx, solver_move_t::Bi);
+            }
+            _ => {}
+        }
+        out_idx
+    }
+
+    fn swc_white_orange_on_r_face(
+        &mut self, 
+        orange_face: usize, 
+        out: &mut [solver_move_t], 
+        mut out_idx: usize
+    ) -> usize {
+        match orange_face {
+            U_FACE => {
+                self.apply_and_record(out, &mut out_idx, solver_move_t::R);
+                self.apply_and_record(out, &mut out_idx, solver_move_t::B);
+            }
+            D_FACE => {
+                self.apply_and_record(out, &mut out_idx, solver_move_t::Ri);
+                self.apply_and_record(out, &mut out_idx, solver_move_t::B);
+            }
+            F_FACE => {
+                self.apply_and_record(out, &mut out_idx, solver_move_t::F);
+                out_idx += self.swc_white_orange_on_d_face(F_FACE, out, out_idx);
+            }
+            B_FACE => {
+                self.apply_and_record(out, &mut out_idx, solver_move_t::Bi);
+                out_idx += self.swc_white_orange_on_d_face(B_FACE, out, out_idx);
+            }
+            _ => {}
+        }
+        out_idx
+    }
+
+    fn swc_white_orange_on_f_face(
+        &mut self, 
+        orange_face: usize, 
+        out: &mut [solver_move_t], 
+        mut out_idx: usize
+    ) -> usize {
+        match orange_face {
+            U_FACE => {
+                self.apply_and_record(out, &mut out_idx, solver_move_t::F);
+                self.apply_and_record(out, &mut out_idx, solver_move_t::R);
+                self.apply_and_record(out, &mut out_idx, solver_move_t::Ui);
+            }
+            D_FACE => {
+                self.apply_and_record(out, &mut out_idx, solver_move_t::Fi);
+                self.apply_and_record(out, &mut out_idx, solver_move_t::R);
+                self.apply_and_record(out, &mut out_idx, solver_move_t::Ui);
+            }
+            L_FACE => {
+                self.apply_and_record(out, &mut out_idx, solver_move_t::L);
+                out_idx += self.swc_white_orange_on_d_face(L_FACE, out, out_idx);
+            }
+            R_FACE => {
+                self.apply_and_record(out, &mut out_idx, solver_move_t::Ri);
+                out_idx += self.swc_white_orange_on_d_face(R_FACE, out, out_idx);
+            }
+            _ => {}
+        }
+        out_idx
+    }
+
+    fn swc_white_orange_on_b_face(
+        &mut self, 
+        orange_face: usize, 
+        out: &mut [solver_move_t], 
+        mut out_idx: usize
+    ) -> usize {
+        match orange_face {
+            U_FACE => {
+                self.apply_and_record(out, &mut out_idx, solver_move_t::Bi);
+                self.apply_and_record(out, &mut out_idx, solver_move_t::Ri);
+                self.apply_and_record(out, &mut out_idx, solver_move_t::Ui);
+            }
+            D_FACE => {
+                self.apply_and_record(out, &mut out_idx, solver_move_t::Bi);
+                self.apply_and_record(out, &mut out_idx, solver_move_t::L);
+                self.apply_and_record(out, &mut out_idx, solver_move_t::U);
+            }
+            R_FACE => {
+                self.apply_and_record(out, &mut out_idx, solver_move_t::R);
+                out_idx += self.swc_white_orange_on_d_face(R_FACE, out, out_idx);
+            }
+            L_FACE => {
+                self.apply_and_record(out, &mut out_idx, solver_move_t::Li);
+                out_idx += self.swc_white_orange_on_d_face(L_FACE, out, out_idx);
+            }
+            _ => {}
+        }
+        out_idx
+    }
+
+    fn swc_white_orange_on_d_face(
+        &mut self, 
+        orange_face: usize, 
+        out: &mut [solver_move_t], 
+        mut out_idx: usize
+    ) -> usize {
+        // When this function is called, the white sticker is already on the D face. Needs to know which face the orange sticker is on
+        match orange_face {
+            L_FACE => {
+                // todo: add the following moves to the out moves array:
+                // Di (counterclockwise to get the orange sticker of the edge piece to the orange (back) face)
+                // B2 (180 degree turn on face where orange sticker is to get white sticker up to the U face)
+
+                self.apply_move(solver_move_t::Di);
+                self.record_move(out, out_idx, solver_move_t::Di);
+                out_idx += 1;
+
+                self.apply_move(solver_move_t::B2);
+                self.record_move(out, out_idx, solver_move_t::B2);
+                out_idx += 1;
+            }
+            R_FACE => {
+                // todo: add the following moves to the out moves array:
+                // D
+                // B2
+
+                self.apply_move(solver_move_t::D);
+                self.record_move(out, out_idx, solver_move_t::D);
+                out_idx += 1;
+
+                self.apply_move(solver_move_t::B2);
+                self.record_move(out, out_idx, solver_move_t::B2);
+                out_idx += 1;
+            }
+            F_FACE => {
+                // todo: add the following moves to the out moves array:
+                // D2
+                // B2
+
+                self.apply_move(solver_move_t::D2);
+                self.record_move(out, out_idx, solver_move_t::D2);
+                out_idx += 1;
+
+                self.apply_move(solver_move_t::B2);
+                self.record_move(out, out_idx, solver_move_t::B2);
+                out_idx += 1;
+            }
+            B_FACE => {
+                // orange already on B, rotate B face 180 so that white sticker is on top
+                self.apply_move(solver_move_t::B2);
+                self.record_move(out, out_idx, solver_move_t::B2);
+                out_idx += 1;
+            }
+            _ => {}
+        }
+        out_idx
+    }
+
+    fn swc_white_orange_on_u_face(
+        &mut self, 
+        orange_face: usize, 
+        out: &mut [solver_move_t], 
+        mut out_idx: usize
+    ) -> usize {
+        // When this function is called, the white sticker is on the U face. Needs to know which face the orange sticker is on
+        match orange_face {
+            L_FACE => {
+                self.apply_move(solver_move_t::U);
+                self.record_move(out, out_idx, solver_move_t::U);
+                out_idx += 1;
+            }
+            R_FACE => {
+                self.apply_move(solver_move_t::Ui);
+                self.record_move(out, out_idx, solver_move_t::Ui);
+                out_idx += 1;
+            }
+            F_FACE => {
+                self.apply_move(solver_move_t::U2);
+                self.record_move(out, out_idx, solver_move_t::U2);
+                out_idx += 1;
+            }
+            B_FACE => {
+                // Orange is already on B! all done!
+            }
+            _ => {}
+        }
+        out_idx
+    }
