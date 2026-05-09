@@ -57,20 +57,46 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
-#define B1_Pin GPIO_PIN_13
-#define B1_GPIO_Port GPIOC
+#define B_DIR_Pin GPIO_PIN_0
+#define B_DIR_GPIO_Port GPIOC
+#define B_STEP_Pin GPIO_PIN_1
+#define B_STEP_GPIO_Port GPIOC
+#define U_DIR_Pin GPIO_PIN_2
+#define U_DIR_GPIO_Port GPIOC
+#define U_STEP_Pin GPIO_PIN_0
+#define U_STEP_GPIO_Port GPIOA
 #define USART_TX_Pin GPIO_PIN_2
 #define USART_TX_GPIO_Port GPIOA
 #define USART_RX_Pin GPIO_PIN_3
 #define USART_RX_GPIO_Port GPIOA
+#define L_STEP_Pin GPIO_PIN_4
+#define L_STEP_GPIO_Port GPIOA
 #define LD2_Pin GPIO_PIN_5
 #define LD2_GPIO_Port GPIOA
+#define SOLVE_BUTTON_Pin GPIO_PIN_6
+#define SOLVE_BUTTON_GPIO_Port GPIOA
+#define SOLVE_BUTTON_EXTI_IRQn EXTI9_5_IRQn
+#define EXECUTE_BUTTON_Pin GPIO_PIN_7
+#define EXECUTE_BUTTON_GPIO_Port GPIOA
+#define EXECUTE_BUTTON_EXTI_IRQn EXTI9_5_IRQn
+#define L_DIR_Pin GPIO_PIN_0
+#define L_DIR_GPIO_Port GPIOB
+#define F_DIR_Pin GPIO_PIN_10
+#define F_DIR_GPIO_Port GPIOB
+#define F_STEP_Pin GPIO_PIN_8
+#define F_STEP_GPIO_Port GPIOA
+#define D_DIR_Pin GPIO_PIN_10
+#define D_DIR_GPIO_Port GPIOA
 #define TMS_Pin GPIO_PIN_13
 #define TMS_GPIO_Port GPIOA
 #define TCK_Pin GPIO_PIN_14
 #define TCK_GPIO_Port GPIOA
-#define SWO_Pin GPIO_PIN_3
-#define SWO_GPIO_Port GPIOB
+#define D_STEP_Pin GPIO_PIN_3
+#define D_STEP_GPIO_Port GPIOB
+#define R_STEP_Pin GPIO_PIN_4
+#define R_STEP_GPIO_Port GPIOB
+#define R_DIR_Pin GPIO_PIN_5
+#define R_DIR_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
 
