@@ -1,5 +1,19 @@
 # Rubik's Cube Solver Part 2  
 
+## May 11, 2026
+Migration complete! Porting the codebase from an F401RE project to a F446RE project took a bit longer than I thought, but I got it done! Not only that, but the SYSCLK is now running at 130MHz, compared to the F401RE's 84MHz (which was actually only running at 72MHz, whoops). It did take a while for the W25Q128 to get here, though, but it's here now. Up next is figuring out how QSPI works!    
+The process by which I did the migration was probably a little more complicated than it needed to be, but I'll explain it here regardless. 
+
+First, I made a branch off of main called f446-port. That way, I had two identical copies of the same project directory (Rubiks Cube/).  
+Then, in the branch, I deleted everything from Rubiks Cube (including the hidden .cproject, .mxproject, and .project files) except for .git (I accidentally also deleted that and my heart stopped but I fixed it).  
+After that, I created a new project directory (called F446_Solver/) with CubeIDE targeting a Nucleo-F446RE. I set all the peripherals to default, and copied over the entire contents of that folder to the Rubiks Cube directory.  
+I had to tweak the hidden files to target the right project directory and build target (such as the ioc file, the .cproject file, .mxproject file, and .project file) but it was simple enough, and I learned a little more about how CubeMX generates these files.  
+After that worked, I added back the pre-build shell script which compiles the Rust static library into the .a file in Middlewares/, added back the linker flags and library in the project settings, and everything worked fine!  
+Once that was done, I went through the IOC and reconfigured the clock config, FreeRTOS, GPIO, motor timer (TIM3), and UART. FreeRTOS and UART were identical to the F401 project, but I made sure the SYSCLK was maxed out for this, and as such I had to modify the Prescaler and Period of TIM3 for the 20Khz STEP rate for the motors.    
+Finally, the GPIO was the exact same save for PA1, which originally was the U_Dir pin. On the F446RE, it corresponds to QUADSPI_BK1_IO3. Honestly I'm not entirely sure what that means yet, but it looks important, so I moved the U_Dir pin to PC2.   
+Once I made sure the UART communication worked from gui.py, I went ahead and physically unplugged the F401RE from the project, substituting it for my shiny new F446RE. I ran several system tests from top to bottom, and everything is working exactly as it was before the migration.
+Now, I'm gonna watch a few Youtube videos about QUADSPI on STM32, read the datasheets for the F446 and W25Q128, and I should be good to go!
+
 ## May 2, 2026
 I found an approach that works. My solver can now find a solution for a cube that was scrambled in 33 moves in 26ms on my laptop. I realized it just wasn't feasable to write a well performing solver with less than a megabyte of tables. I did some googling and found that I can use external flash to store and access larger tables, particularly for phase 2. The plan right now is to use a QSPI external flash device, particularly the Adafruit W25Q128. It is an external Quad-SPI flash memory chip that can provide up to 16MB of storage. The access latency at runtime will be around 350ns, compared to 10ns internal flash access, but it shouldn't be that noticeable. 
 
