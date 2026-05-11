@@ -1,0 +1,43 @@
+Rubik's Cube Rust Solver Functions
+
+General Purpose Helper Functions
+convert_to_cubie
+inverse_move
+choose
+make_solved
+is_solved
+
+State Space Compression Coordiante Functions
+corner_orient_coord
+edge_orient_coord
+udslice_coord
+udslice_perm_coord
+edge_perm_coord
+corner_perm_coord
+
+Rotation Functions
+find_corner_at
+find_edge_at
+cycle_corners
+cycle_edges
+u
+d
+l
+r
+f
+b
+apply_move
+
+Kociemba Helper Functions
+face_of
+should_prune
+is_phase1_solved
+is_phase2_solved
+
+Kociemba Functions
+ida_phase1_recursive
+kociemba_phase1
+ida_phase2_recursive
+kociemba_phase2
+solve_internal
+solve_cube
