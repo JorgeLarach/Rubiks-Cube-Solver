@@ -69,6 +69,7 @@ NVIC.TIM1_UP_TIM10_IRQn=true\:0\:0\:false\:false\:true\:false\:false\:true\:true
 NVIC.TIM3_IRQn=true\:5\:0\:false\:false\:true\:true\:true\:true\:true
 NVIC.TimeBase=TIM1_UP_TIM10_IRQn
 NVIC.TimeBaseIP=TIM10
+NVIC.USART2_IRQn=true\:5\:0\:false\:false\:true\:true\:true\:true\:true
 NVIC.UsageFault_IRQn=true\:0\:0\:false\:false\:true\:false\:true\:false\:false
 PA0-WKUP.GPIOParameters=GPIO_Label
 PA0-WKUP.GPIO_Label=U_STEP

@@ -22,14 +22,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include <stdio.h>
-#include <stepper_primitives.h>
-#include <string.h>
-#include "cube_solver.h"
-#include "stepper_timer.h"
-#include "stepper.h"
-#include "uart_cube.h"
-#include "cube_processor.h"
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -368,18 +361,11 @@ static void MX_GPIO_Init(void)
 __weak void CubeProcessStart(void *argument)
 {
   /* USER CODE BEGIN 5 */
-  cube_processor_init();
-  stepper_tim3_enable_ir();
-  stepper_init_all();
-  uart_start_reception(&huart2);
+
   /* Infinite loop */
   for(;;)
   {
-    if(rx_ready){
-	  rx_ready = 0;
-	  cube_process_uart_packet();
-    }
-	osDelay(1000);
+	osDelay(50);
   }
   /* USER CODE END 5 */
 }

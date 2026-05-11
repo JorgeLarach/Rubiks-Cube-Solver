@@ -6,12 +6,32 @@
  */
 
 #include "cube_processor.h"
-#include "uart_cube.h"  // For rx_buffer
+#include "uart_cube.h"  // for rx_buffer
 #include "cmsis_os.h" // for os_delay
 #include "board_pins.h" // for button pins
+#include "stepper_timer.h" // for tim3_enable
 
 cube_state_t cube_state = {0};
 extern UART_HandleTypeDef huart2;
+
+void CubeProcessStart(void *argument)
+{
+  /* USER CODE BEGIN 5 */
+  cube_processor_init();
+  stepper_tim3_enable_ir();
+  stepper_init_all();
+  uart_start_reception(&huart2);
+  /* Infinite loop */
+  for(;;)
+  {
+    if(rx_ready){
+	  rx_ready = 0;
+	  cube_process_uart_packet();
+    }
+	osDelay(1000);
+  }
+  /* USER CODE END 5 */
+}
 
 void cube_processor_init(void) {
     cube_state.cube_ready = false;
@@ -19,6 +39,8 @@ void cube_processor_init(void) {
     cube_state.motors_running = false;
     cube_state.move_count = 0;
 }
+
+
 
 void cube_process_uart_packet(void) {
     // Copy UART data to cube state
