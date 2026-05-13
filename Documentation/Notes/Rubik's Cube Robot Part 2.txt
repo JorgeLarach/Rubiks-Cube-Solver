@@ -1,4 +1,84 @@
 Rubik's Cube Robot Part 2
+5/12/26
+Starting QSPI adventure!
+I recently got in my W25Q128 128MBit SPI NOR external flash memory and my Nucleo-F446RE. I don't know how I missed this, but while the F446 does contain a QSPI peripheral, according to the F446RE Reference Manual, "Communication can be either in Single Data Rate or Dual Data Rate," meaning only IO0 and IO1 can be used as data lines. So while DualSPI isnt truly QuadSPI (four data lines), its still twice as fast as normal SPI and the peripheral itself still enables me to use external flash, which is a non-negotiable for this project. 
+
+Right now Im working on the QSPI configuration. The ref. manual says:
+The QUADSPI configuration is done in two phases:
+1. QUADSPI peripheral configuration
+2. QUADSPI flash memory configuration
+
+I've already done the peripheral configuration:
+SYSCLK (for F446) = 168 MHz
+It turns out ST designed much of the F4 ecosystem around:
+168 MHz SYSCLK
+48 MHz USB clock
+
+Prescaler = 8
+Because QSPI_CLK = kernel_clock (HCLK = 168MHz) / (prescaler + 1)
+So 168 MHz / (8 + 1) ≈ 18.7 MHz. Plenty good for this case
+
+FIFO Threshold = 4
+4 is the standard CubeMX default for stability
+Generates FIFO threshold flag when FIFO level crosses 4 bytes
+For receive:
+flag set when FIFO contains >= 4 bytes available to read
+For transmit:
+flag set when FIFO has <= 4 bytes remaining and needs refill
+
+No Sample Shifting
+Sample shifting is concerned about when incoming bits are sampled relative to clock edges
+Starting out, since the clock is slow, we don't need this
+
+Flash Size: 23
+The QUADSPI peripheral on the F446RE has a register called FSIZE (Flash Size) that doesn't store the actual byte count. Instead, it stores an exponent. Specifically, the chip size is interpreted as 2^(FSIZE+1) bytes. So for a 16MB chip: 16MB = 2^(24) bytes, meaning 2^(FSIZE+1) = 2²⁴, so FSIZE+1 = 24, so FSIZE = 23. This is just how ST designed the register — it saves bits by storing the exponent instead of a 32-bit byte count.
+
+CS High Time
+Standard is 2 cycles between commands for NOR Flash internal processes
+
+That's Phase 1 of the QUADSPI configuration. Now, we have to talk about Phase 2: Flash Memory Configuration
+
+We configured the STM32 Peripheral hardware, now we need to manually speak to the flash using command opcodes.
+
+The STM32 HAL provides "transport primitives" like 
+HAL_QSPI_Command()
+HAL_QSPI_Transmit()
+HAL_QSPI_Receive()
+
+Which is super helpful, but I still have to define the actual flash protocol transactions myself. Reading over the reference manual: 
+The QUADSPI communicates with the flash memory using commands. Each command can include five phases: 
+	instruction, 
+	address, 
+	alternate byte, 
+	dummy, 
+	data. 
+
+As such, I sketched up some fields of some future data struct:
+instruction opcode
+address width 
+number of data lines
+dummy cycles
+transfer length
+polling behavior
+
+Im starting to understand how this stuff works now, and reading over the W25Q128 Datasheet, section 8.1.2 provides a huge Instruction Set Table. Apparently, the best first step from here is to just get the JEDEC ID from the NOR flash, which is:
+0x9F, or 9Fh, which is 10011111 in binary. 
+This is what the datasheet has to say about JEDEC ID:
+The Read JEDEC ID instruction is compatible with the JEDEC standard for SPI compatible serial memories that was adopted in 2003. The instruction is initiated by driving the /CS pin low and shifting the instruction code “9Fh”. The JEDEC assigned Manufacturer ID byte for Winbond (EFh) and two Device ID bytes, Memory Type (ID15-ID8) and Capacity (ID7-ID0) are then shifted out on the falling edge of CLK with most significant bit (MSB) first
+
+So when I send the 9Fh instruction, I should get back 3 bytes, or 6 hexadecimal digits,
+EF __ __. The two blanks represent the memory type and capacity, each 1 byte (or 2 hex digits)
+
+I'll get right into writing some firmware.
+
+Alright I just wrote a couple functions to send the JEDEC instruction, receive from the flash device, and print over UART the response. Now I gotta wire this thing up:
+PC9:  IO0
+PC10: IO1
+PB6:  NCS
+PB2:  CLK
+
+I keep getting 00 00 00. I triple checked the wiring, probed with the multimeter, tried different timing and QSPI peripheral configurations, referenced tutorials online, and still can't get it to work. Tomorrow I'll try just reading JEDEC on SPI1 just to make sure the breakout isn't busted.
+
 4/25/26
 Its my birthday and im celebrating by learning about combinatorics!!
 We are on the quest of compressing four of the cube's state spaces.
