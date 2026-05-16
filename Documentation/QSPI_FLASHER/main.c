@@ -56,7 +56,7 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
-QSPI_HandleTypeDef hqspi;
+SPI_HandleTypeDef hspi1;
 
 UART_HandleTypeDef huart2;
 
@@ -68,7 +68,7 @@ UART_HandleTypeDef huart2;
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_USART2_UART_Init(void);
-static void MX_QUADSPI_Init(void);
+static void MX_SPI1_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -86,73 +86,124 @@ static void uart_send(const char *s)
 // 2. Memory Type byte
 // 3. Capacity byte
 // This is why this function is expecting a 3 byte array to write this data into
-static HAL_StatusTypeDef qspi_read_jedec_id(uint8_t *id)
+//static HAL_StatusTypeDef qspi_read_jedec_id(uint8_t *id)
+//{
+//	QSPI_CommandTypeDef cmd = {0}; // Zero initialize the entire struct
+//
+//	cmd.InstructionMode = QSPI_INSTRUCTION_1_LINE;     // How many data lines carry the instruction opcode? Here, sending 0x9F over IO0
+//	cmd.Instruction = 0x9F;                            // Opcode of the instruction
+//	cmd.AddressMode = QSPI_ADDRESS_NONE;               // This command does not contain an address phase. JEDEC ID is global chip information.
+//	cmd.AlternateByteMode = QSPI_ALTERNATE_BYTES_NONE; // JEDEC ID does not use alternate bytes
+//	cmd.DataMode = QSPI_DATA_1_LINE;                   // How response data returns from flash. On a single IO line
+//	cmd.NbData = 3;                                    // Number of bytes expected from flash. Here, it's manufacturer, memory type, and capacity, each one byte
+//	cmd.DummyCycles = 0;                               // Intentional idle clock cycles inserted before data phase. No dummy cycles required here.
+//	cmd.DdrMode = QSPI_DDR_MODE_DISABLE;               // DDR = Double Data Rate, so sample on rising AND falling clock edges. Here, only SDR
+//	cmd.DdrHoldHalfCycle = QSPI_DDR_HHC_ANALOG_DELAY;  // DDR disabled, but HAL still requires field populated. Largely irrelevant
+//	cmd.SIOOMode = QSPI_SIOO_INST_EVERY_CMD;           // SIOO: Send Instruction Only Once. Don't want optimizations here
+//
+//	HAL_StatusTypeDef status;
+//
+//	if((status = HAL_QSPI_Command(&hqspi, &cmd, HAL_MAX_DELAY)) != HAL_OK)
+//	{
+//	    uart_send("Read JEDEC failed failed\r\n");
+//	    return HAL_ERROR;
+//	}
+//
+//	if((status = HAL_QSPI_Receive(&hqspi, id, HAL_MAX_DELAY)) != HAL_OK)
+//	{
+//	    uart_send("Receive failed\r\n");
+//	    return HAL_ERROR;
+//	}
+//
+//	return HAL_OK;
+//}
+
+//static HAL_StatusTypeDef qspi_reset_flash(void)
+//{
+//    QSPI_CommandTypeDef cmd = {0};
+//
+//    cmd.InstructionMode = QSPI_INSTRUCTION_1_LINE;
+//    cmd.AddressMode = QSPI_ADDRESS_NONE;
+//    cmd.AlternateByteMode = QSPI_ALTERNATE_BYTES_NONE;
+//    cmd.DataMode = QSPI_DATA_NONE;
+//    cmd.DummyCycles = 0;
+//    cmd.DdrMode = QSPI_DDR_MODE_DISABLE;
+//    cmd.DdrHoldHalfCycle = QSPI_DDR_HHC_ANALOG_DELAY;
+//    cmd.SIOOMode = QSPI_SIOO_INST_EVERY_CMD;
+//    cmd.Instruction = 0x66; // Enable reset
+//
+//    HAL_StatusTypeDef status;
+//
+//    if((status = HAL_QSPI_Command(&hqspi, &cmd, HAL_MAX_DELAY)) != HAL_OK)
+//    {
+//    	uart_send("Enable reset failed \r\n");
+//    	return HAL_ERROR;
+//    }
+//
+//    // Reset device
+//    cmd.Instruction = 0x99;
+//
+//    if((status = HAL_QSPI_Command(&hqspi, &cmd, HAL_MAX_DELAY)) != HAL_OK)
+//    {
+//    	uart_send("Reset device failed \r\n");
+//    	return HAL_ERROR;
+//    }
+//
+//    HAL_Delay(100);
+//
+//    return HAL_OK;
+//}
+
+//uint8_t spi_read_jedec(void)
+//{
+//    uint8_t tx[4] = {0x9F, 0x00, 0x00, 0x00};
+//    uint8_t rx[4] = {0};
+//
+//    HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_RESET);
+//
+//    HAL_SPI_TransmitReceive(&hspi1, tx, rx, 4, HAL_MAX_DELAY);
+//
+//    HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_SET);
+//
+//    char buf[64];
+//    sprintf(buf,
+//            "!JEDEC: %02X %02X %02X\r\n",
+//            rx[1], rx[2], rx[3]);
+//
+//    HAL_UART_Transmit(&huart2,
+//                      (uint8_t*)buf,
+//                      strlen(buf),
+//                      100);
+//
+//    return rx[1];
+//}
+
+#define W25Q_SPI hspi1
+#define csLOW()  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_RESET)
+#define csHIGH() HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_SET)
+
+void W25Q_Reset(void)
 {
-	QSPI_CommandTypeDef cmd = {0}; // Zero initialize the entire struct
-
-	cmd.InstructionMode = QSPI_INSTRUCTION_1_LINE;     // How many data lines carry the instruction opcode? Here, sending 0x9F over IO0
-	cmd.Instruction = 0x9F;                            // Opcode of the instruction
-	cmd.AddressMode = QSPI_ADDRESS_NONE;               // This command does not contain an address phase. JEDEC ID is global chip information.
-	cmd.AlternateByteMode = QSPI_ALTERNATE_BYTES_NONE; // JEDEC ID does not use alternate bytes
-	cmd.DataMode = QSPI_DATA_1_LINE;                   // How response data returns from flash. On a single IO line
-	cmd.NbData = 3;                                    // Number of bytes expected from flash. Here, it's manufacturer, memory type, and capacity, each one byte
-	cmd.DummyCycles = 0;                               // Intentional idle clock cycles inserted before data phase. No dummy cycles required here.
-	cmd.DdrMode = QSPI_DDR_MODE_DISABLE;               // DDR = Double Data Rate, so sample on rising AND falling clock edges. Here, only SDR
-	cmd.DdrHoldHalfCycle = QSPI_DDR_HHC_ANALOG_DELAY;  // DDR disabled, but HAL still requires field populated. Largely irrelevant
-	cmd.SIOOMode = QSPI_SIOO_INST_EVERY_CMD;           // SIOO: Send Instruction Only Once. Don't want optimizations here
-
-	HAL_StatusTypeDef status;
-
-	if((status = HAL_QSPI_Command(&hqspi, &cmd, HAL_MAX_DELAY)) != HAL_OK)
-	{
-	    uart_send("Read JEDEC failed failed\r\n");
-	    return HAL_ERROR;
-	}
-
-	if((status = HAL_QSPI_Receive(&hqspi, id, HAL_MAX_DELAY)) != HAL_OK)
-	{
-	    uart_send("Receive failed\r\n");
-	    return HAL_ERROR;
-	}
-
-	return HAL_OK;
+	uint8_t tData[2];
+	tData[0] = 0x66;
+	tData[1] = 0x99;
+	csLOW();
+	HAL_SPI_Transmit(&W25Q_SPI, tData, 2, 1000);
+	csHIGH();
+	HAL_Delay(100);
 }
 
-static HAL_StatusTypeDef qspi_reset_flash(void)
+uint32_t W25Q_ReadID(void)
 {
-    QSPI_CommandTypeDef cmd = {0};
-
-    cmd.InstructionMode = QSPI_INSTRUCTION_1_LINE;
-    cmd.AddressMode = QSPI_ADDRESS_NONE;
-    cmd.AlternateByteMode = QSPI_ALTERNATE_BYTES_NONE;
-    cmd.DataMode = QSPI_DATA_NONE;
-    cmd.DummyCycles = 0;
-    cmd.DdrMode = QSPI_DDR_MODE_DISABLE;
-    cmd.DdrHoldHalfCycle = QSPI_DDR_HHC_ANALOG_DELAY;
-    cmd.SIOOMode = QSPI_SIOO_INST_EVERY_CMD;
-    cmd.Instruction = 0x66; // Enable reset
-
-    HAL_StatusTypeDef status;
-
-    if((status = HAL_QSPI_Command(&hqspi, &cmd, HAL_MAX_DELAY)) != HAL_OK)
-    {
-    	uart_send("Enable reset failed \r\n");
-    	return HAL_ERROR;
-    }
-
-    // Reset device
-    cmd.Instruction = 0x99;
-
-    if((status = HAL_QSPI_Command(&hqspi, &cmd, HAL_MAX_DELAY)) != HAL_OK)
-    {
-    	uart_send("Reset device failed \r\n");
-    	return HAL_ERROR;
-    }
-
-    HAL_Delay(100);
-
-    return HAL_OK;
+	uint8_t tData = 0x9F;
+	uint8_t rData[3];
+	csLOW();
+	HAL_SPI_Transmit(&W25Q_SPI, &tData, 1, 1000);
+	HAL_SPI_Receive(&W25Q_SPI, rData, 3, 3000);
+	csHIGH();
+	return ((rData[0] << 16)|(rData[1]<<8)|rData[2]);
 }
+uint32_t ID=0;
 /* USER CODE END 0 */
 
 /**
@@ -185,35 +236,39 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
-  MX_QUADSPI_Init();
+  MX_SPI1_Init();
   /* USER CODE BEGIN 2 */
   uart_send("Flasher booted\r\n");
   HAL_Delay(100);
+  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_SET);
 
-  char buf[64];
-  uint8_t id[3] = {5, 5, 5};
+  W25Q_Reset();
+  ID = W25Q_ReadID();
 
-  if(qspi_reset_flash() == HAL_OK){
-	  char buf[64];
+//  char buf[64];
+//  uint8_t id[3] = {5, 5, 5};
 
-	  sprintf(buf, "Flash Reset Success\r\n");
+//  if(qspi_reset_flash() == HAL_OK)
+//  {
+//	  sprintf(buf, "Flash Reset Success\r\n");
+//	  uart_send(buf);
+//  } else
+//  {
+//	  uart_send("Flash Reset Failed \r\n");
+//  }
+//
+//  if(qspi_read_jedec_id(id) == HAL_OK)
+//  {
+//	  sprintf(buf,
+//	          "JEDEC ID: %02X %02X %02X\r\n",
+//	          id[0], id[1], id[2]);
+//	  uart_send(buf);
+//  } else
+//  {
+//	  uart_send("QSPI read failed \r\n");
+//  }
 
-	  uart_send(buf);
-  } else {
-	  uart_send("Flash Reset Failed \r\n");
-  }
 
-  if(qspi_read_jedec_id(id) == HAL_OK){
-	  char buf[64];
-
-	  sprintf(buf,
-	          "JEDEC ID: %02X %02X %02X\r\n",
-	          id[0], id[1], id[2]);
-
-	  uart_send(buf);
-  } else {
-	  uart_send("QSPI read failed \r\n");
-  }
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -223,6 +278,9 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+//	  spi_read_jedec();
+//	  HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_4);
+//	  HAL_Delay(300);
   }
   /* USER CODE END 3 */
 }
@@ -274,37 +332,40 @@ void SystemClock_Config(void)
 }
 
 /**
-  * @brief QUADSPI Initialization Function
+  * @brief SPI1 Initialization Function
   * @param None
   * @retval None
   */
-static void MX_QUADSPI_Init(void)
+static void MX_SPI1_Init(void)
 {
 
-  /* USER CODE BEGIN QUADSPI_Init 0 */
+  /* USER CODE BEGIN SPI1_Init 0 */
 
-  /* USER CODE END QUADSPI_Init 0 */
+  /* USER CODE END SPI1_Init 0 */
 
-  /* USER CODE BEGIN QUADSPI_Init 1 */
+  /* USER CODE BEGIN SPI1_Init 1 */
 
-  /* USER CODE END QUADSPI_Init 1 */
-  /* QUADSPI parameter configuration*/
-  hqspi.Instance = QUADSPI;
-  hqspi.Init.ClockPrescaler = 8;
-  hqspi.Init.FifoThreshold = 4;
-  hqspi.Init.SampleShifting = QSPI_SAMPLE_SHIFTING_NONE;
-  hqspi.Init.FlashSize = 23;
-  hqspi.Init.ChipSelectHighTime = QSPI_CS_HIGH_TIME_1_CYCLE;
-  hqspi.Init.ClockMode = QSPI_CLOCK_MODE_0;
-  hqspi.Init.FlashID = QSPI_FLASH_ID_1;
-  hqspi.Init.DualFlash = QSPI_DUALFLASH_DISABLE;
-  if (HAL_QSPI_Init(&hqspi) != HAL_OK)
+  /* USER CODE END SPI1_Init 1 */
+  /* SPI1 parameter configuration*/
+  hspi1.Instance = SPI1;
+  hspi1.Init.Mode = SPI_MODE_MASTER;
+  hspi1.Init.Direction = SPI_DIRECTION_2LINES;
+  hspi1.Init.DataSize = SPI_DATASIZE_8BIT;
+  hspi1.Init.CLKPolarity = SPI_POLARITY_LOW;
+  hspi1.Init.CLKPhase = SPI_PHASE_1EDGE;
+  hspi1.Init.NSS = SPI_NSS_SOFT;
+  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_16;
+  hspi1.Init.FirstBit = SPI_FIRSTBIT_MSB;
+  hspi1.Init.TIMode = SPI_TIMODE_DISABLE;
+  hspi1.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
+  hspi1.Init.CRCPolynomial = 10;
+  if (HAL_SPI_Init(&hspi1) != HAL_OK)
   {
     Error_Handler();
   }
-  /* USER CODE BEGIN QUADSPI_Init 2 */
+  /* USER CODE BEGIN SPI1_Init 2 */
 
-  /* USER CODE END QUADSPI_Init 2 */
+  /* USER CODE END SPI1_Init 2 */
 
 }
 
@@ -360,6 +421,9 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_SET);
+
+  /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin : B1_Pin */
@@ -367,6 +431,13 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(B1_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : PA4 */
+  GPIO_InitStruct.Pin = GPIO_PIN_4;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
   /*Configure GPIO pin : LD2_Pin */
   GPIO_InitStruct.Pin = LD2_Pin;

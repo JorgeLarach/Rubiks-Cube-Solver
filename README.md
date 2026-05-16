@@ -1,5 +1,18 @@
 # Rubik's Cube Solver Part 2  
 
+## May 13, 2026
+Well, I've been hard at work writing the QSPI protocol for the W25Q serial flash. After I wrapped up the migration, I created a new STM32 project called Flasher to contain the one-time use firmware for the communication protocol. I initialized the USART2 peripheral and the QUADSPI peripheral (which was the whole point of the migration) with Dual Lines, wired up the serial flash, and wrote a few functions to send the JEDEC ID instruction, 0x9F. This command returns 3 bytes:  
+    1. The JEDEC assigned Manufacturer ID byte for Winbond (always 0xEF)  
+    2. Memory Type byte  
+    3. Capacity byte  
+
+At first, I got all 0s, which definitely wasn't supposed to happen. I even disconnected the breakout from power just to see what the code would return, and indeed, it was all 0s.  
+So I decided to try reading the JEDEC ID over normal SPI instead. I triple checked the jumper wire connections, made sure the /WP and /HOLD pins on the flash were pulled up, used the HAL_SPI_Transmit() and Receive functions, and this time, I was getting all Fs. Getting somewhere.
+
+I probed the pins with my multimeter and verified that both the breakout was getting 3V and the /CS pin was high by default. I even tried swapping IO0 and IO1 in case I was going crazy, and that time I got 0x66 0x99 0x02, which ended up being the breakout's FIFO queue transmitting the two instructions I sent before JEDEC ID, which were the Enable Reset (0x66) and Reset Device (0x99) instructions. I imagine the 0x02 is just garbage data, but I'm not sure yet. 
+
+That's where I am today. I've spent two days banging my head against this problem, frequently referencing the datasheet, trying tons of different things out, but no luck yet.
+
 ## May 11, 2026
 Migration complete! Porting the codebase from an F401RE project to a F446RE project took a bit longer than I thought, but I got it done! Not only that, but the SYSCLK is now running at 130MHz, compared to the F401RE's 84MHz (which was actually only running at 72MHz, whoops). It did take a while for the W25Q128 to get here, though, but it's here now. Up next is figuring out how QSPI works!    
 The process by which I did the migration was probably a little more complicated than it needed to be, but I'll explain it here regardless. 
@@ -9,13 +22,13 @@ Then, in the branch, I deleted everything from Rubiks Cube (including the hidden
 After that, I created a new project directory (called F446_Solver/) with CubeIDE targeting a Nucleo-F446RE. I set all the peripherals to default, and copied over the entire contents of that folder to the Rubiks Cube directory.  
 I had to tweak the hidden files to target the right project directory and build target (such as the ioc file, the .cproject file, .mxproject file, and .project file) but it was simple enough, and I learned a little more about how CubeMX generates these files.  
 After that worked, I added back the pre-build shell script which compiles the Rust static library into the .a file in Middlewares/, added back the linker flags and library in the project settings, and everything worked fine!  
-Once that was done, I went through the IOC and reconfigured the clock config, FreeRTOS, GPIO, motor timer (TIM3), and UART. FreeRTOS and UART were identical to the F401 project, but I made sure the SYSCLK was maxed out for this, and as such I had to modify the Prescaler and Period of TIM3 for the 20Khz STEP rate for the motors.    
+Once that was done, I went through the IOC and reconfigured the clock config, FreeRTOS, GPIO, motor timer (TIM3), and UART. FreeRTOS and UART were identical to the F401 project, but I made sure the SYSCLK was maxed out for this, and as such I had to modify the Prescaler and Period of TIM3 to maintain the 20Khz STEP rate for the motors.    
 Finally, the GPIO was the exact same save for PA1, which originally was the U_Dir pin. On the F446RE, it corresponds to QUADSPI_BK1_IO3. Honestly I'm not entirely sure what that means yet, but it looks important, so I moved the U_Dir pin to PC2.   
 Once I made sure the UART communication worked from gui.py, I went ahead and physically unplugged the F401RE from the project, substituting it for my shiny new F446RE. I ran several system tests from top to bottom, and everything is working exactly as it was before the migration.
 Now, I'm gonna watch a few Youtube videos about QUADSPI on STM32, read the datasheets for the F446 and W25Q128, and I should be good to go!
 
 ## May 2, 2026
-I found an approach that works. My solver can now find a solution for a cube that was scrambled in 33 moves in 26ms on my laptop. I realized it just wasn't feasable to write a well performing solver with less than a megabyte of tables. I did some googling and found that I can use external flash to store and access larger tables, particularly for phase 2. The plan right now is to use a QSPI external flash device, particularly the Adafruit W25Q128. It is an external Quad-SPI flash memory chip that can provide up to 16MB of storage. The access latency at runtime will be around 350ns, compared to 10ns internal flash access, but it shouldn't be that noticeable. 
+I found an approach that works. My solver can now find a solution for a cube that was scrambled in 33 moves in 26ms on my laptop. I realized it just wasn't feasable to write a well performing solver with less than a megabyte of tables. I did some googling and found that I can use external flash to store and access larger tables, which will be necessary almost exclusively for phase 2. The plan right now is to use a QSPI external flash device, particularly the Adafruit W25Q128. It is an external Quad-SPI flash memory chip that can provide up to 16MB of storage. The access latency at runtime will be around 350ns, compared to 10ns internal flash access, but it shouldn't be that noticeable. 
 
 The problem is, my current MCU, the Nucleo-F401RE, doesn't have a dedicated QSPI peripheral, so for this approach, I would also need to get something like a Nucleo-F446RE. I might have to reconfigure the whole project from scratch on the CubeMX IOC for the new MCU, and then manually port over all the code and linker settings, but I'm not sure yet. I'll need to keep looking into that. 
 
@@ -144,13 +157,13 @@ Why this size: 495 UD states × 18 moves × 2 bytes = 17,820 bytes.
 When used: Phase 1 search, every node.  
 Lives in: Internal flash.
 
-### CP_MOVE_TABLE
-Size: 806,400 bytes ≈ 787KB
-What it stands for: Corner permutation move transitions. For every CP coord and every one of the 10 Phase 2 moves, stores the resulting CP coord.
-What the value means: CP_MOVE[cp][mi] = new corner perm coord after applying Phase 2 move mi.
-Why this size: 40,320 CP states × 10 Phase 2 moves × 2 bytes = 806,400 bytes.
-When used: Phase 2 search, every node, every move tried.
-Lives in: QSPI external flash.
+### CP_MOVE_TABLE  
+Size: 806,400 bytes ≈ 787KB  
+What it stands for: Corner permutation move transitions. For every CP coord and every one of the 10 Phase 2 moves, stores the resulting CP coord.  
+What the value means: CP_MOVE[cp][mi] = new corner perm coord after applying Phase 2 move mi.  
+Why this size: 40,320 CP states × 10 Phase 2 moves × 2 bytes = 806,400 bytes.  
+When used: Phase 2 search, every node, every move tried.  
+Lives in: QSPI external flash.  
 
 ### EP_MOVE_TABLE
 Size: 806,400 bytes ≈ 787KB  
@@ -171,7 +184,7 @@ Lives in: Internal flash.
 I'll be doing more research into QSPI, as well as figuring out how to migrate my project between target MCUs on the IDE, but for now I'll just be happy that I now have a solver that can actually solve a cube in my lifetime!
 
 ## May 1, 2026
-Well I tried the Kociemba approach I described below, and it seems its a lot faster than the single IDA* implementation, but still way too slow. Here's a performance ratio table:
+Well I tried the Kociemba approach I described below, and it seems its a lot faster than the single IDA* implementation, but still way too slow. Here's a performance table:
 
 | Moves | Phase 1 Time(s)  | Phase 2 Time(s)  |
 | ----- | ---------------- | ---------------- |
@@ -283,7 +296,7 @@ Reduces the cube to a special subgroup called G1. G1 is the set of all cube stat
 That's the first IDA* search
 
 ### Phase 2
-Solves from G1 to solved, using only the 10 moves U, U2, Ui, D, D2, Di, R2, L2, F2, B2. Because the move set is restricted, the search space collapses dramatically.
+Solves from G1 to solved, using only the 10 moves U, U2, Ui, D, D2, Di, R2, L2, F2, B2. Because the move set is restricted, the search space collapses quite a bit.
 * All corners are correctly positioned (CP = 0) <-- corner permutation
 * All UD-slice edges are correctly positioned (UP = 0) <-- ud slice permutation
 * All edges are correctly positioned (EP = 0) <-- edge permutation
@@ -315,13 +328,14 @@ March 15, 2026
 Welcome to my Rubik's Cube Solver project!  
 
 I started this project on January 16, 2026, a few weeks after I wrapped up my [Robotic Arm project](https://github.com/JorgeLarach/Robotic-Arm). I really wanted this to be my biggest project yet, and I wanted to focus more on the software side of things rather than the mechanical or design aspects, which I felt had been stealing the spotlight from my last couple of projects. The software for this project is structured in three parts:
-1. Python GUI with Tkinter for transmitting initial cube state: This script runs on the host device, and it allows the user to color-in the 54 cube stickers according to their actual scrambled physical cube. There's a cube validation script that runs in the background before the 54 bytes are sent through pyserial to the MCU, which, for this project, is an STM32 Nucleo-F401RE.
+1. Python GUI with Tkinter for transmitting initial cube state: This script runs on the host device, and it allows the user to color-in the 54 cube stickers according to their actual scrambled physical cube. There's a cube validation function that runs in the background before the 54 bytes are sent through pyserial to the MCU, which, for this project, is an STM32 Nucleo-F401RE.
 2. Rust no-std static library solver: Once the cube configuration is in the MCU's RAM, the user can feel free to unplug the MCU from the host machine. The solver runs entirely on machine, and the user presses a button to execute it. A few caveats: the solver isn't actually written yet; that's part 2 of the project. Turns out its rather challenging to write a Rubik's cube solver with no-std, and much more so if you've never actually solved the thing on your own. That being said, learning to solve a cube is one of the main reasons why I chose this project. Furthermore, it certainly isn't necessary to have the solver run on-machine with no-std. This is an intentional, self imposed constraint. I wanted to practice writing an FFI between C and Rust, as the latter's prevalence in industry seems to be increasing year after year, and I also enjoy programming in Rust. As of now, the solver outputs a constant move list, regardless of the initial cube configuration, of which the second half of the list is the inverse of the first half. It basically scrambles and unscrambles a solved cube.
 
 3. C motor driver with FreeRTOS: This module is responsible for receiving UART packets from the host machine, calling the Rust solver, and activating the motor hardware timer. It is functionally the code that ties the project together. It manages a cube_state struct, which stores the initial cube configuration, the move list output by the solver, a translated stepper_move list which the motor module uses to execute the moves, and a series of boolean flags to ensure no processes are interrupting each other or executing in an incorrect order.
 
-This project uses the standard Rubik's cube move notation, where 'L' denotes a 90 degree clockwise turn of the Left face, 'Li' denotes a 90 degree counterclockwise turn, and 'L2' denotes a 180 degree turn. Across all three languages used in this project, I standardized the cube notation order and orientation as follows: Up - White, Down - Yellow, Left - Green, Right - Blue, Front - Red, and Back - Orange. For example, when the 54 byte UART packet is received, the first nine bytes correspond to the nine stickers of the U face, where byte 0 is the top left sticker (or facelet), byte 1 is the top middle sticker, byte 2 is the top right sticker, and so on. This standardization greatly eased the process of reasoning over the move application and rotation logic done within the Rust solver module, as well as the preliminary initial cube verification logic done by the Python GUI before transmission. 
+This project uses the standard Rubik's cube move notation, where 'L' denotes a 90 degree clockwise turn of the Left face, 'Li' denotes a 90 degree counterclockwise turn, and 'L2' denotes a 180 degree turn. Across all three languages used in this project, I standardized the cube notation order and orientation as follows: Up - White, Down - Yellow, Left - Green, Right - Blue, Front - Red, and Back - Orange. For example, when the 54 byte UART packet is received, the first nine bytes correspond to the nine stickers of the U face, where byte 0 is the top left sticker (or facelet), byte 1 is the top middle sticker, and so on. This standardization greatly eased the process of reasoning over the move application and rotation logic done within the Rust solver module, as well as the preliminary initial cube verification logic done by the Python GUI before transmission. 
 
+### Development Timeline
 Before starting any work on the software side of the project, however, I spent some time learning about the world of stepper motors and drivers. Considering my previous three projects relied on hobby servo motors, such as the MG995 and MG996R, the jump from servo motors to stepper motors was certainly a big one. Where servo motors needed at most three wires to work (Vcc, GND, and PWM), I found that getting a stepper motor to do the minimum possible work needed eighteen. I had previously worked with stepper motors in my Embedded Microcomputer Systems class during the 2025 Spring semester at Trinity University, but to a far lesser extent than this application called for. I used Aeed Musa's excellent [Rubik's Cube Robot video](https://www.youtube.com/watch?v=V8gHTKWw--Y) as the basis for my selection of stepper motor model (NEMA 17), stepper motor drivers (TMC2208), chassis STLs (can be found [here](https://www.instructables.com/Rubiks-Cube-Solver-2/)), and 24V power supply module. That said, all the wiring and software for this project is original. A significant challenge I found early on in the project was properly configuring the current limit on the TMC2208 using the on-board potentiometer. I pored over the datasheet for longer than I'd like to admit, and made some mistakes that thankfully didn't damage any of the drivers or motors I was using. Once I had a single stepper motor reliably rotating 90 degrees every second, I felt comfortable delving into the software aspect of the project.
 
 I introduced FreeRTOS, which, despite the overarching pipeline of the project being quite linear, with each module running only once and having to wait only for the previous module to finish (Host GUI -> Rust solver -> Stepper executor), I felt it would be helpful for keeping concerns separated between modules, as well as for managing resources tracked within data structures shared between them. The principal task is the CubeProcessTask, which is in charge of receiving the UART packet from the GUI module, copying its 54 bytes from the rx_buffer into the cube_state buffer, and setting the according flags to ensure no other process is running out of turn (for example, it ensures the cube_run_motors function is executed only after the cube_run_solver function). Once I felt satisfied with the general structure of the software, I started work on the most exciting yet brain-searing section of the project: the Rust solver.
