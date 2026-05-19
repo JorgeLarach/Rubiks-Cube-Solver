@@ -1,7 +1,7 @@
 # Rubik's Cube Solver Part 2  
 
 ## May 19, 2026
-It seems the age-old idiom that the closer you get to finishing a project, the more work you have to do, is true. I'm putting this project on hold for the time being, and will be focusing my time on ESP32 development for a recent work opportunity. For the time being, this project will sit quietly on my workbench, until I have an opportunity to return to it and finally figure out what is going on with my serial flash chip. Maybe that'll be called part 3, who knows? Thanks for reading, and again, feel free to reach out with any questions (or suggestions) about the project to jorgelarachesp@gmail.com.
+It seems the age-old idiom that the closer you get to finishing a project, the more work you have to do, is true. I'm putting this project on hold for the time being, and will be focusing my time on ESP32 development for a recent work opportunity. For now, this project will sit quietly on my workbench, until I have an opportunity to return to it and finally figure out what is going on with my serial flash chip. Maybe that'll be called part 3, who knows? Thanks for reading, and again, feel free to reach out with any questions (or suggestions) about the project to jorgelarachesp@gmail.com.
 
 ## May 13, 2026
 Well, I've been hard at work writing the QSPI protocol for the W25Q serial flash. After I wrapped up the migration, I created a new STM32 project called Flasher to contain the one-time use firmware for the communication protocol. I initialized the USART2 peripheral and the QUADSPI peripheral (which was the whole point of the migration) with Dual Lines, wired up the serial flash, and wrote a few functions to send the JEDEC ID instruction, 0x9F. This command returns 3 bytes:  
