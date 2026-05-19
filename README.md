@@ -1,5 +1,8 @@
 # Rubik's Cube Solver Part 2  
 
+## May 19, 2026
+It seems the age-old idiom that the closer you get to finishing a project, the more work you have to do, is true. I'm putting this project on hold for the time being, and will be focusing my time on ESP32 development for a recent work opportunity. For the time being, this project will sit quietly on my workbench, until I have an opportunity to return to it and finally figure out what is going on with my serial flash chip. Maybe that'll be called part 3, who knows? Thanks for reading, and again, feel free to reach out with any questions (or suggestions) about the project to jorgelarachesp@gmail.com.
+
 ## May 13, 2026
 Well, I've been hard at work writing the QSPI protocol for the W25Q serial flash. After I wrapped up the migration, I created a new STM32 project called Flasher to contain the one-time use firmware for the communication protocol. I initialized the USART2 peripheral and the QUADSPI peripheral (which was the whole point of the migration) with Dual Lines, wired up the serial flash, and wrote a few functions to send the JEDEC ID instruction, 0x9F. This command returns 3 bytes:  
     1. The JEDEC assigned Manufacturer ID byte for Winbond (always 0xEF)  
@@ -78,7 +81,7 @@ $$
 
 We get 2.25 as the overall Effective Branching Factor for Phase 1. That means for every node explored, it expands on average to 2.25 more nodes. This means the algorithm is exploring a small fraction of the search space, and that the heuristic is efficient in cutting it down. We do the same computations over Phase 2's test results, and get a EBF of 2.13, indicating better performance than Phase 1, which makes sense due to the larger size and number of tables Phase 2 has access to. About that, below is the current setup for the tables:
 
-Stored in Internal Flash (F446RE has 1MB): 
+Stored in Internal Flash (F446RE has 512KB): 
 | Table               | Size (B)     | Purpose 
 | -----               | ------------ | -------  
 | CORNER_ORIENT_TABLE |  2,187       | Phase 1 heuristic
